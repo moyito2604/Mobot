@@ -13,6 +13,7 @@ import Threaded_timer
 os.system("clear")
 
 queues = {}
+timers = {}
 
 configgen.generateConfiguration('m!', True, 'TOKEN', 'TOKEN')
 import config
