@@ -116,11 +116,9 @@ async def leave(ctx):
         await ctx.send("I am not in a voice channel")
     shutil.rmtree(pwd + '/' + str(ctx.guild.id))
     print('directory ' + str(ctx.guild.id) + ' has been deleted')
-    print(timers)
     timers[ctx.guild.id].stop()
     timers.pop(ctx.guild.id)
     queues.pop(ctx.guild.id)
-    print(timers)
     print('Successfully left the voice Channel')
 
 ydl_opts = {
@@ -250,6 +248,7 @@ def queue(ctx):
                     queues[ctx.guild.id].pop(0)
                     source = FFmpegPCMAudio(pwd+'/'+str(ctx.guild.id)+'/'+queues[ctx.guild.id][0])
                 else:
+                    os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
                     source, title = dccommands.retrieveAudio(queues[ctx.guild.id][0], ctx.guild.id)
             player = voice.play(source)
             queues[ctx.guild.id].pop(0)
