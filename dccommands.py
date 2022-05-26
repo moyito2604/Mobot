@@ -3,8 +3,10 @@ from nextcord import FFmpegPCMAudio
 import yt_dlp
 import os
 
+pwd = os.path.dirname(os.path.realpath(__file__))
+
 def techQuotes():
-    files = open(os.path.dirname(os.path.realpath(__file__)) + '/Quotes/' + 'Funnytechquotes.txt', 'r')
+    files = open(pwd + '/Quotes/' + 'Funnytechquotes.txt', 'r')
     quote = ''
     randomquote = randint(1, 62)
     for counter in range(randomquote):
@@ -14,7 +16,7 @@ def techQuotes():
     return quote
 
 def seanQuotes():
-    files = open(os.path.dirname(os.path.realpath(__file__)) + '/Quotes/' + 'Seanquotes.txt', 'r')
+    files = open(pwd + '/Quotes/' + 'Seanquotes.txt', 'r')
     quote = ''
     randomquote = randint(2, 117)
     for counter in range(randomquote):
@@ -24,7 +26,7 @@ def seanQuotes():
     return quote
 
 def oneSeam():
-    files = open(os.path.dirname(os.path.realpath(__file__)) + '/Quotes/' + 'Seanquotes.txt', 'r')
+    files = open(pwd + '/Quotes/' + 'Seanquotes.txt', 'r')
     quote = ''
     quote = files.readline()
     print('\nSean Quote number ' + str(1) + ' was printed')
@@ -44,35 +46,48 @@ class loggerOutputs:
         with open('logs.txt', 'a+') as file:
             file.write("Log: " + msg + "\n")
             print("Log: " + msg)
-        
-ydl_opts = {
-'format': 'bestaudio/best',
-'postprocessors': [{
-    'key':'FFmpegExtractAudio',
-    'preferredcodec': 'mp3',
-    'preferredquality': '192',
-}]
-}
 
-def retrieveAudio(url):
+def retrieveAudio(url, path):
+
+    ydl_opts = {
+    'format': 'bestaudio/best',
+    'outtmpl': str(path) + '/%(title)s.%(ext)s',
+    'postprocessors': [{
+        'key':'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192',
+    }]
+    }
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url)
         title = info.get('title', None)
-    for file in os.listdir("./"):
+    for file in os.listdir(pwd+'/'+str(path)):
         if file.endswith(".mp3"):
-            os.rename(file, "song.mp3")
-    source = FFmpegPCMAudio('song.mp3')
+            os.rename(pwd+'/'+str(path)+'/'+ file, pwd+'/'+str(path)+'/song.mp3')
+    source = FFmpegPCMAudio(pwd+'/'+str(path)+'/song.mp3')
     return source, title
 
-def retrievePlaylist(url):
+def retrievePlaylist(url, path):
+
+    ydl_opts = {
+    'format': 'bestaudio/best',
+    'outtmpl': str(path) + '/%(title)s.%(ext)s',
+    'postprocessors': [{
+        'key':'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192',
+    }]
+    }
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url)
         title = info.get('title', None)
     songlist = []
     counter = 0
-    for file in os.listdir("./"):
+    for file in os.listdir(pwd+'/'+str(path)):
         if file.endswith(".mp3"):
-            os.rename(file, "song-" + str(counter) +".mp3")
+            os.rename(pwd+'/'+str(path)+'/'+ file, pwd+'/'+str(path)+'/song-' + str(counter) +'.mp3')
             songlist.append('song-' + str(counter) +'.mp3')
             counter = counter + 1
     print(songlist)

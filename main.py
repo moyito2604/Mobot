@@ -8,6 +8,7 @@ import dccommands
 import configgen
 import os.path
 import yt_dlp
+import shutil
 sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)) + '/Dependencies/')
 import Threaded_timer
 os.system("clear")
@@ -86,8 +87,11 @@ async def join(ctx):
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
     if (ctx.author.voice):
         if voice == None:
-            os.system('rm *.mp3')
-            os.system('rm *.webm')
+            if os.path.isdir(os.path.dirname(os.path.realpath(__file__)) + '/' + str(ctx.guild.id)):
+                shutil.rmtree(os.path.dirname(os.path.realpath(__file__)) + '/' + str(ctx.guild.id))
+                print('directory ' + str(ctx.guild.id) + ' has been deleted')
+            os.mkdir(os.path.dirname(os.path.realpath(__file__))+ '/' + str(ctx.guild.id))
+            print('directory ' + str(ctx.guild.id) + ' has been created')
             queues[ctx.guild.id] = []
             channel = ctx.message.author.voice.channel
             voice = await channel.connect()
@@ -110,8 +114,8 @@ async def leave(ctx):
         await ctx.send("Left the voice channel")
     else:
         await ctx.send("I am not in a voice channel")
-    os.system('rm *.mp3')
-    os.system('rm *.webm')
+    shutil.rmtree(os.path.dirname(os.path.realpath(__file__)) + '/' + str(ctx.guild.id))
+    print('directory ' + str(ctx.guild.id) + ' has been deleted')
     rt.stop()
     queues.pop(ctx.guild.id)
     print('Successfully left the voice Channel')
@@ -130,8 +134,11 @@ async def play(ctx, url:str):
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
     if (ctx.author.voice):
         if voice == None:
-            os.system('rm *.mp3')
-            os.system('rm *.webm')
+            if os.path.isdir(os.path.dirname(os.path.realpath(__file__)) + '/' + str(ctx.guild.id)):
+                shutil.rmtree(os.path.dirname(os.path.realpath(__file__)) + '/' + str(ctx.guild.id))
+                print('directory ' + str(ctx.guild.id) + ' has been deleted')
+            os.mkdir(os.path.dirname(os.path.realpath(__file__))+ '/' + str(ctx.guild.id))
+            print('directory ' + str(ctx.guild.id) + ' has been created')
             queues[ctx.guild.id] = []
             global channel 
             channel = ctx.message.author.voice.channel
@@ -189,8 +196,8 @@ async def stop(ctx):
         voice.stop()
         await ctx.send("Music has been stopped and queue has been cleared")
         print("Music has been stopped and queue has been cleared")
-        os.system('rm *.mp3')
-        os.system('rm *.webm')
+        os.system('rm ' + ctx.guild.id + '/*.mp3')
+        os.system('rm ' + ctx.guild.id + '/*.webm')
         rt.stop()
     else:
         await ctx.send("There is no audio to stop.")
@@ -227,27 +234,27 @@ def queue(ctx):
         rt.stop()
         if queues[ctx.guild.id]:
             if queues[ctx.guild.id][0].startswith('song'):
-                source = FFmpegPCMAudio(queues[ctx.guild.id][0])
+                source = FFmpegPCMAudio(os.path.dirname(os.path.realpath(__file__))+'/'+str(ctx.guild.id)+'/'+queues[ctx.guild.id][0])
             else:
                 if "playlist" in queues[ctx.guild.id][0]:
-                    os.system('rm *.mp3')
-                    os.system('rm *.webm')
+                    os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
+                    os.system('rm ' + str(ctx.guild.id) + '/*.webm')
                     print(queues[ctx.guild.id])
                     source = FFmpegPCMAudio(os.path.dirname(os.path.realpath(__file__)) + '/Dependencies/' + 'Elevator_Music.mp3')
                     player = voice.play(source)
-                    songlist, title = dccommands.retrievePlaylist(queues[ctx.guild.id][0])
+                    songlist, title = dccommands.retrievePlaylist(queues[ctx.guild.id][0], ctx.guild.id)
                     voice.stop()
                     queues[ctx.guild.id].extend(songlist)
                     queues[ctx.guild.id].pop(0)
-                    source = FFmpegPCMAudio(queues[ctx.guild.id][0])
+                    source = FFmpegPCMAudio(os.path.dirname(os.path.realpath(__file__))+'/'+str(ctx.guild.id)+'/'+queues[ctx.guild.id][0])
                 else:
-                    source, title = dccommands.retrieveAudio(queues[ctx.guild.id][0])
+                    source, title = dccommands.retrieveAudio(queues[ctx.guild.id][0], ctx.guild.id)
             player = voice.play(source)
             queues[ctx.guild.id].pop(0)
             rt.start()
         else:
-            os.system('rm *.mp3')
-            os.system('rm *.webm')
+            os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
+            os.system('rm ' + str(ctx.guild.id) + '/*.webm')
             print('No queued items')
 
 client.run(Token)
