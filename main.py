@@ -198,8 +198,8 @@ async def stop(ctx):
         voice.stop()
         await ctx.send("Music has been stopped and queue has been cleared")
         print("Music has been stopped and queue has been cleared")
-        os.system('rm ' + ctx.guild.id + '/*.mp3')
-        os.system('rm ' + ctx.guild.id + '/*.webm')
+        os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
+        os.system('rm ' + str(ctx.guild.id) + '/*.webm')
         timers[ctx.guild.id].stop()
     else:
         await ctx.send("There is no audio to stop.")
