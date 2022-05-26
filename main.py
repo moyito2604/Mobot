@@ -98,9 +98,8 @@ async def join(ctx):
             voice = await channel.connect()
             await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
             print('Successfully Joined the ' + str(channel) + ' voice channel')
-            global rt
-            rt = Threaded_timer.RepeatedTimer(1, queue, ctx)
-            rt.stop()
+            timers[ctx.guild.id] = Threaded_timer.RepeatedTimer(1, queue, ctx)
+            timers[ctx.guild.id].stop()
         else:
             await ctx.send("I am already connected")
     else:
@@ -117,8 +116,11 @@ async def leave(ctx):
         await ctx.send("I am not in a voice channel")
     shutil.rmtree(pwd + '/' + str(ctx.guild.id))
     print('directory ' + str(ctx.guild.id) + ' has been deleted')
-    rt.stop()
+    print(timers)
+    timers[ctx.guild.id].stop()
+    timers.pop(ctx.guild.id)
     queues.pop(ctx.guild.id)
+    print(timers)
     print('Successfully left the voice Channel')
 
 ydl_opts = {
@@ -146,9 +148,8 @@ async def play(ctx, url:str):
             voice = await channel.connect()
             await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
             print('Successfully Joined the ' + str(channel) + ' voice channel')
-            global rt
-            rt = Threaded_timer.RepeatedTimer(1, queue, ctx)
-            rt.stop()
+            timers[ctx.guild.id] = Threaded_timer.RepeatedTimer(1, queue, ctx)
+            timers[ctx.guild.id].stop()
         queues[ctx.guild.id].append(url)
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False, process=False)
@@ -165,7 +166,7 @@ async def play(ctx, url:str):
                 await ctx.send('Please enjoy this music while the playlist is being retrieved.')
             else:
                 await ctx.send('Now playing:\n***' + title + '***')
-        rt.start()
+        timers[ctx.guild.id].start()
     else:
         await ctx.send("You are not in a voice channel, you must be in a voice channel for me to join")
 
@@ -199,7 +200,7 @@ async def stop(ctx):
         print("Music has been stopped and queue has been cleared")
         os.system('rm ' + ctx.guild.id + '/*.mp3')
         os.system('rm ' + ctx.guild.id + '/*.webm')
-        rt.stop()
+        timers[ctx.guild.id].stop()
     else:
         await ctx.send("There is no audio to stop.")
 
@@ -232,7 +233,7 @@ def queue(ctx):
     if (voice.is_playing() or voice.is_paused()):
         pass
     else:
-        rt.stop()
+        timers[ctx.guild.id].stop()
         if queues[ctx.guild.id]:
             if queues[ctx.guild.id][0].startswith('song'):
                 source = FFmpegPCMAudio(pwd+'/'+str(ctx.guild.id)+'/'+queues[ctx.guild.id][0])
@@ -252,7 +253,7 @@ def queue(ctx):
                     source, title = dccommands.retrieveAudio(queues[ctx.guild.id][0], ctx.guild.id)
             player = voice.play(source)
             queues[ctx.guild.id].pop(0)
-            rt.start()
+            timers[ctx.guild.id].start()
         else:
             os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
             os.system('rm ' + str(ctx.guild.id) + '/*.webm')
