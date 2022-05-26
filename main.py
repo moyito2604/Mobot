@@ -15,6 +15,7 @@ os.system("clear")
 
 queues = {}
 timers = {}
+pwd = os.path.dirname(os.path.realpath(__file__))
 
 configgen.generateConfiguration('m!', True, 'TOKEN', 'TOKEN')
 import config
@@ -87,10 +88,10 @@ async def join(ctx):
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
     if (ctx.author.voice):
         if voice == None:
-            if os.path.isdir(os.path.dirname(os.path.realpath(__file__)) + '/' + str(ctx.guild.id)):
-                shutil.rmtree(os.path.dirname(os.path.realpath(__file__)) + '/' + str(ctx.guild.id))
+            if os.path.isdir(pwd + '/' + str(ctx.guild.id)):
+                shutil.rmtree(pwd + '/' + str(ctx.guild.id))
                 print('directory ' + str(ctx.guild.id) + ' has been deleted')
-            os.mkdir(os.path.dirname(os.path.realpath(__file__))+ '/' + str(ctx.guild.id))
+            os.mkdir(pwd+ '/' + str(ctx.guild.id))
             print('directory ' + str(ctx.guild.id) + ' has been created')
             queues[ctx.guild.id] = []
             channel = ctx.message.author.voice.channel
@@ -114,7 +115,7 @@ async def leave(ctx):
         await ctx.send("Left the voice channel")
     else:
         await ctx.send("I am not in a voice channel")
-    shutil.rmtree(os.path.dirname(os.path.realpath(__file__)) + '/' + str(ctx.guild.id))
+    shutil.rmtree(pwd + '/' + str(ctx.guild.id))
     print('directory ' + str(ctx.guild.id) + ' has been deleted')
     rt.stop()
     queues.pop(ctx.guild.id)
@@ -134,10 +135,10 @@ async def play(ctx, url:str):
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
     if (ctx.author.voice):
         if voice == None:
-            if os.path.isdir(os.path.dirname(os.path.realpath(__file__)) + '/' + str(ctx.guild.id)):
-                shutil.rmtree(os.path.dirname(os.path.realpath(__file__)) + '/' + str(ctx.guild.id))
+            if os.path.isdir(pwd + '/' + str(ctx.guild.id)):
+                shutil.rmtree(pwd + '/' + str(ctx.guild.id))
                 print('directory ' + str(ctx.guild.id) + ' has been deleted')
-            os.mkdir(os.path.dirname(os.path.realpath(__file__))+ '/' + str(ctx.guild.id))
+            os.mkdir(pwd+ '/' + str(ctx.guild.id))
             print('directory ' + str(ctx.guild.id) + ' has been created')
             queues[ctx.guild.id] = []
             global channel 
@@ -234,19 +235,19 @@ def queue(ctx):
         rt.stop()
         if queues[ctx.guild.id]:
             if queues[ctx.guild.id][0].startswith('song'):
-                source = FFmpegPCMAudio(os.path.dirname(os.path.realpath(__file__))+'/'+str(ctx.guild.id)+'/'+queues[ctx.guild.id][0])
+                source = FFmpegPCMAudio(pwd+'/'+str(ctx.guild.id)+'/'+queues[ctx.guild.id][0])
             else:
                 if "playlist" in queues[ctx.guild.id][0]:
                     os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
                     os.system('rm ' + str(ctx.guild.id) + '/*.webm')
                     print(queues[ctx.guild.id])
-                    source = FFmpegPCMAudio(os.path.dirname(os.path.realpath(__file__)) + '/Dependencies/' + 'Elevator_Music.mp3')
+                    source = FFmpegPCMAudio(pwd + '/Dependencies/' + 'Elevator_Music.mp3')
                     player = voice.play(source)
                     songlist, title = dccommands.retrievePlaylist(queues[ctx.guild.id][0], ctx.guild.id)
                     voice.stop()
                     queues[ctx.guild.id].extend(songlist)
                     queues[ctx.guild.id].pop(0)
-                    source = FFmpegPCMAudio(os.path.dirname(os.path.realpath(__file__))+'/'+str(ctx.guild.id)+'/'+queues[ctx.guild.id][0])
+                    source = FFmpegPCMAudio(pwd+'/'+str(ctx.guild.id)+'/'+queues[ctx.guild.id][0])
                 else:
                     source, title = dccommands.retrieveAudio(queues[ctx.guild.id][0], ctx.guild.id)
             player = voice.play(source)
