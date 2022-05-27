@@ -15,11 +15,12 @@ m!stop: stops playing audio and clears the queue
 m!skip: skips the current track in queue
 ```
 
-The music portion of the bot requires a couple dependencies to run properly as it utilizes **yt_dlp, nextcord, and ffmpeg** to process the audio that is recieved through the bot. 
+The music portion of the bot requires a couple dependencies to run properly as it utilizes **yt_dlp, nextcord, youtube-search-python, and ffmpeg** to process the audio that is recieved through the bot. 
 To install these, it is necessary to run the three commands below in a Debian based distro:
 ```
 pip3 install nextcord
 pip3 install yt_dlp
+pip3 install youtube-search-python
 apt-get install ffmpeg
 ```
 Once these dependencies are installed, clone the repository to the location desired using this command:
