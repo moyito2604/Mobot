@@ -2,6 +2,7 @@ import os
 import nextcord
 from nextcord.ext import commands
 from nextcord import FFmpegPCMAudio
+from youtubesearchpython import VideosSearch
 import sys
 import time
 import dccommands
@@ -15,6 +16,7 @@ os.system("clear")
 
 queues = {}
 timers = {}
+searches = {}
 pwd = os.path.dirname(os.path.realpath(__file__))
 
 configgen.generateConfiguration('m!', True, 'TOKEN', 'TOKEN')
@@ -76,7 +78,7 @@ async def help(ctx):
     hm = hm + '***Music Bot Commands***\n'
     hm = hm + extensions + 'join: joins voice channel\n'
     hm = hm + extensions + 'leave: leaves voice channel\n'
-    hm = hm + extensions + 'play: plays music with a youtube link, queues music, and plays music global rtses music currently paused\n'
+    hm = hm + extensions + 'play: plays music with a youtube link, queues music, and plays music currently paused\n'
     hm = hm + extensions + 'stop: stops playing audio and clears the queue\n'
     hm = hm + extensions + 'skip: skips the current track in queue\n\n'
     hm = hm + 'All of these commands are case insensitive\n'
@@ -94,6 +96,7 @@ async def join(ctx):
             os.mkdir(pwd+ '/' + str(ctx.guild.id))
             print('directory ' + str(ctx.guild.id) + ' has been created')
             queues[ctx.guild.id] = []
+            searches[ctx.guild.id] = ''
             channel = ctx.message.author.voice.channel
             voice = await channel.connect()
             await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -131,9 +134,10 @@ ydl_opts = {
 }
 
 @client.command(pass_context = True)
-async def play(ctx, url:str):
+async def play(ctx, *, url:str):
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
     if (ctx.author.voice):
+        print(url)
         if voice == None:
             if os.path.isdir(pwd + '/' + str(ctx.guild.id)):
                 shutil.rmtree(pwd + '/' + str(ctx.guild.id))
@@ -141,30 +145,45 @@ async def play(ctx, url:str):
             os.mkdir(pwd+ '/' + str(ctx.guild.id))
             print('directory ' + str(ctx.guild.id) + ' has been created')
             queues[ctx.guild.id] = []
-            global channel 
+            searches[ctx.guild.id] = ''
             channel = ctx.message.author.voice.channel
             voice = await channel.connect()
             await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
             print('Successfully Joined the ' + str(channel) + ' voice channel')
             timers[ctx.guild.id] = Threaded_timer.RepeatedTimer(1, queue, ctx)
             timers[ctx.guild.id].stop()
-        queues[ctx.guild.id].append(url)
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False, process=False)
-            title = info.get('title', None)
-        if voice.is_playing() or voice.is_paused():
-            if "playlist" in url:
-                await ctx.send('Playlist ***' + title + '*** has been added to the queue')
+        if 'https://www.youtube.com' in url or 'https://youtu.be' in url:
+            queues[ctx.guild.id].append(url)
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False, process=False)
+                title = info.get('title', None)
+            if voice.is_playing() or voice.is_paused():
+                if "playlist" in url:
+                    await ctx.send('Playlist ***' + title + '*** has been added to the queue')
+                else:
+                    await ctx.send('***' + title + '*** has been added to the queue')
             else:
-                await ctx.send('***' + title + '*** has been added to the queue')
+                await ctx.send('Retrieving from source')
+                if "playlist" in url:
+                    await ctx.send('Now playing playlist:\n***' + title + '***')
+                    await ctx.send('Please enjoy this music while the playlist is being retrieved.')
+                else:
+                    await ctx.send('Now playing:\n***' + title + '***')
+            timers[ctx.guild.id].start()
+        elif url == '1' or url == '2' or url == '3' or url == '4' or url == '5':
+            print('successfully chose a song')
+            await ctx.send('Song number ' + url + ' selected:\nSong Title:\n***' + searches[ctx.guild.id]['result'][int(url)-1]['title']+'***')
+            queues[ctx.guild.id].append(searches[ctx.guild.id]['result'][int(url)-1]['link'])
+            print(queues[ctx.guild.id])
+            timers[ctx.guild.id].start()
         else:
-            await ctx.send('Retrieving from source')
-            if "playlist" in url:
-                await ctx.send('Now playing playlist:\n***' + title + '***')
-                await ctx.send('Please enjoy this music while the playlist is being retrieved.')
-            else:
-                await ctx.send('Now playing:\n***' + title + '***')
-        timers[ctx.guild.id].start()
+            vidsearch = VideosSearch(url, limit = 5)
+            searches[ctx.guild.id] = vidsearch.result()
+            await ctx.send('Please select a song from the following results:\n1: ***' + searches[ctx.guild.id]['result'][0]['title']+'***\n'
+            '2: ***' + searches[ctx.guild.id]['result'][1]['title']+'***\n'+
+            '3: ***' + searches[ctx.guild.id]['result'][2]['title']+'***\n'+
+            '4: ***' + searches[ctx.guild.id]['result'][3]['title']+'***\n'+
+            '5: ***' + searches[ctx.guild.id]['result'][4]['title']+'***\n')
     else:
         await ctx.send("You are not in a voice channel, you must be in a voice channel for me to join")
 
