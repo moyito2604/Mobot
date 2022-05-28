@@ -10,7 +10,9 @@ m!tquote: Generates a tech quote
 ***Music Bot Commands***
 m!join: joins voice channel
 m!leave: leaves voice channel
-m!play: plays music with a youtube link, queues music, and plays music that is currently paused
+m!play: plays music with a youtube link, queues music, and plays music currently paused
+This command also allows you to search for a song on youtube
+
 m!stop: stops playing audio and clears the queue
 m!skip: skips the current track in queue
 ```
