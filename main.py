@@ -188,7 +188,7 @@ async def play(ctx, *, url:str):
         else:
             vidsearch = VideosSearch(url, limit = 5)
             searches[ctx.guild.id] = vidsearch.result()
-            await ctx.send('Please select a song from the following results:\n1: ***' + searches[ctx.guild.id]['result'][0]['title']+'***\n'
+            await ctx.send('Please select a song from the following results:\nSyntax:\n' + extensions + 'play 3\n' + '1: ***' + searches[ctx.guild.id]['result'][0]['title']+'***\n'
             '2: ***' + searches[ctx.guild.id]['result'][1]['title']+'***\n'+
             '3: ***' + searches[ctx.guild.id]['result'][2]['title']+'***\n'+
             '4: ***' + searches[ctx.guild.id]['result'][3]['title']+'***\n'+
