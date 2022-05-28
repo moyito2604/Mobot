@@ -29,4 +29,8 @@ Once these dependencies are installed, clone the repository to the location desi
 ```
 git clone https://github.com/lldmmoisessc/Mobot.git
 ```
-This bot is only designed to run in a version of linux since it uses some shell commands only available to Linux
+This bot is only designed to run in a version of linux since it uses some shell commands only available to Linux <br /> <br />
+Once the bot is downloaded to the desired location, navigate the directory and run the following command to activate it.
+```
+python3 main.py
+```
