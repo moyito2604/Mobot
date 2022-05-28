@@ -79,6 +79,7 @@ async def help(ctx):
     hm = hm + extensions + 'join: joins voice channel\n'
     hm = hm + extensions + 'leave: leaves voice channel\n'
     hm = hm + extensions + 'play: plays music with a youtube link, queues music, and plays music currently paused\n'
+    hm = hm + 'This command also allows you to search for a song on youtube\n\n'
     hm = hm + extensions + 'stop: stops playing audio and clears the queue\n'
     hm = hm + extensions + 'skip: skips the current track in queue\n\n'
     hm = hm + 'All of these commands are case insensitive\n'
@@ -122,6 +123,7 @@ async def leave(ctx):
     timers[ctx.guild.id].stop()
     timers.pop(ctx.guild.id)
     queues.pop(ctx.guild.id)
+    searches.pop(ctx.guild.id)
     print('Successfully left the voice Channel')
 
 ydl_opts = {
@@ -171,11 +173,18 @@ async def play(ctx, *, url:str):
                     await ctx.send('Now playing:\n***' + title + '***')
             timers[ctx.guild.id].start()
         elif url == '1' or url == '2' or url == '3' or url == '4' or url == '5':
-            print('successfully chose a song')
-            await ctx.send('Song number ' + url + ' selected:\nSong Title:\n***' + searches[ctx.guild.id]['result'][int(url)-1]['title']+'***')
-            queues[ctx.guild.id].append(searches[ctx.guild.id]['result'][int(url)-1]['link'])
-            print(queues[ctx.guild.id])
-            timers[ctx.guild.id].start()
+            if searches[ctx.guild.id] == '':
+                pass
+            else:
+                print('successfully chose a song')
+                if voice.is_playing() or voice.is_paused():
+                    await ctx.send('Song number ' + url + ' selected:\n***' + searches[ctx.guild.id]['result'][int(url)-1]['title']+'*** has been added to the queue')
+                else:
+                    await ctx.send('Song number ' + url + ' selected:\nNow Playing:\n***' + searches[ctx.guild.id]['result'][int(url)-1]['title']+'***')
+                queues[ctx.guild.id].append(searches[ctx.guild.id]['result'][int(url)-1]['link'])
+                searches[ctx.guild.id] = ''
+                print(queues[ctx.guild.id])
+                timers[ctx.guild.id].start()
         else:
             vidsearch = VideosSearch(url, limit = 5)
             searches[ctx.guild.id] = vidsearch.result()
