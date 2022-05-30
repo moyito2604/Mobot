@@ -15,6 +15,7 @@ This command also allows you to search for a song on youtube
 
 m!stop: stops playing audio and clears the queue
 m!skip: skips the current track in queue
+m!showqueue: shows the songs that are currently in queue
 ```
 
 The music portion of the bot requires a couple dependencies to run properly as it utilizes **yt_dlp, nextcord, youtube-search-python, and ffmpeg** to process the audio that is recieved through the bot. 
