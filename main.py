@@ -1,3 +1,4 @@
+from calendar import c
 import os
 import nextcord
 from nextcord.ext import commands
@@ -17,6 +18,7 @@ os.system("clear")
 queues = {}
 timers = {}
 searches = {}
+titles = {}
 pwd = os.path.dirname(os.path.realpath(__file__))
 
 configgen.generateConfiguration('m!', True, 'TOKEN', 'TOKEN')
@@ -81,7 +83,8 @@ async def help(ctx):
     hm = hm + extensions + 'play: plays music with a youtube link, queues music, and plays music currently paused\n'
     hm = hm + 'This command also allows you to search for a song on youtube\n\n'
     hm = hm + extensions + 'stop: stops playing audio and clears the queue\n'
-    hm = hm + extensions + 'skip: skips the current track in queue\n\n'
+    hm = hm + extensions + 'skip: skips the current track in queue\n'
+    hm = hm + extensions + 'showqueue: shows the songs that are currently in queue\n\n'
     hm = hm + 'All of these commands are case insensitive\n'
     hm = hm + '```'
     await ctx.send(hm)
@@ -97,6 +100,7 @@ async def join(ctx):
             os.mkdir(pwd+ '/' + str(ctx.guild.id))
             print('directory ' + str(ctx.guild.id) + ' has been created')
             queues[ctx.guild.id] = []
+            titles[ctx.guild.id] = []
             searches[ctx.guild.id] = ''
             channel = ctx.message.author.voice.channel
             voice = await channel.connect()
@@ -124,6 +128,7 @@ async def leave(ctx):
     timers.pop(ctx.guild.id)
     queues.pop(ctx.guild.id)
     searches.pop(ctx.guild.id)
+    titles.pop(ctx.guild.id)
     print('Successfully left the voice Channel')
 
 ydl_opts = {
@@ -147,6 +152,7 @@ async def play(ctx, *, url:str):
             os.mkdir(pwd+ '/' + str(ctx.guild.id))
             print('directory ' + str(ctx.guild.id) + ' has been created')
             queues[ctx.guild.id] = []
+            titles[ctx.guild.id] = []
             searches[ctx.guild.id] = ''
             channel = ctx.message.author.voice.channel
             voice = await channel.connect()
@@ -159,6 +165,7 @@ async def play(ctx, *, url:str):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False, process=False)
                 title = info.get('title', None)
+                titles[ctx.guild.id].append(title)
             if voice.is_playing() or voice.is_paused():
                 if "playlist" in url:
                     await ctx.send('Playlist ***' + title + '*** has been added to the queue')
@@ -174,7 +181,7 @@ async def play(ctx, *, url:str):
             timers[ctx.guild.id].start()
         elif url == '1' or url == '2' or url == '3' or url == '4' or url == '5':
             if searches[ctx.guild.id] == '':
-                pass
+                await ctx.send('There is currently no searched music, please search for a song and try again.')
             else:
                 print('successfully chose a song')
                 if voice.is_playing() or voice.is_paused():
@@ -182,8 +189,8 @@ async def play(ctx, *, url:str):
                 else:
                     await ctx.send('Song number ' + url + ' selected:\nNow Playing:\n***' + searches[ctx.guild.id]['result'][int(url)-1]['title']+'***')
                 queues[ctx.guild.id].append(searches[ctx.guild.id]['result'][int(url)-1]['link'])
+                titles[ctx.guild.id].append(searches[ctx.guild.id]['result'][int(url)-1]['title'])
                 searches[ctx.guild.id] = ''
-                print(queues[ctx.guild.id])
                 timers[ctx.guild.id].start()
         else:
             vidsearch = VideosSearch(url, limit = 5)
@@ -221,6 +228,7 @@ async def stop(ctx):
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
     if voice.is_playing() or voice.is_paused():
         queues[ctx.guild.id].clear()
+        titles[ctx.guild.id].clear()
         voice.stop()
         await ctx.send("Music has been stopped and queue has been cleared")
         print("Music has been stopped and queue has been cleared")
@@ -239,9 +247,7 @@ async def skip(ctx):
         print("\nSong has been skipped\n")
         if queues[ctx.guild.id]:
             if "youtube" in queues[ctx.guild.id][0]:
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    info = ydl.extract_info(queues[ctx.guild.id][0], download=False, process=False)
-                    title = info.get('title', None)
+                title = titles[ctx.guild.id][0]
                 if "playlist" in queues[ctx.guild.id][0]:
                     await ctx.send('Now playing playlist:\n***' + title + '***')
                     await ctx.send('Please enjoy this music while the playlist is being retrieved.')
@@ -253,6 +259,18 @@ async def skip(ctx):
             await ctx.send("Your queue is empty")
     else:
         await ctx.send("There is no music to skip.")
+
+@client.command(pass_context = True)
+async def showqueue(ctx):
+    queued = ''
+    counter = 0
+    for title in titles[ctx.guild.id]:
+        queued = queued + '***' + titles[ctx.guild.id][counter] + '***\n'
+        counter = counter + 1
+    if queued == '':
+        await ctx.send('There are no songs currently on queue')
+    else:
+        await ctx.send('Songs currently on queue:\n' + queued)
 
 def queue(ctx):
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
@@ -267,17 +285,18 @@ def queue(ctx):
                 if "playlist" in queues[ctx.guild.id][0]:
                     os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
                     os.system('rm ' + str(ctx.guild.id) + '/*.webm')
-                    print(queues[ctx.guild.id])
                     source = FFmpegPCMAudio(pwd + '/Dependencies/' + 'Elevator_Music.mp3')
                     player = voice.play(source)
                     songlist, title = dccommands.retrievePlaylist(queues[ctx.guild.id][0], ctx.guild.id)
                     voice.stop()
-                    queues[ctx.guild.id].extend(songlist)
                     queues[ctx.guild.id].pop(0)
+                    queues[ctx.guild.id] = songlist+queues[ctx.guild.id]
+                    titles[ctx.guild.id].pop(0)
                     source = FFmpegPCMAudio(pwd+'/'+str(ctx.guild.id)+'/'+queues[ctx.guild.id][0])
                 else:
                     os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
                     source, title = dccommands.retrieveAudio(queues[ctx.guild.id][0], ctx.guild.id)
+                    titles[ctx.guild.id].pop(0)
             player = voice.play(source)
             queues[ctx.guild.id].pop(0)
             timers[ctx.guild.id].start()
