@@ -35,3 +35,10 @@ Once the bot is downloaded to the desired location, navigate the directory and r
 ```
 python3 main.py
 ```
+On the first run of the program, the bot will generate a config.py with a couple fields in it and will prompt you to input your bot token
+```
+Token = 'TOKEN'
+extension = 'm!'
+```
+Input the bot token under token and run the program again to be able to use the bot <br />
+The extension field is the default extension used by the bot to run commands.
