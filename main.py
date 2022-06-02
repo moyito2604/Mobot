@@ -30,7 +30,7 @@ async def on_ready():
 
 extensions = []
 
-for filename in os.listdir('./Cogs'):
+for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         extensions.append("cogs." + filename[:-3])
 
