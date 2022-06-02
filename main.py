@@ -1,5 +1,6 @@
 from calendar import c
 import os
+from turtle import down
 import nextcord
 from nextcord.ext import commands
 from nextcord import FFmpegPCMAudio
@@ -19,6 +20,7 @@ queues = {}
 timers = {}
 searches = {}
 titles = {}
+downloading = {}
 pwd = os.path.dirname(os.path.realpath(__file__))
 
 configgen.generateConfiguration('m!', True, 'TOKEN', 'TOKEN')
@@ -101,6 +103,7 @@ async def join(ctx):
             print('directory ' + str(ctx.guild.id) + ' has been created')
             queues[ctx.guild.id] = []
             titles[ctx.guild.id] = []
+            downloading[ctx.guild.id] = False
             searches[ctx.guild.id] = ''
             channel = ctx.message.author.voice.channel
             voice = await channel.connect()
@@ -153,6 +156,7 @@ async def play(ctx, *, url:str):
             print('directory ' + str(ctx.guild.id) + ' has been created')
             queues[ctx.guild.id] = []
             titles[ctx.guild.id] = []
+            downloading[ctx.guild.id] = False
             searches[ctx.guild.id] = ''
             channel = ctx.message.author.voice.channel
             voice = await channel.connect()
@@ -166,7 +170,7 @@ async def play(ctx, *, url:str):
                 info = ydl.extract_info(url, download=False, process=False)
                 title = info.get('title', None)
                 titles[ctx.guild.id].append(title)
-            if voice.is_playing() or voice.is_paused():
+            if voice.is_playing() or voice.is_paused() or downloading[ctx.guild.id] == True:
                 if "playlist" in url:
                     await ctx.send('Playlist ***' + title + '*** has been added to the queue')
                 else:
@@ -178,20 +182,22 @@ async def play(ctx, *, url:str):
                     await ctx.send('Please enjoy this music while the playlist is being retrieved.')
                 else:
                     await ctx.send('Now playing:\n***' + title + '***')
-            timers[ctx.guild.id].start()
+            if downloading[ctx.guild.id] == False:
+                timers[ctx.guild.id].start()
         elif url == '1' or url == '2' or url == '3' or url == '4' or url == '5':
             if searches[ctx.guild.id] == '':
                 await ctx.send('There is currently no searched music, please search for a song and try again.')
             else:
                 print('successfully chose a song')
-                if voice.is_playing() or voice.is_paused():
+                if voice.is_playing() or voice.is_paused() or downloading[ctx.guild.id] == True:
                     await ctx.send('Song number ' + url + ' selected:\n***' + searches[ctx.guild.id]['result'][int(url)-1]['title']+'*** has been added to the queue')
                 else:
                     await ctx.send('Song number ' + url + ' selected:\nNow Playing:\n***' + searches[ctx.guild.id]['result'][int(url)-1]['title']+'***')
                 queues[ctx.guild.id].append(searches[ctx.guild.id]['result'][int(url)-1]['link'])
                 titles[ctx.guild.id].append(searches[ctx.guild.id]['result'][int(url)-1]['title'])
                 searches[ctx.guild.id] = ''
-                timers[ctx.guild.id].start()
+                if downloading[ctx.guild.id] == False:
+                    timers[ctx.guild.id].start()
         else:
             vidsearch = VideosSearch(url, limit = 5)
             searches[ctx.guild.id] = vidsearch.result()
@@ -265,7 +271,7 @@ async def showqueue(ctx):
     queued = ''
     counter = 0
     for title in titles[ctx.guild.id]:
-        queued = queued + '***' + titles[ctx.guild.id][counter] + '***\n'
+        queued = queued + str(counter+1) + ': ***' + titles[ctx.guild.id][counter] + '***\n'
         counter = counter + 1
     if queued == '':
         await ctx.send('There are no songs currently on queue')
@@ -282,6 +288,8 @@ def queue(ctx):
             if queues[ctx.guild.id][0].startswith('song'):
                 source = FFmpegPCMAudio(pwd+'/'+str(ctx.guild.id)+'/'+queues[ctx.guild.id][0])
             else:
+                downloading[ctx.guild.id] = True
+                titles[ctx.guild.id].pop(0)
                 if "playlist" in queues[ctx.guild.id][0]:
                     os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
                     os.system('rm ' + str(ctx.guild.id) + '/*.webm')
@@ -291,15 +299,14 @@ def queue(ctx):
                     voice.stop()
                     queues[ctx.guild.id].pop(0)
                     queues[ctx.guild.id] = songlist+queues[ctx.guild.id]
-                    titles[ctx.guild.id].pop(0)
                     source = FFmpegPCMAudio(pwd+'/'+str(ctx.guild.id)+'/'+queues[ctx.guild.id][0])
                 else:
                     os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
                     source, title = dccommands.retrieveAudio(queues[ctx.guild.id][0], ctx.guild.id)
-                    titles[ctx.guild.id].pop(0)
             player = voice.play(source)
             queues[ctx.guild.id].pop(0)
             timers[ctx.guild.id].start()
+            downloading[ctx.guild.id] = False
         else:
             os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
             os.system('rm ' + str(ctx.guild.id) + '/*.webm')
