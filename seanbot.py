@@ -1,7 +1,9 @@
 import nextcord
+import sys
+import os
+sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)) + '/Cogs/Dependencies/')
 import dccommands
 import config
-import os
 os.system("clear")
 
 seanToken = config.seanToken
