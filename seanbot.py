@@ -1,5 +1,5 @@
 import nextcord
-import cogs.Dependencies.dccommands as dccommands
+import dccommands
 import config
 import os
 os.system("clear")
