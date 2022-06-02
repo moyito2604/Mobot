@@ -1,7 +1,7 @@
 import nextcord
 import sys
 import os
-sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)) + '/Cogs/Dependencies/')
+sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)) + '/cogs/Dependencies/')
 import dccommands
 import config
 os.system("clear")
