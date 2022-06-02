@@ -2,7 +2,6 @@
 This is a bot made originally for The Commune server but is open to anybody who wants to use it for their own servers <br />
 Here is a list of possible commands you can use with this bot:
 ```
-m!ce: use to change the command extension using syntax        m!ce 'extension'
 m!ding: replies with dong
 m!deez: replies with nutz
 m!tquote: Generates a tech quote
