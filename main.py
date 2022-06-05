@@ -4,6 +4,7 @@ from nextcord.ext import commands
 import sys
 import configgen
 import os.path
+from nextcord import Interaction
 os.system("clear")
 
 configgen.generateConfiguration('m!', True, 'TOKEN', 'TOKEN')
