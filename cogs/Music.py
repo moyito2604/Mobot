@@ -11,7 +11,6 @@ import config
 sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)) + '/Dependencies/')
 import Threaded_timer
 import dccommands
-os.system("clear")
 
 queues = {}
 timers = {}
@@ -31,6 +30,7 @@ ydl_opts = {
 class Music(commands.Cog):
 
     def __init__(self, client):
+        print("Music Initialized Successfully")
         self.client = client
 
     @commands.command(pass_context = True)

@@ -1,5 +1,6 @@
 import nextcord
 from nextcord.ext import commands
+from nextcord import Interaction
 import sys
 import os
 import time
@@ -15,7 +16,13 @@ seanToken = config.seanToken
 class General(commands.Cog):
 
     def __init__(self, client):
+        print("General Initialized Successfully")
         self.client = client
+
+    @nextcord.slash_command(name="ping", description="Check bots ping!")
+    async def pingtest(self, interaction : Interaction):
+        embed = nextcord.Embed(title=(f"My ping is {round(self.client.latency* 1000)}ms"))
+        await interaction.response.send_message(embed=embed)
 
     @commands.command(pass_context = True)
     async def ce(self, ctx, extension):
@@ -59,6 +66,8 @@ class General(commands.Cog):
         hm = hm + extensions + 'stop: stops playing audio and clears the queue\n'
         hm = hm + extensions + 'skip: skips the current track in queue\n'
         hm = hm + extensions + 'showqueue: shows the songs that are currently in queue\n\n'
+        hm = hm + '***Slash Commands***\n'
+        hm = hm + '/ping: Displays the bot\'s ping\n\n'
         hm = hm + 'All of these commands are case insensitive\n'
         hm = hm + '```'
         await ctx.send(hm)
