@@ -4,7 +4,7 @@ from nextcord.ext import commands
 import sys
 import configgen
 import os.path
-from nextcord import Interaction
+import settings
 os.system("clear")
 
 configgen.generateConfiguration('m!', True, 'TOKEN', 'TOKEN')
@@ -28,6 +28,8 @@ async def on_ready():
     activity = nextcord.Game(name=game, type=3)
     await client.change_presence(status=nextcord.Status.online, activity=activity)
     print('We have logged in as {0.user}\n'.format(client))
+
+settings.init()
 
 extensions = []
 
