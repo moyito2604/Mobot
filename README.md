@@ -5,8 +5,8 @@ Here is a list of possible commands you can use with this bot:
 m!ding: replies with dong
 m!deez: replies with nutz
 m!tquote: Generates a tech quote
-
-***Music Bot Commands***
+All commands with an extension are case insensitive
+Music Bot Commands
 m!join: joins voice channel
 m!leave: leaves voice channel
 m!play: plays music with a youtube link, queues music, and plays music currently paused
@@ -15,6 +15,10 @@ This command also allows you to search for a song on youtube
 m!stop: stops playing audio and clears the queue
 m!skip: skips the current track in queue
 m!showqueue: shows the songs that are currently in queue
+Slash Commands
+/ping: Displays the bot's ping
+/unpause: plays any paused music in the bot
+All of the Music commands have slash versions as well
 ```
 
 The music portion of the bot requires a couple dependencies to run properly as it utilizes **yt_dlp, nextcord, youtube-search-python, and ffmpeg** to process the audio that is recieved through the bot. 
