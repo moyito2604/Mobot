@@ -1,3 +1,5 @@
+from attr import field, fields
+from matplotlib.pyplot import title
 import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction
@@ -52,25 +54,47 @@ class General(commands.Cog):
         await ctx.send('dong')
         print("Response to ding printed")
 
-    @commands.command(pass_context = True)
-    async def help(self, ctx):
-        hm = '```***List of Commands you can use***\n\n'
-        hm = hm + extensions + 'ding: replies with dong\n'
-        hm = hm + extensions + 'deez: replies with nutz\n'
-        hm = hm + extensions + 'tquote: Generates a tech quote\n\n'
-        hm = hm + '***Music Bot Commands***\n'
-        hm = hm + extensions + 'join: joins voice channel\n'
-        hm = hm + extensions + 'leave: leaves voice channel\n'
-        hm = hm + extensions + 'play: plays music with a youtube link, queues music, and plays music currently paused\n'
-        hm = hm + 'This command also allows you to search for a song on youtube\n\n'
-        hm = hm + extensions + 'stop: stops playing audio and clears the queue\n'
-        hm = hm + extensions + 'skip: skips the current track in queue\n'
-        hm = hm + extensions + 'showqueue: shows the songs that are currently in queue\n\n'
-        hm = hm + '***Slash Commands***\n'
-        hm = hm + '/ping: Displays the bot\'s ping\n\n'
-        hm = hm + 'All of these commands are case insensitive\n'
-        hm = hm + '```'
-        await ctx.send(hm)
+    @commands.command(name = "help", pass_context = True)
+    async def helps(self, ctx):
+        cm = extensions + 'ding: replies with dong\n'
+        cm = cm + extensions + 'deez: replies with nutz\n'
+        cm = cm + extensions + 'tquote: Generates a tech quote\n'
+        cm = cm + 'All commands with an extension are case insensitive\n'
+        mc = extensions + 'join: joins voice channel\n'
+        mc = mc + extensions + 'leave: leaves voice channel\n'
+        mc = mc + extensions + 'play: plays music with a youtube link, queues music, and plays music currently paused\n'
+        mc = mc + '***This command also allows you to search for a song on youtube***\n\n'
+        mc = mc + extensions + 'stop: stops playing audio and clears the queue\n'
+        mc = mc + extensions + 'skip: skips the current track in queue\n'
+        mc = mc + extensions + 'showqueue: shows the songs that are currently in queue\n\n'
+        sl = '/ping: Displays the bot\'s ping\n'
+        sl = sl + '/unpause: plays any paused music in the bot\n'
+        sl = sl + '***All of the Music commands have slash versions as well***'
+        embed = nextcord.Embed(title="List of Commands you can use", description=cm)
+        embed.add_field(name="Music Bot Commands", value=mc, inline=False)
+        embed.add_field(name="Slash Commands", value=sl, inline = False)
+        await ctx.send(embed=embed)
+
+    @nextcord.slash_command(guild_ids=[930997105756102719])
+    async def help(self, interaction : Interaction):
+        cm = extensions + 'ding: replies with dong\n'
+        cm = cm + extensions + 'deez: replies with nutz\n'
+        cm = cm + extensions + 'tquote: Generates a tech quote\n'
+        cm = cm + 'All commands with an extension are case insensitive\n'
+        mc = extensions + 'join: joins voice channel\n'
+        mc = mc + extensions + 'leave: leaves voice channel\n'
+        mc = mc + extensions + 'play: plays music with a youtube link, queues music, and plays music currently paused\n'
+        mc = mc + '***This command also allows you to search for a song on youtube***\n\n'
+        mc = mc + extensions + 'stop: stops playing audio and clears the queue\n'
+        mc = mc + extensions + 'skip: skips the current track in queue\n'
+        mc = mc + extensions + 'showqueue: shows the songs that are currently in queue\n\n'
+        sl = '/ping: Displays the bot\'s ping\n'
+        sl = sl + '/unpause: plays any paused music in the bot\n'
+        sl = sl + '***All of the Music commands have slash versions as well***'
+        embed = nextcord.Embed(title="List of Commands you can use", description=cm)
+        embed.add_field(name="Music Bot Commands", value=mc, inline=False)
+        embed.add_field(name="Slash Commands", value=sl, inline = False)
+        await interaction.send(embed=embed)
 
 def setup(client):
     client.add_cog(General(client))
