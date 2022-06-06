@@ -75,7 +75,7 @@ class General(commands.Cog):
         embed.add_field(name="Slash Commands", value=sl, inline = False)
         await ctx.send(embed=embed)
 
-    @nextcord.slash_command(guild_ids=[930997105756102719])
+    @nextcord.slash_command(name = "help", description="Prints out helpful commands and options!")
     async def help(self, interaction : Interaction):
         cm = extensions + 'ding: replies with dong\n'
         cm = cm + extensions + 'deez: replies with nutz\n'
