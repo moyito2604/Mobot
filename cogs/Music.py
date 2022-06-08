@@ -230,18 +230,18 @@ def queue(ctx, client):
                     os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.webm')
                     source = FFmpegPCMAudio(pwd + '/Dependencies/' + 'Elevator_Music.mp3')
                     player = voice.play(source)
-                    songlist, title = dccommands.retrievePlaylist(settings.queues[ctx.guild.id][0], (pwd+'/'+str(ctx.guild.id)))
+                    songlist, title = dccommands.retrievePlaylist(settings.queues[ctx.guild.id][0])
                     voice.stop()
                     settings.queues[ctx.guild.id].pop(0)
                     settings.queues[ctx.guild.id] = songlist+settings.queues[ctx.guild.id]
-                    source = FFmpegPCMAudio(pwd+'/'+str(ctx.guild.id)+'/'+settings.queues[ctx.guild.id][0])
                     settings.titles[ctx.guild.id].pop(0)
+                    settings.titles[ctx.guild.id] = title+settings.titles[ctx.guild.id]
                 else:
                     os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
                     source, title = dccommands.retrieveAudio(settings.queues[ctx.guild.id][0], (pwd+'/'+str(ctx.guild.id)))
                     settings.titles[ctx.guild.id].pop(0)
-            player = voice.play(source)
-            settings.queues[ctx.guild.id].pop(0)
+                    player = voice.play(source)
+                    settings.queues[ctx.guild.id].pop(0)
             settings.timers[ctx.guild.id].start()
             settings.downloading[ctx.guild.id] = False
         else:
