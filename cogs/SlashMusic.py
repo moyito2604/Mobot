@@ -172,7 +172,7 @@ class SlashMusic(commands.Cog):
             voice.stop()
             await interaction.send("Music has been stopped and queue has been cleared")
             print("Music has been stopped and queue has been cleared")
-            os.system('rm ' + str(interaction.guild.id) + '/*.mp3')
+            os.system('rm ' + str(interaction.guild.id) + '/*.opus')
             os.system('rm ' + str(interaction.guild.id) + '/*.webm')
             settings.timers[interaction.guild.id].stop()
         else:

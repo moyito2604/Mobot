@@ -54,18 +54,17 @@ def retrieveAudio(url, path:str):
     'outtmpl': path + '/%(title)s.%(ext)s',
     'postprocessors': [{
         'key':'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
         'preferredquality': '192',
-    }]
+    }],
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url)
         title = info.get('title', None)
     for file in os.listdir(path):
-        if file.endswith(".mp3"):
-            os.rename(path+'/'+ file, path+'/song.mp3')
-    source = FFmpegPCMAudio(path+'/song.mp3')
+        if file.endswith(".opus"):
+            os.rename(path+'/'+ file, path+'/song.opus')
+    source = FFmpegPCMAudio(path+'/song.opus')
     return source, title
 
 def retrievePlaylist(url):
