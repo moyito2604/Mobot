@@ -170,7 +170,7 @@ class Music(commands.Cog):
             voice.stop()
             await ctx.send("Music has been stopped and queue has been cleared")
             print("Music has been stopped and queue has been cleared")
-            os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
+            os.system('rm ' + str(ctx.guild.id) + '/*.opus')
             os.system('rm ' + str(ctx.guild.id) + '/*.webm')
             settings.timers[ctx.guild.id].stop()
         else:
@@ -226,7 +226,7 @@ def queue(ctx, client):
             else:
                 settings.downloading[ctx.guild.id] = True
                 if "playlist" in settings.queues[ctx.guild.id][0]:
-                    os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.mp3')
+                    os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.opus')
                     os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.webm')
                     source = FFmpegPCMAudio(pwd + '/Dependencies/' + 'Elevator_Music.mp3')
                     player = voice.play(source)
@@ -237,7 +237,7 @@ def queue(ctx, client):
                     settings.titles[ctx.guild.id].pop(0)
                     settings.titles[ctx.guild.id] = title+settings.titles[ctx.guild.id]
                 else:
-                    os.system('rm ' + str(ctx.guild.id) + '/*.mp3')
+                    os.system('rm ' + str(ctx.guild.id) + '/*.opus')
                     source, title = dccommands.retrieveAudio(settings.queues[ctx.guild.id][0], (pwd+'/'+str(ctx.guild.id)))
                     settings.titles[ctx.guild.id].pop(0)
                     player = voice.play(source)
@@ -245,6 +245,6 @@ def queue(ctx, client):
             settings.timers[ctx.guild.id].start()
             settings.downloading[ctx.guild.id] = False
         else:
-            os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.mp3')
+            os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.opus')
             os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.webm')
             print('No queued items')
