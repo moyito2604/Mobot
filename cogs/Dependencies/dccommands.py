@@ -68,28 +68,17 @@ def retrieveAudio(url, path:str):
     source = FFmpegPCMAudio(path+'/song.mp3')
     return source, title
 
-def retrievePlaylist(url, path):
-
-    ydl_opts = {
-    'format': 'bestaudio/best',
-    'outtmpl': path + '/%(title)s.%(ext)s',
-    'postprocessors': [{
-        'key':'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192',
-    }]
-    }
-
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url)
-        title = info.get('title', None)
+def retrievePlaylist(url):
+    with yt_dlp.YoutubeDL() as ydl:
+        info = ydl.extract_info(url, download = False)
     songlist = []
-    counter = 0
-    for file in os.listdir(path):
-        if file.endswith(".mp3"):
-            os.rename(path+'/'+ file, path+'/song-' + str(counter) +'.mp3')
-            songlist.append('song-' + str(counter) +'.mp3')
-            counter = counter + 1
+    title = []
+    if 'entries' in info:
+        results = info['entries']
+        for i, item in enumerate(results):
+            songlist.append(info['entries'][i]['webpage_url'])
+            title.append(info['entries'][i]['title'])
     print(songlist)
+    print(title)
     return songlist, title
     
