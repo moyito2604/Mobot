@@ -15,6 +15,25 @@ Token = config.Token
 extensions = config.extension
 seanToken = config.seanToken
 
+cm = extensions + 'ding: replies with dong\n'
+cm = cm + extensions + 'deez: replies with nutz\n'
+cm = cm + extensions + 'tquote: Generates a tech quote\n'
+cm = cm + 'All commands with an extension are case insensitive\n'
+mc = extensions + 'join: joins voice channel\n'
+mc = mc + extensions + 'leave: leaves voice channel\n'
+mc = mc + extensions + 'play: plays music with a youtube link, queues music, and plays music currently paused\n'
+mc = mc + '***This command also allows you to search for a song on youtube***\n\n'
+mc = mc + extensions + 'stop: stops playing audio and clears the queue\n'
+mc = mc + extensions + 'skip: skips the current track in queue\n'
+mc = mc + extensions + 'showqueue: shows the songs that are currently in queue\n'
+mc = mc + extensions + 'repeat: Allows you to toggle the queue repeat'
+sl = '/ping: Displays the bot\'s ping\n'
+sl = sl + '/unpause: plays any paused music in the bot\n'
+sl = sl + '***All of the Music commands have slash versions as well***'
+helpembed = nextcord.Embed(title="List of Commands you can use", description=cm)
+helpembed.add_field(name="Music Bot Commands", value=mc, inline=False)
+helpembed.add_field(name="Slash Commands", value=sl, inline = False)
+
 class General(commands.Cog):
 
     def __init__(self, client):
@@ -56,45 +75,11 @@ class General(commands.Cog):
 
     @commands.command(name = "help", pass_context = True)
     async def helps(self, ctx):
-        cm = extensions + 'ding: replies with dong\n'
-        cm = cm + extensions + 'deez: replies with nutz\n'
-        cm = cm + extensions + 'tquote: Generates a tech quote\n'
-        cm = cm + 'All commands with an extension are case insensitive\n'
-        mc = extensions + 'join: joins voice channel\n'
-        mc = mc + extensions + 'leave: leaves voice channel\n'
-        mc = mc + extensions + 'play: plays music with a youtube link, queues music, and plays music currently paused\n'
-        mc = mc + '***This command also allows you to search for a song on youtube***\n\n'
-        mc = mc + extensions + 'stop: stops playing audio and clears the queue\n'
-        mc = mc + extensions + 'skip: skips the current track in queue\n'
-        mc = mc + extensions + 'showqueue: shows the songs that are currently in queue\n\n'
-        sl = '/ping: Displays the bot\'s ping\n'
-        sl = sl + '/unpause: plays any paused music in the bot\n'
-        sl = sl + '***All of the Music commands have slash versions as well***'
-        embed = nextcord.Embed(title="List of Commands you can use", description=cm)
-        embed.add_field(name="Music Bot Commands", value=mc, inline=False)
-        embed.add_field(name="Slash Commands", value=sl, inline = False)
-        await ctx.send(embed=embed)
+        await ctx.send(embed=helpembed)
 
     @nextcord.slash_command(name = "help", description="Prints out helpful commands and options!")
     async def help(self, interaction : Interaction):
-        cm = extensions + 'ding: replies with dong\n'
-        cm = cm + extensions + 'deez: replies with nutz\n'
-        cm = cm + extensions + 'tquote: Generates a tech quote\n'
-        cm = cm + 'All commands with an extension are case insensitive\n'
-        mc = extensions + 'join: joins voice channel\n'
-        mc = mc + extensions + 'leave: leaves voice channel\n'
-        mc = mc + extensions + 'play: plays music with a youtube link, queues music, and plays music currently paused\n'
-        mc = mc + '***This command also allows you to search for a song on youtube***\n\n'
-        mc = mc + extensions + 'stop: stops playing audio and clears the queue\n'
-        mc = mc + extensions + 'skip: skips the current track in queue\n'
-        mc = mc + extensions + 'showqueue: shows the songs that are currently in queue\n\n'
-        sl = '/ping: Displays the bot\'s ping\n'
-        sl = sl + '/unpause: plays any paused music in the bot\n'
-        sl = sl + '***All of the Music commands have slash versions as well***'
-        embed = nextcord.Embed(title="List of Commands you can use", description=cm)
-        embed.add_field(name="Music Bot Commands", value=mc, inline=False)
-        embed.add_field(name="Slash Commands", value=sl, inline = False)
-        await interaction.send(embed=embed)
+        await interaction.send(embed=helpembed)
 
 def setup(client):
     client.add_cog(General(client))

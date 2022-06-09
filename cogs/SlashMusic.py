@@ -45,7 +45,7 @@ class SlashMusic(commands.Cog):
                 print('directory ' + str(interaction.guild.id) + ' has been created')
                 settings.queues[interaction.guild.id] = []
                 settings.titles[interaction.guild.id] = []
-                settings.downloading[interaction.guild.id] = False
+                settings.downloading[interaction.guild.id] = [False, False]
                 settings.searches[interaction.guild.id] = ''
                 channel = interaction.user.voice.channel
                 voice = await channel.connect()
@@ -90,7 +90,7 @@ class SlashMusic(commands.Cog):
                 print('directory ' + str(interaction.guild.id) + ' has been created')
                 settings.queues[interaction.guild.id] = []
                 settings.titles[interaction.guild.id] = []
-                settings.downloading[interaction.guild.id] = False
+                settings.downloading[interaction.guild.id] = [False, False]
                 settings.searches[interaction.guild.id] = ''
                 channel = interaction.user.voice.channel
                 voice = await channel.connect()
@@ -105,7 +105,7 @@ class SlashMusic(commands.Cog):
                     info = ydl.extract_info(url, download=False, process=False)
                     title = info.get('title', None)
                     settings.titles[interaction.guild.id].append(title)
-                if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id] == True:
+                if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
                     if "playlist" in url:
                         await interaction.send('Playlist ***' + title + '*** has been added to the queue')
                     else:
@@ -117,21 +117,21 @@ class SlashMusic(commands.Cog):
                         await interaction.send('Please enjoy this music while the playlist is being retrieved.')
                     else:
                         await interaction.send('Now playing:\n***' + title + '***')
-                if settings.downloading[interaction.guild.id] == False:
+                if settings.downloading[interaction.guild.id][0] == False:
                     settings.timers[interaction.guild.id].start()
             elif url == '1' or url == '2' or url == '3' or url == '4' or url == '5':
                 if settings.searches[interaction.guild.id] == '':
                     await interaction.send('There is currently no searched music, please search for a song and try again.')
                 else:
                     print('successfully chose a song')
-                    if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id] == True:
+                    if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
                         await interaction.send('Song number ' + url + ' selected:\n***' + settings.searches[interaction.guild.id]['result'][int(url)-1]['title']+'*** has been added to the queue')
                     else:
                         await interaction.send('Song number ' + url + ' selected:\nNow Playing:\n***' + settings.searches[interaction.guild.id]['result'][int(url)-1]['title']+'***')
                     settings.queues[interaction.guild.id].append(settings.searches[interaction.guild.id]['result'][int(url)-1]['link'])
                     settings.titles[interaction.guild.id].append(settings.searches[interaction.guild.id]['result'][int(url)-1]['title'])
                     settings.searches[interaction.guild.id] = ''
-                    if settings.downloading[interaction.guild.id] == False:
+                    if settings.downloading[interaction.guild.id][0] == False:
                         settings.timers[interaction.guild.id].start()
             else:
                 vidsearch = VideosSearch(url, limit = 5)
@@ -216,13 +216,28 @@ class SlashMusic(commands.Cog):
     async def showqueue(self, interaction : Interaction):
         queued = ''
         counter = 0
-        for title in settings.titles[interaction.guild.id]:
-            queued = queued + str(counter+1) + ': ***' + settings.titles[interaction.guild.id][counter] + '***\n'
-            counter = counter + 1
-        if queued == '':
-            await interaction.send('There are no songs currently on queue')
+        if interaction.guild.id in settings.titles:
+            for title in settings.titles[interaction.guild.id]:
+                queued = queued + str(counter+1) + ': ***' + settings.titles[interaction.guild.id][counter] + '***\n'
+                counter = counter + 1
+            if queued == '':
+                await interaction.send('There are no songs currently on queue')
+            else:
+                await interaction.send('Songs currently on queue:\n' + queued)
         else:
-            await interaction.send('Songs currently on queue:\n' + queued)
+            await interaction.send('There is no active queue for this server')
+    
+    @nextcord.slash_command(name = "repeat", description = "allows user to repeat the queue")
+    async def repeat(self, interaction: Interaction):
+        if interaction.guild.id in settings.downloading:
+            if settings.downloading[interaction.guild.id][1]:
+                settings.downloading[interaction.guild.id][1] = False
+                await interaction.send('Repeating has been turned off')
+            else:
+                settings.downloading[interaction.guild.id][1] = True
+                await interaction.send('Repeating has been turned on')
+        else:
+            await interaction.send('I am not in a voice channel')
 
 
 def setup(client):
