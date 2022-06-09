@@ -82,7 +82,6 @@ class SlashMusic(commands.Cog):
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
         pwd = os.path.dirname(os.path.realpath(__file__))
         if (interaction.user.voice):
-            print(url)
             if voice == None:
                 if os.path.isdir(pwd + '/' + str(interaction.guild.id)):
                     shutil.rmtree(pwd + '/' + str(interaction.guild.id))
@@ -99,7 +98,8 @@ class SlashMusic(commands.Cog):
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
                 settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Music.queue, interaction, self.client)
                 settings.timers[interaction.guild.id].stop()
-            if 'https://www.youtube.com' in url or 'https://youtu.be' in url:
+        if voice != None:
+            if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
                 settings.queues[interaction.guild.id].append(url)
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     info = ydl.extract_info(url, download=False, process=False)
@@ -147,58 +147,70 @@ class SlashMusic(commands.Cog):
     @nextcord.slash_command(name="unpause", description="allows the user to unpause any music currently paused")
     async def unpause(self, interaction : Interaction):
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
-        if voice.is_paused():
-            voice.resume()
-            await interaction.send("Music is playing")
+        if voice == None:
+            await interaction.send("I am not in a voice channel")
         else:
-            await interaction.send("There is no paused audio in the voice channel.")
+            if voice.is_paused():
+                voice.resume()
+                await interaction.send("Music is playing")
+            else:
+                await interaction.send("There is no paused audio in the voice channel.")
 
 
     @nextcord.slash_command(name = "pause", description = "pauses any music currently playing in the voice channel")
     async def pause(self, interaction : Interaction):
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
-        if voice.is_playing():
-            voice.pause()
-            await interaction.send("Music has been paused")
+        if voice == None:
+            await interaction.send("I am not in a voice channel")
         else:
-            await interaction.send("There is no audio playing in the voice channel.")
+            if voice.is_playing():
+                voice.pause()
+                await interaction.send("Music has been paused")
+            else:
+                await interaction.send("There is no audio playing in the voice channel.")
 
     @nextcord.slash_command(name = "stop", description = "stops the music in a voice channel and clears the queue")
     async def stop(self, interaction : Interaction):
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
-        if voice.is_playing() or voice.is_paused():
-            settings.queues[interaction.guild.id].clear()
-            settings.titles[interaction.guild.id].clear()
-            voice.stop()
-            await interaction.send("Music has been stopped and queue has been cleared")
-            print("Music has been stopped and queue has been cleared")
-            os.system('rm ' + str(interaction.guild.id) + '/*.opus')
-            os.system('rm ' + str(interaction.guild.id) + '/*.webm')
-            settings.timers[interaction.guild.id].stop()
+        if voice == None:
+            await interaction.send("I am not in a voice channel")
         else:
-            await interaction.send("There is no audio to stop.")
+            if voice.is_playing() or voice.is_paused():
+                settings.queues[interaction.guild.id].clear()
+                settings.titles[interaction.guild.id].clear()
+                voice.stop()
+                await interaction.send("Music has been stopped and queue has been cleared")
+                print("Music has been stopped and queue has been cleared")
+                os.system('rm ' + str(interaction.guild.id) + '/*.opus')
+                os.system('rm ' + str(interaction.guild.id) + '/*.webm')
+                settings.timers[interaction.guild.id].stop()
+            else:
+                await interaction.send("There is no audio to stop.")
 
     @nextcord.slash_command(name = "skip", description = "skips the current song")
     async def skip(self, interaction : Interaction):
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
-        if voice.is_playing() or voice.is_paused():
-            voice.stop()
-            await interaction.send("Song has been skipped")
-            print("\nSong has been skipped\n")
-            if settings.queues[interaction.guild.id]:
-                if "youtube" in settings.queues[interaction.guild.id][0]:
-                    title = settings.titles[interaction.guild.id][0]
-                    if "playlist" in settings.queues[interaction.guild.id][0]:
-                        await interaction.send('Now playing playlist:\n***' + title + '***')
-                        await interaction.send('Please enjoy this music while the playlist is being retrieved.')
-                    else:
-                        await interaction.send('Now playing:\n***' + title + '***')
-                elif "song" in settings.queues[interaction.guild.id][0]:
-                    await interaction.send('Now playing the next item in your playlist')
+        if voice == None:
+            await interaction.send("I am not in a voice channel")
+        else:  
+            if voice.is_playing() or voice.is_paused():
+                voice.stop()
+                await interaction.send("Song has been skipped")
+                print("\nSong has been skipped\n")
+                if settings.queues[interaction.guild.id]:
+                    if "youtube" in settings.queues[interaction.guild.id][0]:
+                        title = settings.titles[interaction.guild.id][0]
+                        if "playlist" in settings.queues[interaction.guild.id][0]:
+                            await interaction.send('Now playing playlist:\n***' + title + '***')
+                            await interaction.send('Please enjoy this music while the playlist is being retrieved.')
+                        else:
+                            await interaction.send('Now playing:\n***' + title + '***')
+                    elif "song" in settings.queues[interaction.guild.id][0]:
+                        await interaction.send('Now playing the next item in your playlist')
+                else:
+                    await interaction.send("Your queue is empty")
             else:
-                await interaction.send("Your queue is empty")
-        else:
-            await interaction.send("There is no music to skip.")
+                await interaction.send("There is no music to skip.")
 
     @nextcord.slash_command(name = "showqueue", description = "allows the user to view the current queue")
     async def showqueue(self, interaction : Interaction):

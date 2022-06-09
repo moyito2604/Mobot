@@ -48,7 +48,7 @@ class Music(commands.Cog):
                 voice = await channel.connect()
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
-                settings.timers[ctx.guild.id] = Threaded_timer.RepeatedTimer(1, queue, ctx)
+                settings.timers[ctx.guild.id] = Threaded_timer.RepeatedTimer(1, queue, ctx, self.client)
                 settings.timers[ctx.guild.id].stop()
             else:
                 await ctx.send("I am already connected")
@@ -96,7 +96,8 @@ class Music(commands.Cog):
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
                 settings.timers[ctx.guild.id] = Threaded_timer.RepeatedTimer(1, queue, ctx, self.client)
                 settings.timers[ctx.guild.id].stop()
-            if 'https://www.youtube.com' in url or 'https://youtu.be' in url:
+        if voice != None:
+            if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
                 settings.queues[ctx.guild.id].append(url)
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     info = ydl.extract_info(url, download=False, process=False)
@@ -145,58 +146,70 @@ class Music(commands.Cog):
     async def unpause(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             voice = nextcord.utils.get(self.client.voice_clients, guild=ctx.guild)
-            if voice.is_paused():
-                voice.resume()
-                await ctx.send("Music is playing")
+            if voice == None:
+                await ctx.send("I am not in a voice channel")
             else:
-                await ctx.send("There is no paused audio in the voice channel.")
+                if voice.is_paused():
+                    voice.resume()
+                    await ctx.send("Music is playing")
+                else:
+                    await ctx.send("There is no paused audio in the voice channel.")
 
 
     @commands.command(pass_context = True)
     async def pause(self, ctx):
         voice = nextcord.utils.get(self.client.voice_clients, guild=ctx.guild)
-        if voice.is_playing():
-            voice.pause()
-            await ctx.send("Music has been paused")
+        if voice == None:
+            await ctx.send("I am not in a voice channel")
         else:
-            await ctx.send("There is no audio playing in the voice channel.")
+            if voice.is_playing():
+                voice.pause()
+                await ctx.send("Music has been paused")
+            else:
+                await ctx.send("There is no audio playing in the voice channel.")
 
     @commands.command(pass_context = True)
     async def stop(self, ctx):
         voice = nextcord.utils.get(self.client.voice_clients, guild=ctx.guild)
-        if voice.is_playing() or voice.is_paused():
-            settings.queues[ctx.guild.id].clear()
-            settings.titles[ctx.guild.id].clear()
-            voice.stop()
-            await ctx.send("Music has been stopped and queue has been cleared")
-            print("Music has been stopped and queue has been cleared")
-            os.system('rm ' + str(ctx.guild.id) + '/*.opus')
-            os.system('rm ' + str(ctx.guild.id) + '/*.webm')
-            settings.timers[ctx.guild.id].stop()
+        if voice == None:
+            await ctx.send("I am not in a voice channel")
         else:
-            await ctx.send("There is no audio to stop.")
+            if voice.is_playing() or voice.is_paused():
+                settings.queues[ctx.guild.id].clear()
+                settings.titles[ctx.guild.id].clear()
+                voice.stop()
+                await ctx.send("Music has been stopped and queue has been cleared")
+                print("Music has been stopped and queue has been cleared")
+                os.system('rm ' + str(ctx.guild.id) + '/*.opus')
+                os.system('rm ' + str(ctx.guild.id) + '/*.webm')
+                settings.timers[ctx.guild.id].stop()
+            else:
+                await ctx.send("There is no audio to stop.")
 
     @commands.command(pass_context = True)
     async def skip(self, ctx):
         voice = nextcord.utils.get(self.client.voice_clients, guild=ctx.guild)
-        if voice.is_playing() or voice.is_paused():
-            voice.stop()
-            await ctx.send("Song has been skipped")
-            print("\nSong has been skipped\n")
-            if settings.queues[ctx.guild.id]:
-                if "youtube" in settings.queues[ctx.guild.id][0]:
-                    title = settings.titles[ctx.guild.id][0]
-                    if "playlist" in settings.queues[ctx.guild.id][0]:
-                        await ctx.send('Now playing playlist:\n***' + title + '***')
-                        await ctx.send('Please enjoy this music while the playlist is being retrieved.')
-                    else:
-                        await ctx.send('Now playing:\n***' + title + '***')
-                elif "song" in settings.queues[ctx.guild.id][0]:
-                    await ctx.send('Now playing the next item in your playlist')
-            else:
-                await ctx.send("Your queue is empty")
+        if voice == None:
+            await ctx.send("I am not in a voice channel")
         else:
-            await ctx.send("There is no music to skip.")
+            if voice.is_playing() or voice.is_paused():
+                voice.stop()
+                await ctx.send("Song has been skipped")
+                print("\nSong has been skipped\n")
+                if settings.queues[ctx.guild.id]:
+                    if "youtube" in settings.queues[ctx.guild.id][0]:
+                        title = settings.titles[ctx.guild.id][0]
+                        if "playlist" in settings.queues[ctx.guild.id][0]:
+                            await ctx.send('Now playing playlist:\n***' + title + '***')
+                            await ctx.send('Please enjoy this music while the playlist is being retrieved.')
+                        else:
+                            await ctx.send('Now playing:\n***' + title + '***')
+                    elif "song" in settings.queues[ctx.guild.id][0]:
+                        await ctx.send('Now playing the next item in your playlist')
+                else:
+                    await ctx.send("Your queue is empty")
+            else:
+                await ctx.send("There is no music to skip.")
 
     @commands.command(pass_context = True)
     async def showqueue(self, ctx):
