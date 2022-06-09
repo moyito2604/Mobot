@@ -15,6 +15,7 @@ This command also allows you to search for a song on youtube
 m!stop: stops playing audio and clears the queue
 m!skip: skips the current track in queue
 m!showqueue: shows the songs that are currently in queue
+m!repeat: Allows you to toggle the queue repeat
 Slash Commands
 /ping: Displays the bot's ping
 /unpause: plays any paused music in the bot
