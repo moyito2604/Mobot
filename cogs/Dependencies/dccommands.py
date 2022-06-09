@@ -1,5 +1,5 @@
 from random import randint
-from nextcord import FFmpegPCMAudio
+from nextcord import FFmpegOpusAudio
 import yt_dlp
 import os
 
@@ -64,7 +64,7 @@ def retrieveAudio(url, path:str):
     for file in os.listdir(path):
         if file.endswith(".opus"):
             os.rename(path+'/'+ file, path+'/song.opus')
-    source = FFmpegPCMAudio(path+'/song.opus')
+    source = FFmpegOpusAudio(path+'/song.opus')
     return source, title
 
 def retrievePlaylist(url):
@@ -77,7 +77,5 @@ def retrievePlaylist(url):
         for i, item in enumerate(results):
             songlist.append(info['entries'][i]['webpage_url'])
             title.append(info['entries'][i]['title'])
-    print(songlist)
-    print(title)
     return songlist, title
     
