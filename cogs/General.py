@@ -1,5 +1,3 @@
-from attr import field, fields
-from matplotlib.pyplot import title
 import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction

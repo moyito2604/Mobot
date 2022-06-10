@@ -239,6 +239,18 @@ class SlashMusic(commands.Cog):
         else:
             await interaction.send('I am not in a voice channel')
 
+    @nextcord.slash_command(name = "remove", description = "allows a user to remove one item from queue")
+    async def remove(self, interaction: Interaction, song:int):
+        if interaction.guild.id in settings.queues:
+            if song <= len(settings.queues[interaction.guild.id]) and song > 0:
+                await interaction.send(f"***{settings.titles[interaction.guild.id][song-1]}***\nhas been removed from the queue")
+                settings.queues[interaction.guild.id].pop(song-1)
+                settings.titles[interaction.guild.id].pop(song-1)
+            else:
+                await interaction.send("Invalid choice of song removal")
+        else:
+            await interaction.send('There is no active queue')
+
 
 def setup(client):
     client.add_cog(SlashMusic(client))
