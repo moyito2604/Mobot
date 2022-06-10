@@ -238,6 +238,18 @@ class Music(commands.Cog):
         else:
             await ctx.send('I am not in a voice channel')
 
+    @commands.command(pass_context = True)
+    async def remove(self, ctx, song:int):
+        if ctx.guild.id in settings.queues:
+            if song <= len(settings.queues[ctx.guild.id]) and song > 0:
+                await ctx.send(f"***{settings.titles[ctx.guild.id][song-1]}***\nhas been removed from the queue")
+                settings.queues[ctx.guild.id].pop(song-1)
+                settings.titles[ctx.guild.id].pop(song-1)
+            else:
+                await ctx.send("Invalid choice of song removal")
+        else:
+            await ctx.send('There is no active queue')
+
 def setup(client):
     client.add_cog(Music(client))
 
