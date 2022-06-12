@@ -1,3 +1,4 @@
+from code import interact
 import os
 import nextcord
 from nextcord.ext import commands
@@ -251,6 +252,41 @@ class SlashMusic(commands.Cog):
         else:
             await interaction.send('There is no active queue')
 
+    @nextcord.slash_command(name = "save", description = "saves the current settings and queue to use later")
+    async def save(self, interaction: Interaction):
+        if interaction.guild.id in settings.queues:
+            settings.saveq[interaction.guild.id] = settings.queues[interaction.guild.id]
+            settings.saved[interaction.guild.id] = settings.downloading[interaction.guild.id]
+            settings.saved[interaction.guild.id][0] = False
+            settings.savet[interaction.guild.id] = settings.titles[interaction.guild.id]
+            msg = f"{len(settings.savet[interaction.guild.id])} songs have been saved\n"
+            if settings.saved[interaction.guild.id][1] == True:
+                msg = msg + "Repeating was left on"
+            else:
+                msg = msg + "Repeating was left off"
+            await interaction.send(msg)
+            print(settings.saveq)
+        else:
+            await interaction.send('I am not in a voice channel')
+
+    @nextcord.slash_command(name = "load", description = "loads previously saved settings")
+    async def load(self, interaction: Interaction):
+        print(settings.saveq)        
+        if interaction.guild.id in settings.saveq:
+            voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
+            voice.stop()
+            settings.queues[interaction.guild.id] = settings.saveq[interaction.guild.id]
+            settings.downloading[interaction.guild.id] = settings.saved[interaction.guild.id]
+            settings.titles[interaction.guild.id] = settings.savet[interaction.guild.id]
+            msg = f"{len(settings.titles[interaction.guild.id])} songs have been recovered\n"
+            if settings.downloading[interaction.guild.id][1] == True:
+                msg = msg + "Repeating is on"
+            else:
+                msg = msg + "Repeating is off"
+            await interaction.send(msg)
+            settings.timers[interaction.guild.id].start()
+        else:
+            await interaction.send('I am not in a voice channel')
 
 def setup(client):
     client.add_cog(SlashMusic(client))
