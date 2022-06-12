@@ -47,7 +47,7 @@ class SlashMusic(commands.Cog):
                 settings.queues[interaction.guild.id] = []
                 settings.titles[interaction.guild.id] = []
                 settings.downloading[interaction.guild.id] = [False, False]
-                settings.searches[interaction.guild.id] = ['']
+                settings.searches[interaction.guild.id] = ['', '']
                 channel = interaction.user.voice.channel
                 voice = await channel.connect()
                 await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -92,7 +92,7 @@ class SlashMusic(commands.Cog):
                 settings.queues[interaction.guild.id] = []
                 settings.titles[interaction.guild.id] = []
                 settings.downloading[interaction.guild.id] = [False, False]
-                settings.searches[interaction.guild.id] = ['']
+                settings.searches[interaction.guild.id] = ['', '']
                 channel = interaction.user.voice.channel
                 voice = await channel.connect()
                 await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -134,7 +134,7 @@ class SlashMusic(commands.Cog):
                     settings.queues[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][int(url)-1]['link'])
                     settings.titles[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][int(url)-1]['title'])
                     settings.searches[interaction.guild.id][0] = ''
-                    settings.searches[interaction.guild.id].pop(1)
+                    settings.searches[interaction.guild.id][1] = ''
                     if settings.downloading[interaction.guild.id][0] == False:
                         settings.timers[interaction.guild.id].start()
             else:
@@ -145,7 +145,7 @@ class SlashMusic(commands.Cog):
                 '3: ***' + settings.searches[interaction.guild.id][0]['result'][2]['title']+'***\n'+
                 '4: ***' + settings.searches[interaction.guild.id][0]['result'][3]['title']+'***\n'+
                 '5: ***' + settings.searches[interaction.guild.id][0]['result'][4]['title']+'***\n')
-                settings.searches[interaction.guild.id].append(msg)
+                settings.searches[interaction.guild.id][1] = msg
         else:
             await interaction.send("You are not in a voice channel, you must be in a voice channel for me to join")
 
