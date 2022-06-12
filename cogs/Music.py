@@ -43,7 +43,7 @@ class Music(commands.Cog):
                 settings.queues[ctx.guild.id] = []
                 settings.titles[ctx.guild.id] = []
                 settings.downloading[ctx.guild.id] = [False, False]
-                settings.searches[ctx.guild.id] = ['']
+                settings.searches[ctx.guild.id] = ['', '']
                 channel = ctx.message.author.voice.channel
                 voice = await channel.connect()
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -89,7 +89,7 @@ class Music(commands.Cog):
                 settings.queues[ctx.guild.id] = []
                 settings.titles[ctx.guild.id] = []
                 settings.downloading[ctx.guild.id] = [False, False]
-                settings.searches[ctx.guild.id] = ['']
+                settings.searches[ctx.guild.id] = ['', '']
                 channel = ctx.message.author.voice.channel
                 voice = await channel.connect()
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -135,7 +135,7 @@ class Music(commands.Cog):
                     settings.queues[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][int(url)-1]['link'])
                     settings.titles[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title'])
                     settings.searches[ctx.guild.id][0] = ''
-                    settings.searches[ctx.guild.id].pop(1)
+                    settings.searches[ctx.guild.id][1] = ''
                     if settings.downloading[ctx.guild.id][0] == False:
                         settings.timers[ctx.guild.id].start()
             else:
@@ -146,7 +146,7 @@ class Music(commands.Cog):
                 '3: ***' + settings.searches[ctx.guild.id][0]['result'][2]['title']+'***\n'+
                 '4: ***' + settings.searches[ctx.guild.id][0]['result'][3]['title']+'***\n'+
                 '5: ***' + settings.searches[ctx.guild.id][0]['result'][4]['title']+'***\n')
-                settings.searches[ctx.guild.id].append(msg)
+                settings.searches[ctx.guild.id][1] = msg
         else:
             await ctx.send("You are not in a voice channel, you must be in a voice channel for me to join")
 
