@@ -1,11 +1,14 @@
 
+from tkinter.filedialog import SaveFileDialog
+
+
 def init():
-    global queues, timers, searches, titles, downloading, saved, savet, saveq
+    global queues, timers, searches, titles, downloading, saveq, savet, saved
     queues = {}
     timers = {}
     searches = {}
     titles = {}
     downloading = {}
     saveq = {}
-    saved = {}
     savet = {}
+    saved = {}
