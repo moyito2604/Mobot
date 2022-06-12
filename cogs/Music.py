@@ -43,7 +43,7 @@ class Music(commands.Cog):
                 settings.queues[ctx.guild.id] = []
                 settings.titles[ctx.guild.id] = []
                 settings.downloading[ctx.guild.id] = [False, False]
-                settings.searches[ctx.guild.id] = ''
+                settings.searches[ctx.guild.id] = ['']
                 channel = ctx.message.author.voice.channel
                 voice = await channel.connect()
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -89,7 +89,7 @@ class Music(commands.Cog):
                 settings.queues[ctx.guild.id] = []
                 settings.titles[ctx.guild.id] = []
                 settings.downloading[ctx.guild.id] = [False, False]
-                settings.searches[ctx.guild.id] = ''
+                settings.searches[ctx.guild.id] = ['']
                 channel = ctx.message.author.voice.channel
                 voice = await channel.connect()
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -118,27 +118,35 @@ class Music(commands.Cog):
                 if settings.downloading[ctx.guild.id][0] == False:
                     settings.timers[ctx.guild.id].start()
             elif url == '1' or url == '2' or url == '3' or url == '4' or url == '5':
-                if settings.searches[ctx.guild.id] == '':
+                if settings.searches[ctx.guild.id][0] == '':
                     await ctx.send('There is currently no searched music, please search for a song and try again.')
                 else:
                     print('successfully chose a song')
                     if voice.is_playing() or voice.is_paused() or settings.downloading[ctx.guild.id][0] == True:
-                        await ctx.send('Song number ' + url + ' selected:\n***' + settings.searches[ctx.guild.id]['result'][int(url)-1]['title']+'*** has been added to the queue')
+                        if settings.searches[ctx.guild.id][1] == None:
+                            await ctx.send('Song number ' + url + ' selected:\n***' + settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title']+'*** has been added to the queue')
+                        else:
+                            await settings.searches[ctx.guild.id][1].edit('Song number ' + url + ' selected:\n***' + settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title']+'*** has been added to the queue')
                     else:
-                        await ctx.send('Song number ' + url + ' selected:\nNow Playing:\n***' + settings.searches[ctx.guild.id]['result'][int(url)-1]['title']+'***')
-                    settings.queues[ctx.guild.id].append(settings.searches[ctx.guild.id]['result'][int(url)-1]['link'])
-                    settings.titles[ctx.guild.id].append(settings.searches[ctx.guild.id]['result'][int(url)-1]['title'])
-                    settings.searches[ctx.guild.id] = ''
+                        if settings.searches[ctx.guild.id][1] == None:
+                            await ctx.send('Song number ' + url + ' selected:\nNow Playing:\n***' + settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title']+'***')
+                        else:
+                            await settings.searches[ctx.guild.id][1].edit('Song number ' + url + ' selected:\nNow Playing:\n***' + settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title']+'***')
+                    settings.queues[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][int(url)-1]['link'])
+                    settings.titles[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title'])
+                    settings.searches[ctx.guild.id][0] = ''
+                    settings.searches[ctx.guild.id].pop(1)
                     if settings.downloading[ctx.guild.id][0] == False:
                         settings.timers[ctx.guild.id].start()
             else:
                 vidsearch = VideosSearch(url, limit = 5)
-                settings.searches[ctx.guild.id] = vidsearch.result()
-                await ctx.send('Please select a song from the following results:\nSyntax:\n' + extensions + 'play 3\n' + '1: ***' + settings.searches[ctx.guild.id]['result'][0]['title']+'***\n'
-                '2: ***' + settings.searches[ctx.guild.id]['result'][1]['title']+'***\n'+
-                '3: ***' + settings.searches[ctx.guild.id]['result'][2]['title']+'***\n'+
-                '4: ***' + settings.searches[ctx.guild.id]['result'][3]['title']+'***\n'+
-                '5: ***' + settings.searches[ctx.guild.id]['result'][4]['title']+'***\n')
+                settings.searches[ctx.guild.id][0] = vidsearch.result()
+                msg = await ctx.send('Please select a song from the following results:\nSyntax:\n' + extensions + 'play 3\n' + '1: ***' + settings.searches[ctx.guild.id][0]['result'][0]['title']+'***\n'
+                '2: ***' + settings.searches[ctx.guild.id][0]['result'][1]['title']+'***\n'+
+                '3: ***' + settings.searches[ctx.guild.id][0]['result'][2]['title']+'***\n'+
+                '4: ***' + settings.searches[ctx.guild.id][0]['result'][3]['title']+'***\n'+
+                '5: ***' + settings.searches[ctx.guild.id][0]['result'][4]['title']+'***\n')
+                settings.searches[ctx.guild.id].append(msg)
         else:
             await ctx.send("You are not in a voice channel, you must be in a voice channel for me to join")
 
@@ -175,8 +183,8 @@ class Music(commands.Cog):
             await ctx.send("I am not in a voice channel")
         else:
             if voice.is_playing() or voice.is_paused():
-                settings.queues[ctx.guild.id].clear()
-                settings.titles[ctx.guild.id].clear()
+                settings.queues[ctx.guild.id] = []
+                settings.titles[ctx.guild.id] = []
                 voice.stop()
                 await ctx.send("Music has been stopped and queue has been cleared")
                 print("Music has been stopped and queue has been cleared")
@@ -269,7 +277,7 @@ class Music(commands.Cog):
 
     @commands.command(pass_context = True)
     async def load(self, ctx):
-        print(settings.saveq)        
+        print(settings.saveq)
         if ctx.guild.id in settings.saveq:
             voice = nextcord.utils.get(self.client.voice_clients, guild=ctx.guild)
             voice.stop()
