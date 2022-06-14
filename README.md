@@ -16,6 +16,12 @@ m!stop: stops playing audio and clears the queue
 m!skip: skips the current track in queue
 m!showqueue: shows the songs that are currently in queue
 m!repeat: Allows you to toggle the queue repeat
+m!remove: Allows the user to remove a single item from queue
+m!save: Allows a user to save a queue
+m!load: Allows a user to load a the saved queue
+m!song: Searches and adds a song to the queue without selection
+m!playlist: Searches for playlists and allows the user to select a playlist to add to the queue
+m!qplaylist: Searches and adds a playlist to the queue without selection
 Slash Commands
 /ping: Displays the bot's ping
 /unpause: plays any paused music in the bot
