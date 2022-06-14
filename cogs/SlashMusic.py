@@ -5,6 +5,7 @@ from nextcord.ext import commands
 from nextcord import FFmpegPCMAudio
 from nextcord import Interaction
 from youtubesearchpython import VideosSearch
+from youtubesearchpython import PlaylistsSearch
 import sys
 import os.path
 import yt_dlp
@@ -217,6 +218,82 @@ class SlashMusic(commands.Cog):
             else:
                 await interaction.send("There is no music to skip.")
 
+    @nextcord.slash_command(name = "song", description = "allows the user to search for a song and add it to the queue")
+    async def song(self, interaction: Interaction, song: str):
+        voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
+        if voice != None:
+            vidsearch = VideosSearch(song, limit = 1)
+            settings.searches[interaction.guild.id][0] = vidsearch.result()
+            if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
+                await interaction.response.send_message('***' + settings.searches[interaction.guild.id][0]['result'][0]['title']+'\n*** has been added to the queue')
+            else:
+                await interaction.response.send_message('Now Playing:\n***' + settings.searches[interaction.guild.id][0]['result'][0]['title']+'***')            
+            settings.queues[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][0]['link'])
+            settings.titles[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][0]['title'])
+            settings.searches[interaction.guild.id][0] = ''
+            if settings.downloading[interaction.guild.id][0] == False:
+                settings.timers[interaction.guild.id].start()
+        else:
+            await interaction.response.send_message('I am not in a voice channel')
+
+    @nextcord.slash_command(name = "playlist", description = "allows a user to search for and select a playlist and add it to the queue")
+    async def playlist(self, interaction : Interaction, playlist: str):
+        voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
+        if voice != None:
+            if playlist == '1' or playlist == '2' or playlist == '3' or playlist == '4' or playlist == '5':
+                if settings.searches[interaction.guild.id][0] == '':
+                    await interaction.send('There is currently no searched music, please search for a playlist and try again.')
+                else:
+                    print('successfully chose a playlist')
+                    if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
+                        if settings.searches[interaction.guild.id][1] == None:
+                            await interaction.send('Playlist number ' + playlist + ' selected:\n***' + settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title']+'*** has been added to the queue')
+                        else:
+                            await settings.searches[interaction.guild.id][1].edit('playlist number ' + playlist + ' selected:\n***' + settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title']+'*** has been added to the queue')
+                    else:
+                        if settings.searches[interaction.guild.id][1] == None:
+                            await interaction.send('Playlist number ' + playlist + ' selected:\nNow Playing:\n***' + settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title']+'***')
+                            await interaction.send('Please enjoy this music while the playlist is being retrieved.')
+                        else:
+                            await settings.searches[interaction.guild.id][1].edit('playlist number ' + playlist + ' selected:\nNow Playing:\n***' + settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title']+'***')
+                            await interaction.send('Please enjoy this music while the playlist is being retrieved.')
+                    settings.queues[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['link'])
+                    settings.titles[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title'])
+                    settings.searches[interaction.guild.id][0] = ''
+                    settings.searches[interaction.guild.id][1] = ''
+                    if settings.downloading[interaction.guild.id][0] == False:
+                        settings.timers[interaction.guild.id].start()
+            else:
+                vidsearch = PlaylistsSearch(playlist, limit = 5)
+                settings.searches[interaction.guild.id][0] = vidsearch.result()
+                msg = await interaction.send('Please select a playlist from the following results:\nSyntax:\n' + extensions + 'play 3\n1: ***' + settings.searches[interaction.guild.id][0]['result'][0]['title'] + 
+                '*** \tSize: ' + settings.searches[interaction.guild.id][0]['result'][0]['videoCount'] + '\n'+
+                f'2: ***' + settings.searches[interaction.guild.id][0]['result'][1]['title'] + '*** \tSize:' + settings.searches[interaction.guild.id][0]['result'][1]['videoCount'] + '\n'+
+                f'3: ***' + settings.searches[interaction.guild.id][0]['result'][2]['title'] + '*** \tSize:' + settings.searches[interaction.guild.id][0]['result'][2]['videoCount'] + '\n'+
+                f'4: ***' + settings.searches[interaction.guild.id][0]['result'][3]['title'] + '*** \tSize:' + settings.searches[interaction.guild.id][0]['result'][3]['videoCount'] + '\n'+
+                f'5: ***' + settings.searches[interaction.guild.id][0]['result'][4]['title'] + '*** \tSize:' + settings.searches[interaction.guild.id][0]['result'][4]['videoCount'] + '\n')
+                settings.searches[interaction.guild.id][1] = msg
+        else:
+            await interaction.send('I am not in a voice channel')
+    
+    @nextcord.slash_command(name = "qplaylist", description = "allows the user to search and add a playlist to the queue quickly")
+    async def qplaylist(self, interaction : Interaction, playlist: str):
+        voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
+        if voice != None:
+            vidsearch = PlaylistsSearch(playlist, limit = 1)
+            settings.searches[interaction.guild.id][0] = vidsearch.result()
+            if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
+                await interaction.response.send_message('***' + settings.searches[interaction.guild.id][0]['result'][0]['title']+'\n*** has been added to the queue')
+            else:
+                await interaction.response.send_message('Now Playing Playlist:\n***' + settings.searches[interaction.guild.id][0]['result'][0]['title']+'*** \nSize: '+ settings.searches[interaction.guild.id][0]['result'][0]['videoCount'])            
+            settings.queues[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][0]['link'])
+            settings.titles[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][0]['title'])
+            settings.searches[interaction.guild.id][0] = ''
+            if settings.downloading[interaction.guild.id][0] == False:
+                settings.timers[interaction.guild.id].start()
+        else:
+            await interaction.response.send_message('I am not in a voice channel')
+
     @nextcord.slash_command(name = "showqueue", description = "allows the user to view the current queue")
     async def showqueue(self, interaction : Interaction):
         queued = ''
@@ -226,9 +303,12 @@ class SlashMusic(commands.Cog):
                 queued = queued + str(counter+1) + ': ***' + settings.titles[interaction.guild.id][counter] + '***\n'
                 counter = counter + 1
             if queued == '':
-                await interaction.send('There are no songs currently on queue')
+                await interaction.response.send_message('There are no songs currently on queue')
             else:
-                await interaction.send('Songs currently on queue:\n' + queued)
+                if len(queued) > 1970:
+                    await interaction.response.send_message('The queue is currently too long to print')
+                else:
+                    await interaction.response.send_message('Songs currently on queue:\n' + queued)
         else:
             await interaction.send('There is no active queue for this server')
     
