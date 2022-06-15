@@ -20,7 +20,7 @@ class Listeners(commands.Cog):
             pwd = os.path.dirname(os.path.realpath(__file__))
             shutil.rmtree(pwd + '/' + str(member.guild.id))
             print('directory ' + str(member.guild.id) + ' has been deleted')
-            await settings.timers[member.guild.id].stop()
+            settings.timers[member.guild.id].stop()
             settings.timers.pop(member.guild.id)
             settings.queues.pop(member.guild.id)
             settings.searches.pop(member.guild.id)
