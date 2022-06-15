@@ -204,8 +204,6 @@ class SlashMusic(commands.Cog):
                         if "playlist" in settings.queues[interaction.guild.id][0]:
                             await interaction.send('Now playing playlist:\n***' + title + '***')
                             await interaction.send('Please enjoy this music while the playlist is being retrieved.')
-                        else:
-                            await interaction.send('Now playing:\n***' + title + '***')
                     elif "song" in settings.queues[interaction.guild.id][0]:
                         await interaction.send('Now playing the next item in your playlist')
                 else:
@@ -302,6 +300,10 @@ class SlashMusic(commands.Cog):
             else:
                 if len(queued) > 1970:
                     await interaction.response.send_message('The queue is currently too long to print')
+                    queued = ''
+                    for counter in range(0, 10):
+                        queued = queued + str(counter+1) + ': ***' + settings.titles[interaction.guild.id][counter] + '***\n'
+                    await interaction.send('The next 10 songs in queue will be printed instead:\n' + queued)
                 else:
                     await interaction.response.send_message('Songs currently on queue:\n' + queued)
         else:
