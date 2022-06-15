@@ -309,6 +309,10 @@ class Music(commands.Cog):
             else:
                 if len(queued) > 1970:
                     await ctx.send('The queue is currently too long to print')
+                    queued = ''
+                    for counter in range(0, 10):
+                        queued = queued + str(counter+1) + ': ***' + settings.titles[ctx.guild.id][counter] + '***\n'
+                    await ctx.send('The next 10 songs in queue will be printed instead:\n' + queued)
                 else:
                     await ctx.send('Songs currently on queue:\n' + queued)
         else:
