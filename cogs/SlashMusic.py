@@ -1,3 +1,4 @@
+from code import interact
 import os
 import nextcord
 from nextcord.ext import commands
@@ -53,6 +54,7 @@ class SlashMusic(commands.Cog):
                 await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
                 settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Music.queue, interaction, self.client)
+                settings.timers[interaction.guild.id].stop()
             else:
                 await interaction.send("I am already connected")
         else:
@@ -70,7 +72,7 @@ class SlashMusic(commands.Cog):
             await interaction.send("I am not in a voice channel")
         shutil.rmtree(pwd + '/' + str(interaction.guild.id))
         print('directory ' + str(interaction.guild.id) + ' has been deleted')
-        await settings.timers[interaction.guild.id].stop()
+        settings.timers[interaction.guild.id].stop()
         settings.timers.pop(interaction.guild.id)
         settings.queues.pop(interaction.guild.id)
         settings.searches.pop(interaction.guild.id)
@@ -97,6 +99,7 @@ class SlashMusic(commands.Cog):
                 await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
                 settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Music.queue, interaction, self.client)
+                settings.timers[interaction.guild.id].stop()
         if voice != None:
             if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
                 settings.queues[interaction.guild.id].append(url)
@@ -114,8 +117,10 @@ class SlashMusic(commands.Cog):
                     if "playlist" in url:
                         await interaction.send('Now playing playlist:\n***' + title + '***')
                         await interaction.send('Please enjoy this music while the playlist is being retrieved.')
+                    else:
+                        await interaction.send('Now playing:\n***' + title + '***')
                 if settings.downloading[interaction.guild.id][0] == False:
-                    await settings.timers[interaction.guild.id].start()
+                    settings.timers[interaction.guild.id].start()
             elif url == '1' or url == '2' or url == '3' or url == '4' or url == '5':
                 if settings.searches[interaction.guild.id][0] == '':
                     await interaction.send('There is currently no searched music, please search for a song and try again.')
@@ -125,14 +130,14 @@ class SlashMusic(commands.Cog):
                         msgs = 'Song number ' + url + ' selected:\n***' + settings.searches[interaction.guild.id][0]['result'][int(url)-1]['title']+'*** has been added to the queue'
                         await interaction.send(msgs, ephemeral=True)
                     else:
-                        msgs = 'Song number ' + url + ' selected:\n'
+                        msgs = 'Song number ' + url + ' selected:\nNow Playing:\n***' + settings.searches[interaction.guild.id][0]['result'][int(url)-1]['title']+'***'
                         await interaction.send(msgs, ephemeral=True)
                     settings.queues[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][int(url)-1]['link'])
                     settings.titles[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][int(url)-1]['title'])
                     settings.searches[interaction.guild.id][0] = ''
                     settings.searches[interaction.guild.id][1] = ''
                     if settings.downloading[interaction.guild.id][0] == False:
-                        await settings.timers[interaction.guild.id].start()
+                        settings.timers[interaction.guild.id].start()
             else:
                 vidsearch = VideosSearch(url, limit = 5)
                 settings.searches[interaction.guild.id][0] = vidsearch.result()
@@ -184,7 +189,7 @@ class SlashMusic(commands.Cog):
                 print("Music has been stopped and queue has been cleared")
                 os.system('rm ' + str(interaction.guild.id) + '/*.opus')
                 os.system('rm ' + str(interaction.guild.id) + '/*.webm')
-                await settings.timers[interaction.guild.id].pause()
+                settings.timers[interaction.guild.id].stop()
             else:
                 await interaction.send("There is no audio to stop.")
 
@@ -204,6 +209,8 @@ class SlashMusic(commands.Cog):
                         if "playlist" in settings.queues[interaction.guild.id][0]:
                             await interaction.send('Now playing playlist:\n***' + title + '***')
                             await interaction.send('Please enjoy this music while the playlist is being retrieved.')
+                        else:
+                            await interaction.send('Now playing:\n***' + title + '***')
                     elif "song" in settings.queues[interaction.guild.id][0]:
                         await interaction.send('Now playing the next item in your playlist')
                 else:
@@ -220,12 +227,12 @@ class SlashMusic(commands.Cog):
             if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
                 await interaction.response.send_message('***' + settings.searches[interaction.guild.id][0]['result'][0]['title']+'\n*** has been added to the queue')
             else:
-                await interaction.response.send_message('Song Selected')            
+                await interaction.response.send_message('Now Playing:\n***' + settings.searches[interaction.guild.id][0]['result'][0]['title']+'***')            
             settings.queues[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][0]['link'])
             settings.titles[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][0]['title'])
             settings.searches[interaction.guild.id][0] = ''
             if settings.downloading[interaction.guild.id][0] == False:
-                await settings.timers[interaction.guild.id].start()
+                settings.timers[interaction.guild.id].start()
         else:
             await interaction.response.send_message('I am not in a voice channel')
 
@@ -242,20 +249,20 @@ class SlashMusic(commands.Cog):
                         if settings.searches[interaction.guild.id][1] == None:
                             await interaction.send('Playlist number ' + playlist + ' selected:\n***' + settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title']+'*** has been added to the queue')
                         else:
-                            await settings.searches[interaction.guild.id][1].edit('Playlist number ' + playlist + ' selected:\n***' + settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title']+'*** has been added to the queue')
+                            await settings.searches[interaction.guild.id][1].edit('playlist number ' + playlist + ' selected:\n***' + settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title']+'*** has been added to the queue')
                     else:
                         if settings.searches[interaction.guild.id][1] == None:
                             await interaction.send('Playlist number ' + playlist + ' selected:\nNow Playing:\n***' + settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title']+'***')
                             await interaction.send('Please enjoy this music while the playlist is being retrieved.')
                         else:
-                            await settings.searches[interaction.guild.id][1].edit('Playlist number ' + playlist + ' selected:\nNow Playing:\n***' + settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title']+'***')
+                            await settings.searches[interaction.guild.id][1].edit('playlist number ' + playlist + ' selected:\nNow Playing:\n***' + settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title']+'***')
                             await interaction.send('Please enjoy this music while the playlist is being retrieved.')
                     settings.queues[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['link'])
                     settings.titles[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title'])
                     settings.searches[interaction.guild.id][0] = ''
                     settings.searches[interaction.guild.id][1] = ''
                     if settings.downloading[interaction.guild.id][0] == False:
-                        await settings.timers[interaction.guild.id].start()
+                        settings.timers[interaction.guild.id].start()
             else:
                 vidsearch = PlaylistsSearch(playlist, limit = 5)
                 settings.searches[interaction.guild.id][0] = vidsearch.result()
@@ -283,7 +290,7 @@ class SlashMusic(commands.Cog):
             settings.titles[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][0]['title'])
             settings.searches[interaction.guild.id][0] = ''
             if settings.downloading[interaction.guild.id][0] == False:
-                await settings.timers[interaction.guild.id].start()
+                settings.timers[interaction.guild.id].start()
         else:
             await interaction.response.send_message('I am not in a voice channel')
 
@@ -300,10 +307,6 @@ class SlashMusic(commands.Cog):
             else:
                 if len(queued) > 1970:
                     await interaction.response.send_message('The queue is currently too long to print')
-                    queued = ''
-                    for counter in range(0, 10):
-                        queued = queued + str(counter+1) + ': ***' + settings.titles[interaction.guild.id][counter] + '***\n'
-                    await interaction.send('The next 10 songs in queue will be printed instead:\n' + queued)
                 else:
                     await interaction.response.send_message('Songs currently on queue:\n' + queued)
         else:
@@ -365,7 +368,7 @@ class SlashMusic(commands.Cog):
             else:
                 msg = msg + "Repeating is off"
             await interaction.send(msg)
-            await settings.timers[interaction.guild.id].start()
+            settings.timers[interaction.guild.id].start()
         else:
             await interaction.send('I am not in a voice channel')
 
