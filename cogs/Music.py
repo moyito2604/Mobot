@@ -50,7 +50,6 @@ class Music(commands.Cog):
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
                 settings.timers[ctx.guild.id] = Threaded_timer.RepeatedTimer(1, queue, ctx, self.client)
-                settings.timers[ctx.guild.id].stop()
             else:
                 await ctx.send("I am already connected")
         else:
@@ -61,6 +60,8 @@ class Music(commands.Cog):
     async def leave(self, ctx):
         pwd = os.path.dirname(os.path.realpath(__file__))
         voice = nextcord.utils.get(self.client.voice_clients, guild=ctx.guild)
+        await settings.timers[ctx.guild.id].stop()
+        settings.timers.pop(ctx.guild.id)
         if (ctx.voice_client):
             await voice.disconnect()
             await ctx.send("Left the voice channel")
@@ -68,8 +69,6 @@ class Music(commands.Cog):
             await ctx.send("I am not in a voice channel")
         shutil.rmtree(pwd + '/' + str(ctx.guild.id))
         print('directory ' + str(ctx.guild.id) + ' has been deleted')
-        settings.timers[ctx.guild.id].stop()
-        settings.timers.pop(ctx.guild.id)
         settings.queues.pop(ctx.guild.id)
         settings.searches.pop(ctx.guild.id)
         settings.titles.pop(ctx.guild.id)
@@ -96,7 +95,6 @@ class Music(commands.Cog):
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
                 settings.timers[ctx.guild.id] = Threaded_timer.RepeatedTimer(1, queue, ctx, self.client)
-                settings.timers[ctx.guild.id].stop()
         if voice != None:
             if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
                 settings.queues[ctx.guild.id].append(url)
@@ -114,10 +112,8 @@ class Music(commands.Cog):
                     if "playlist" in url:
                         await ctx.send('Now playing playlist:\n***' + title + '***')
                         await ctx.send('Please enjoy this music while the playlist is being retrieved.')
-                    else:
-                        await ctx.send('Now playing:\n***' + title + '***')
                 if settings.downloading[ctx.guild.id][0] == False:
-                    settings.timers[ctx.guild.id].start()
+                    await settings.timers[ctx.guild.id].start()
             elif url == '1' or url == '2' or url == '3' or url == '4' or url == '5':
                 if settings.searches[ctx.guild.id][0] == '':
                     await ctx.send('There is currently no searched music, please search for a song and try again.')
@@ -130,15 +126,15 @@ class Music(commands.Cog):
                             await settings.searches[ctx.guild.id][1].edit('Song number ' + url + ' selected:\n***' + settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title']+'*** has been added to the queue')
                     else:
                         if settings.searches[ctx.guild.id][1] == None:
-                            await ctx.send('Song number ' + url + ' selected:\nNow Playing:\n***' + settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title']+'***')
+                            await ctx.send('Song number ' + url + ' selected:')
                         else:
-                            await settings.searches[ctx.guild.id][1].edit('Song number ' + url + ' selected:\nNow Playing:\n***' + settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title']+'***')
+                            await settings.searches[ctx.guild.id][1].edit('Song number ' + url + ' selected:')
                     settings.queues[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][int(url)-1]['link'])
                     settings.titles[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title'])
                     settings.searches[ctx.guild.id][0] = ''
                     settings.searches[ctx.guild.id][1] = ''
                     if settings.downloading[ctx.guild.id][0] == False:
-                        settings.timers[ctx.guild.id].start()
+                        await settings.timers[ctx.guild.id].start()
             else:
                 vidsearch = VideosSearch(url, limit = 5)
                 settings.searches[ctx.guild.id][0] = vidsearch.result()
@@ -191,7 +187,7 @@ class Music(commands.Cog):
                 print("Music has been stopped and queue has been cleared")
                 os.system('rm ' + str(ctx.guild.id) + '/*.opus')
                 os.system('rm ' + str(ctx.guild.id) + '/*.webm')
-                settings.timers[ctx.guild.id].stop()
+                await settings.timers[ctx.guild.id].pause()
             else:
                 await ctx.send("There is no audio to stop.")
 
@@ -211,8 +207,6 @@ class Music(commands.Cog):
                         if "playlist" in settings.queues[ctx.guild.id][0]:
                             await ctx.send('Now playing playlist:\n***' + title + '***')
                             await ctx.send('Please enjoy this music while the playlist is being retrieved.')
-                        else:
-                            await ctx.send('Now playing:\n***' + title + '***')
                     elif "song" in settings.queues[ctx.guild.id][0]:
                         await ctx.send('Now playing the next item in your playlist')
                 else:
@@ -229,12 +223,12 @@ class Music(commands.Cog):
             if voice.is_playing() or voice.is_paused() or settings.downloading[ctx.guild.id][0] == True:
                 await ctx.send('***' + settings.searches[ctx.guild.id][0]['result'][0]['title']+'\n*** has been added to the queue')
             else:
-                await ctx.send('Now Playing:\n***' + settings.searches[ctx.guild.id][0]['result'][0]['title']+'***')            
+                await ctx.send('Song Selected')   
             settings.queues[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][0]['link'])
             settings.titles[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][0]['title'])
             settings.searches[ctx.guild.id][0] = ''
             if settings.downloading[ctx.guild.id][0] == False:
-                settings.timers[ctx.guild.id].start()
+                await settings.timers[ctx.guild.id].start()
         else:
             await ctx.send('I am not in a voice channel')
     
@@ -251,20 +245,20 @@ class Music(commands.Cog):
                         if settings.searches[ctx.guild.id][1] == None:
                             await ctx.send('Playlist number ' + playlist + ' selected:\n***' + settings.searches[ctx.guild.id][0]['result'][int(playlist)-1]['title']+'*** has been added to the queue')
                         else:
-                            await settings.searches[ctx.guild.id][1].edit('playlist number ' + playlist + ' selected:\n***' + settings.searches[ctx.guild.id][0]['result'][int(playlist)-1]['title']+'*** has been added to the queue')
+                            await settings.searches[ctx.guild.id][1].edit('Playlist number ' + playlist + ' selected:\n***' + settings.searches[ctx.guild.id][0]['result'][int(playlist)-1]['title']+'*** has been added to the queue')
                     else:
                         if settings.searches[ctx.guild.id][1] == None:
                             await ctx.send('Playlist number ' + playlist + ' selected:\nNow Playing:\n***' + settings.searches[ctx.guild.id][0]['result'][int(playlist)-1]['title']+'***')
                             await ctx.send('Please enjoy this music while the playlist is being retrieved.')
                         else:
-                            await settings.searches[ctx.guild.id][1].edit('playlist number ' + playlist + ' selected:\nNow Playing:\n***' + settings.searches[ctx.guild.id][0]['result'][int(playlist)-1]['title']+'***')
+                            await settings.searches[ctx.guild.id][1].edit('Playlist number ' + playlist + ' selected:\nNow Playing:\n***' + settings.searches[ctx.guild.id][0]['result'][int(playlist)-1]['title']+'***')
                             await ctx.send('Please enjoy this music while the playlist is being retrieved.')
                     settings.queues[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][int(playlist)-1]['link'])
                     settings.titles[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][int(playlist)-1]['title'])
                     settings.searches[ctx.guild.id][0] = ''
                     settings.searches[ctx.guild.id][1] = ''
                     if settings.downloading[ctx.guild.id][0] == False:
-                        settings.timers[ctx.guild.id].start()
+                        await settings.timers[ctx.guild.id].start()
             else:
                 vidsearch = PlaylistsSearch(playlist, limit = 5)
                 settings.searches[ctx.guild.id][0] = vidsearch.result()
@@ -292,7 +286,7 @@ class Music(commands.Cog):
             settings.titles[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][0]['title'])
             settings.searches[ctx.guild.id][0] = ''
             if settings.downloading[ctx.guild.id][0] == False:
-                settings.timers[ctx.guild.id].start()
+                await settings.timers[ctx.guild.id].start()
         else:
             await ctx.send('I am not in a voice channel')
 
@@ -309,6 +303,10 @@ class Music(commands.Cog):
             else:
                 if len(queued) > 1970:
                     await ctx.send('The queue is currently too long to print')
+                    queued = ''
+                    for counter in range(0, 10):
+                        queued = queued + str(counter+1) + ': ***' + settings.titles[ctx.guild.id][counter] + '***\n'
+                    await ctx.send('The next 10 songs in queue will be printed instead:\n' + queued)
                 else:
                     await ctx.send('Songs currently on queue:\n' + queued)
         else:
@@ -370,20 +368,19 @@ class Music(commands.Cog):
             else:
                 msg = msg + "Repeating is off"
             await ctx.send(msg)
-            settings.timers[ctx.guild.id].start()
+            await settings.timers[ctx.guild.id].start()
         else:
             await ctx.send('I am not in a voice channel')
 
 def setup(client):
     client.add_cog(Music(client))
 
-def queue(ctx, client):
+async def queue(ctx, client):
     pwd = os.path.dirname(os.path.realpath(__file__))
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
     if (voice.is_playing() or voice.is_paused()):
         pass
     else:
-        settings.timers[ctx.guild.id].stop()
         if settings.queues[ctx.guild.id]:
             if settings.queues[ctx.guild.id][0].startswith('song'):
                 source = FFmpegPCMAudio(pwd+'/'+str(ctx.guild.id)+'/'+settings.queues[ctx.guild.id][0])
@@ -403,15 +400,20 @@ def queue(ctx, client):
                 else:
                     os.system('rm ' + str(ctx.guild.id) + '/*.opus')
                     source, title = dccommands.retrieveAudio(settings.queues[ctx.guild.id][0], (pwd+'/'+str(ctx.guild.id)))
+                    channel = nextcord.utils.get(ctx.guild.channels, id=ctx.channel.id)
+                    await channel.send(f"Now Playing:\n***{title}***")
                     if settings.downloading[ctx.guild.id][1]:
                         settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][0])
                         settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][0])
                     settings.titles[ctx.guild.id].pop(0)
                     player = voice.play(source)
                     settings.queues[ctx.guild.id].pop(0)
-            settings.timers[ctx.guild.id].start()
             settings.downloading[ctx.guild.id][0] = False
         else:
+            await settings.timers[ctx.guild.id].pause()
             os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.opus')
             os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.webm')
             print('No queued items')
+
+async def beans(channel):
+    channel.send('Beans')
