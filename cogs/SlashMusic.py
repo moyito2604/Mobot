@@ -12,6 +12,7 @@ import yt_dlp
 import shutil
 import config
 import settings
+import asyncio
 sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)))
 import Music
 sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)) + '/Dependencies/')
@@ -47,8 +48,9 @@ class SlashMusic(commands.Cog):
                 print('directory ' + str(interaction.guild.id) + ' has been created')
                 settings.queues[interaction.guild.id] = []
                 settings.titles[interaction.guild.id] = []
-                settings.downloading[interaction.guild.id] = [False, False]
+                settings.downloading[interaction.guild.id] = [False, False, False]
                 settings.searches[interaction.guild.id] = ['', '']
+                settings.indexes[interaction.guild.id] = 0
                 channel = interaction.user.voice.channel
                 voice = await channel.connect()
                 await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -92,8 +94,9 @@ class SlashMusic(commands.Cog):
                 print('directory ' + str(interaction.guild.id) + ' has been created')
                 settings.queues[interaction.guild.id] = []
                 settings.titles[interaction.guild.id] = []
-                settings.downloading[interaction.guild.id] = [False, False]
+                settings.downloading[interaction.guild.id] = [False, False, False]
                 settings.searches[interaction.guild.id] = ['', '']
+                settings.indexes[interaction.guild.id] = 0
                 channel = interaction.user.voice.channel
                 voice = await channel.connect()
                 await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -198,23 +201,26 @@ class SlashMusic(commands.Cog):
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
         if voice == None:
             await interaction.send("I am not in a voice channel")
-        else:  
+        else:
             if voice.is_playing() or voice.is_paused():
                 voice.stop()
                 await interaction.send("Song has been skipped")
                 print("\nSong has been skipped\n")
-                if settings.queues[interaction.guild.id]:
-                    if "youtube" in settings.queues[interaction.guild.id][0]:
-                        title = settings.titles[interaction.guild.id][0]
-                        if "playlist" in settings.queues[interaction.guild.id][0]:
-                            await interaction.send('Now playing playlist:\n***' + title + '***')
-                            await interaction.send('Please enjoy this music while the playlist is being retrieved.')
-                        else:
-                            await interaction.send('Now playing:\n***' + title + '***')
-                    elif "song" in settings.queues[interaction.guild.id][0]:
-                        await interaction.send('Now playing the next item in your playlist')
+                if not settings.downloading[interaction.guild.id][2]:
+                    if settings.queues[interaction.guild.id]:
+                        if "youtube" in settings.queues[interaction.guild.id][settings.indexes[interaction.guild.id]]:
+                            title = settings.titles[interaction.guild.id][settings.indexes[interaction.guild.id]]
+                            if "playlist" in settings.queues[interaction.guild.id][settings.indexes[interaction.guild.id]]:
+                                await interaction.send('Now playing playlist:\n***' + title + '***')
+                                await interaction.send('Please enjoy this music while the playlist is being retrieved.')
+                            else:
+                                await interaction.send('Now playing:\n***' + title + '***')
+                        elif "song" in settings.queues[interaction.guild.id][settings.indexes[interaction.guild.id]]:
+                            await interaction.send('Now playing the next item in your playlist')
+                    else:
+                        await interaction.send("Your queue is empty")
                 else:
-                    await interaction.send("Your queue is empty")
+                    await interaction.send("The next shuffled song will play")
             else:
                 await interaction.send("There is no music to skip.")
 
@@ -325,6 +331,32 @@ class SlashMusic(commands.Cog):
             else:
                 settings.downloading[interaction.guild.id][1] = True
                 await interaction.send('Repeating has been turned on')
+        else:
+            await interaction.send('I am not in a voice channel')
+    
+    @nextcord.slash_command(name = "shuffle", description = "allows user to shuffle the queue")
+    async def shuffle(self, interaction: Interaction):
+        if interaction.guild.id in settings.downloading:
+            if settings.downloading[interaction.guild.id][2]:
+                settings.downloading[interaction.guild.id][2] = False
+                await interaction.send('Shuffling has been turned off')
+            else:
+                settings.downloading[interaction.guild.id][2] = True
+                await interaction.send('Shuffling has been turned on')
+        else:
+            await interaction.send('I am not in a voice channel')
+
+    @nextcord.slash_command(name = "status", description = "show the user if repeating and shuffle is turned on or off")
+    async def status(self, interaction: Interaction):
+        if interaction.guild.id in settings.downloading:
+            if settings.downloading[interaction.guild.id][1]:
+                await interaction.send('Repeating is turned on')
+            else:
+                await interaction.send('Repeating is turned off')
+            if settings.downloading[interaction.guild.id][2]:
+                await interaction.send('Shuffling is turned on')
+            else:
+                await interaction.send('Shuffling is turned off')
         else:
             await interaction.send('I am not in a voice channel')
 

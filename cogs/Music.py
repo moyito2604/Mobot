@@ -10,6 +10,8 @@ import yt_dlp
 import shutil
 import config
 import settings
+import random
+import asyncio
 sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)) + '/Dependencies/')
 import Threaded_timer
 import dccommands
@@ -43,8 +45,9 @@ class Music(commands.Cog):
                 print('directory ' + str(ctx.guild.id) + ' has been created')
                 settings.queues[ctx.guild.id] = []
                 settings.titles[ctx.guild.id] = []
-                settings.downloading[ctx.guild.id] = [False, False]
+                settings.downloading[ctx.guild.id] = [False, False, False]
                 settings.searches[ctx.guild.id] = ['', '']
+                settings.indexes[ctx.guild.id] = 0
                 channel = ctx.message.author.voice.channel
                 voice = await channel.connect()
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -89,8 +92,9 @@ class Music(commands.Cog):
                 print('directory ' + str(ctx.guild.id) + ' has been created')
                 settings.queues[ctx.guild.id] = []
                 settings.titles[ctx.guild.id] = []
-                settings.downloading[ctx.guild.id] = [False, False]
+                settings.downloading[ctx.guild.id] = [False, False, False]
                 settings.searches[ctx.guild.id] = ['', '']
+                settings.indexes[ctx.guild.id] = 0
                 channel = ctx.message.author.voice.channel
                 voice = await channel.connect()
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -205,18 +209,21 @@ class Music(commands.Cog):
                 voice.stop()
                 await ctx.send("Song has been skipped")
                 print("\nSong has been skipped\n")
-                if settings.queues[ctx.guild.id]:
-                    if "youtube" in settings.queues[ctx.guild.id][0]:
-                        title = settings.titles[ctx.guild.id][0]
-                        if "playlist" in settings.queues[ctx.guild.id][0]:
-                            await ctx.send('Now playing playlist:\n***' + title + '***')
-                            await ctx.send('Please enjoy this music while the playlist is being retrieved.')
-                        else:
-                            await ctx.send('Now playing:\n***' + title + '***')
-                    elif "song" in settings.queues[ctx.guild.id][0]:
-                        await ctx.send('Now playing the next item in your playlist')
+                if not settings.downloading[ctx.guild.id][2]:
+                    if settings.queues[ctx.guild.id]:
+                        if "youtube" in settings.queues[ctx.guild.id][settings.indexes[ctx.guild.id]]:
+                            title = settings.titles[ctx.guild.id][settings.indexes[ctx.guild.id]]
+                            if "playlist" in settings.queues[ctx.guild.id][settings.indexes[ctx.guild.id]]:
+                                await ctx.send('Now playing playlist:\n***' + title + '***')
+                                await ctx.send('Please enjoy this music while the playlist is being retrieved.')
+                            else:
+                                await ctx.send('Now playing:\n***' + title + '***')
+                        elif "song" in settings.queues[ctx.guild.id][settings.indexes[ctx.guild.id]]:
+                            await ctx.send('Now playing the next item in your playlist')
+                    else:
+                        await ctx.send("Your queue is empty")
                 else:
-                    await ctx.send("Your queue is empty")
+                    await ctx.send("The next shuffled song will play")
             else:
                 await ctx.send("There is no music to skip.")
 
@@ -331,6 +338,32 @@ class Music(commands.Cog):
             await ctx.send('I am not in a voice channel')
 
     @commands.command(pass_context = True)
+    async def shuffle(self, ctx):
+        if ctx.guild.id in settings.downloading:
+            if settings.downloading[ctx.guild.id][2]:
+                settings.downloading[ctx.guild.id][2] = False
+                await ctx.send('Shuffling has been turned off')
+            else:
+                settings.downloading[ctx.guild.id][2] = True
+                await ctx.send('Shuffling has been turned on')
+        else:
+            await ctx.send('I am not in a voice channel')
+    
+    @commands.command(pass_context = True)
+    async def status(self, ctx):
+        if ctx.guild.id in settings.downloading:
+            if settings.downloading[ctx.guild.id][1]:
+                await ctx.send('Repeating is turned on')
+            else:
+                await ctx.send('Repeating is turned off')
+            if settings.downloading[ctx.guild.id][2]:
+                await ctx.send('Shuffling is turned on')
+            else:
+                await ctx.send('Shuffling is turned off')
+        else:
+            await ctx.send('I am not in a voice channel')
+
+    @commands.command(pass_context = True)
     async def remove(self, ctx, song:int):
         if ctx.guild.id in settings.queues:
             if song <= len(settings.queues[ctx.guild.id]) and song > 0:
@@ -393,26 +426,37 @@ def queue(ctx, client):
                 source = FFmpegPCMAudio(pwd+'/'+str(ctx.guild.id)+'/'+settings.queues[ctx.guild.id][0])
             else:
                 settings.downloading[ctx.guild.id][0] = True
-                if "playlist" in settings.queues[ctx.guild.id][0]:
+                if settings.downloading[ctx.guild.id][2]:
+                    if len(settings.queues[ctx.guild.id]) > 1:
+                        if settings.downloading[ctx.guild.id][1]:
+                            settings.indexes[ctx.guild.id] = random.randint(1, (len(settings.queues[ctx.guild.id])-1)) - 1
+                        else:
+                            settings.indexes[ctx.guild.id] = random.randint(1, len(settings.queues[ctx.guild.id])) - 1
+                    else:
+                        settings.indexes[ctx.guild.id] = 0
+                else:
+                    settings.indexes[ctx.guild.id] = 0
+                index = settings.indexes[ctx.guild.id]
+                if "playlist" in settings.queues[ctx.guild.id][index]:
                     os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.opus')
                     os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.webm')
                     source = FFmpegPCMAudio(pwd + '/Dependencies/' + 'Elevator_Music.mp3')
                     player = voice.play(source)
-                    songlist, title = dccommands.retrievePlaylist(settings.queues[ctx.guild.id][0])
+                    songlist, title = dccommands.retrievePlaylist(settings.queues[ctx.guild.id][index])
                     voice.stop()
-                    settings.queues[ctx.guild.id].pop(0)
+                    settings.queues[ctx.guild.id].pop(index)
                     settings.queues[ctx.guild.id] = songlist+settings.queues[ctx.guild.id]
-                    settings.titles[ctx.guild.id].pop(0)
+                    settings.titles[ctx.guild.id].pop(index)
                     settings.titles[ctx.guild.id] = title+settings.titles[ctx.guild.id]
                 else:
                     os.system('rm ' + str(ctx.guild.id) + '/*.opus')
-                    source, title = dccommands.retrieveAudio(settings.queues[ctx.guild.id][0], (pwd+'/'+str(ctx.guild.id)))
+                    source, title = dccommands.retrieveAudio(settings.queues[ctx.guild.id][index], (pwd+'/'+str(ctx.guild.id)))
                     if settings.downloading[ctx.guild.id][1]:
-                        settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][0])
-                        settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][0])
-                    settings.titles[ctx.guild.id].pop(0)
+                        settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
+                        settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
+                    settings.titles[ctx.guild.id].pop(index)
                     player = voice.play(source)
-                    settings.queues[ctx.guild.id].pop(0)
+                    settings.queues[ctx.guild.id].pop(index)
             settings.timers[ctx.guild.id].start()
             settings.downloading[ctx.guild.id][0] = False
         else:
