@@ -16,6 +16,7 @@ class Listeners(commands.Cog):
         if voice == None:
             return
         if len(voice.channel.members) == 1:
+            await settings.channels[member.guild.id].send('All users have left the voice channel, Mobot will now leave the voice chat')
             await voice.disconnect()
             pwd = os.path.dirname(os.path.realpath(__file__))
             shutil.rmtree(pwd + '/' + str(member.guild.id))
@@ -25,6 +26,7 @@ class Listeners(commands.Cog):
             settings.queues.pop(member.guild.id)
             settings.searches.pop(member.guild.id)
             settings.titles.pop(member.guild.id)
+            settings.channels.pop(member.guild.id)
             print('Successfully left the voice Channel')
 
 def setup(client):

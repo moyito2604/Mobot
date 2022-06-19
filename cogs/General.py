@@ -34,7 +34,6 @@ mc = mc + extensions + 'song: Searches and adds a song to the queue without sele
 mc = mc + extensions + 'playlist: Searches for playlists and allows the user to select a playlist to add to the queue\n'
 mc = mc + extensions + 'qplaylist: Searches and adds a playlist to the queue without selection\n\n'
 sl = '/ping: Displays the bot\'s ping\n'
-sl = sl + '/unpause: plays any paused music in the bot\n'
 sl = sl + '***All of the Music commands have slash versions as well***'
 helpembed = nextcord.Embed(title="List of Commands you can use", description=cm)
 helpembed.add_field(name="Music Bot Commands", value=mc, inline=False)

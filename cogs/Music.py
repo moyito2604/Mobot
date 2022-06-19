@@ -11,7 +11,6 @@ import shutil
 import config
 import settings
 import random
-import asyncio
 sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)) + '/Dependencies/')
 import Threaded_timer
 import dccommands
@@ -47,13 +46,14 @@ class Music(commands.Cog):
                 settings.titles[ctx.guild.id] = []
                 settings.downloading[ctx.guild.id] = [False, False, False]
                 settings.searches[ctx.guild.id] = ['', '']
-                settings.indexes[ctx.guild.id] = 0
+                settings.indexes[ctx.guild.id] = False
                 channel = ctx.message.author.voice.channel
                 voice = await channel.connect()
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
                 settings.timers[ctx.guild.id] = Threaded_timer.RepeatedTimer(1, queue, ctx, self.client)
                 settings.timers[ctx.guild.id].stop()
+                settings.channels[ctx.guild.id] = nextcord.utils.get(ctx.guild.channels, id=ctx.channel.id)
             else:
                 await ctx.send("I am already connected")
         else:
@@ -76,6 +76,7 @@ class Music(commands.Cog):
         settings.queues.pop(ctx.guild.id)
         settings.searches.pop(ctx.guild.id)
         settings.titles.pop(ctx.guild.id)
+        settings.channels.pop(ctx.guild.id)
         print('Successfully left the voice Channel')
 
     @commands.command(pass_context = True)
@@ -94,13 +95,14 @@ class Music(commands.Cog):
                 settings.titles[ctx.guild.id] = []
                 settings.downloading[ctx.guild.id] = [False, False, False]
                 settings.searches[ctx.guild.id] = ['', '']
-                settings.indexes[ctx.guild.id] = 0
+                settings.indexes[ctx.guild.id] = False
                 channel = ctx.message.author.voice.channel
                 voice = await channel.connect()
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
                 settings.timers[ctx.guild.id] = Threaded_timer.RepeatedTimer(1, queue, ctx, self.client)
                 settings.timers[ctx.guild.id].stop()
+                settings.channels[ctx.guild.id] = nextcord.utils.get(ctx.guild.channels, id=ctx.channel.id)
         if voice != None:
             if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
                 settings.queues[ctx.guild.id].append(url)
@@ -200,32 +202,65 @@ class Music(commands.Cog):
                 await ctx.send("There is no audio to stop.")
 
     @commands.command(pass_context = True)
-    async def skip(self, ctx):
+    async def skip(self, ctx, amount:int):
         voice = nextcord.utils.get(self.client.voice_clients, guild=ctx.guild)
         if voice == None:
             await ctx.send("I am not in a voice channel")
         else:
-            if voice.is_playing() or voice.is_paused():
-                voice.stop()
-                await ctx.send("Song has been skipped")
+            if voice.is_playing() or voice.is_paused() and (amount <= len(settings.queues[ctx.guild.id]) and amount > 0):
+                await ctx.send(f"{amount} songs have been skipped")
                 print("\nSong has been skipped\n")
-                if not settings.downloading[ctx.guild.id][2]:
+                for counter in range(1, amount):
+                    if settings.downloading[ctx.guild.id][1]:
+                        settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][0])
+                        settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][0])
+                    settings.queues[ctx.guild.id].pop(0)
+                    settings.titles[ctx.guild.id].pop(0)
+                if settings.queues[ctx.guild.id]:
+                    settings.indexes[ctx.guild.id] = True
+                    if "youtube" in settings.queues[ctx.guild.id][0]:
+                        title = settings.titles[ctx.guild.id][0]
+                        if "playlist" in settings.queues[ctx.guild.id][0]:
+                            await ctx.send('Now playing playlist:\n***' + title + '***')
+                            await ctx.send('Please enjoy this music while the playlist is being retrieved.')
+                        else:
+                            await ctx.send('Now playing:\n***' + title + '***')
+                    elif "song" in settings.queues[ctx.guild.id][0]:
+                        await ctx.send('Now playing the next item in your playlist')
+                else:
+                    await ctx.send("Your queue is empty")
+                voice.stop()
+            elif amount > len(settings.queues[ctx.guild.id]) and amount <= 0:
+                await ctx.send("Please input a valid amount of songs to skip")
+            else:
+                await ctx.send("There is no music to skip.")
+    
+    @skip.error
+    async def skips(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            voice = nextcord.utils.get(self.client.voice_clients, guild=ctx.guild)
+            if voice == None:
+                await ctx.send("I am not in a voice channel")
+            else:
+                if voice.is_playing() or voice.is_paused():
+                    await ctx.send("Song has been skipped")
+                    print("\nSong has been skipped\n")
                     if settings.queues[ctx.guild.id]:
-                        if "youtube" in settings.queues[ctx.guild.id][settings.indexes[ctx.guild.id]]:
-                            title = settings.titles[ctx.guild.id][settings.indexes[ctx.guild.id]]
-                            if "playlist" in settings.queues[ctx.guild.id][settings.indexes[ctx.guild.id]]:
+                        settings.indexes[ctx.guild.id] = True
+                        if "youtube" in settings.queues[ctx.guild.id][0]:
+                            title = settings.titles[ctx.guild.id][0]
+                            if "playlist" in settings.queues[ctx.guild.id][0]:
                                 await ctx.send('Now playing playlist:\n***' + title + '***')
                                 await ctx.send('Please enjoy this music while the playlist is being retrieved.')
                             else:
                                 await ctx.send('Now playing:\n***' + title + '***')
-                        elif "song" in settings.queues[ctx.guild.id][settings.indexes[ctx.guild.id]]:
+                        elif "song" in settings.queues[ctx.guild.id][0]:
                             await ctx.send('Now playing the next item in your playlist')
                     else:
                         await ctx.send("Your queue is empty")
+                    voice.stop()
                 else:
-                    await ctx.send("The next shuffled song will play")
-            else:
-                await ctx.send("There is no music to skip.")
+                    await ctx.send("There is no music to skip.")
 
     @commands.command(pass_context = True)
     async def song(self, ctx, *, song: str):
@@ -411,6 +446,11 @@ class Music(commands.Cog):
         else:
             await ctx.send('I am not in a voice channel')
 
+    @commands.command(pass_context = True)
+    async def temp(self, ctx):
+        voice = nextcord.utils.get(self.client.voice_clients, guild=ctx.guild)
+        voice.stop()
+
 def setup(client):
     client.add_cog(Music(client))
 
@@ -420,23 +460,24 @@ def queue(ctx, client):
     if (voice.is_playing() or voice.is_paused()):
         pass
     else:
+        settings.channels[ctx.guild.id] = nextcord.utils.get(ctx.guild.channels, id=ctx.channel.id)
         settings.timers[ctx.guild.id].stop()
         if settings.queues[ctx.guild.id]:
             if settings.queues[ctx.guild.id][0].startswith('song'):
                 source = FFmpegPCMAudio(pwd+'/'+str(ctx.guild.id)+'/'+settings.queues[ctx.guild.id][0])
             else:
                 settings.downloading[ctx.guild.id][0] = True
-                if settings.downloading[ctx.guild.id][2]:
+                if settings.downloading[ctx.guild.id][2] and (not settings.indexes[ctx.guild.id]):
                     if len(settings.queues[ctx.guild.id]) > 1:
                         if settings.downloading[ctx.guild.id][1]:
-                            settings.indexes[ctx.guild.id] = random.randint(1, (len(settings.queues[ctx.guild.id])-1)) - 1
+                            index = random.randint(1, (len(settings.queues[ctx.guild.id])-1)) - 1
                         else:
-                            settings.indexes[ctx.guild.id] = random.randint(1, len(settings.queues[ctx.guild.id])) - 1
+                            index = random.randint(1, len(settings.queues[ctx.guild.id])) - 1
                     else:
-                        settings.indexes[ctx.guild.id] = 0
+                        index = 0
                 else:
-                    settings.indexes[ctx.guild.id] = 0
-                index = settings.indexes[ctx.guild.id]
+                    index = 0
+                    settings.indexes[ctx.guild.id] = False
                 if "playlist" in settings.queues[ctx.guild.id][index]:
                     os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.opus')
                     os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.webm')
