@@ -54,6 +54,9 @@ class SlashMusic(commands.Cog):
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
                 settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Music.queue, interaction, self.client)
                 settings.timers[interaction.guild.id].stop()
+                settings.channels[interaction.guild.id] = interaction
+                if os.path.exists(f'{interaction.guild.id}_logs.log'):
+                    os.remove(f'{interaction.guild.id}_logs.log')
             else:
                 await interaction.send("I am already connected")
         else:
@@ -76,6 +79,7 @@ class SlashMusic(commands.Cog):
         settings.queues.pop(interaction.guild.id)
         settings.searches.pop(interaction.guild.id)
         settings.titles.pop(interaction.guild.id)
+        settings.channels.pop(interaction.guild.id)
         print('Successfully left the voice Channel')
 
     @nextcord.slash_command(name = "play", description = "Allows the bot to play music from a youtube link or search")
@@ -101,6 +105,7 @@ class SlashMusic(commands.Cog):
                     print('Successfully Joined the ' + str(channel) + ' voice channel')
                     settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Music.queue, interaction, self.client)
                     settings.timers[interaction.guild.id].stop()
+                    settings.channels[interaction.guild.id] = interaction
             if voice != None:
                 if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
                     settings.queues[interaction.guild.id].append(url)

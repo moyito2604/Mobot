@@ -28,11 +28,9 @@ async def on_ready():
     activity = nextcord.Game(name=game, type=3)
     if os.path.exists("Guilds.txt"):
         os.remove("Guilds.txt")
-    else:
-        print("Guilds.txt does not exist")
     files = open("Guilds.txt", "w")
     for info in client.guilds:
-        files.write(f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\n")
+        files.write(f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t{info.owner}\t\tid:{info.owner.id}\n")
     files.close()
     await client.change_presence(status=nextcord.Status.online, activity=activity)
     print('We have logged in as {0.user}\n'.format(client))

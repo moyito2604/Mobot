@@ -1,5 +1,6 @@
 from random import randint
 from nextcord import FFmpegOpusAudio
+import settings
 import yt_dlp
 import os
 
@@ -34,23 +35,26 @@ def oneSeam():
     return quote
 
 class loggerOutputs:
-    def error(msg):
-        with open('logs.txt', 'a+') as file:
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def error(self, msg):
+        with open(f'{self.ctx.guild.id}_logs.log', 'a+') as file:
             file.write("Error: " + msg + "\n")
             print("Error: " + msg)
-    def warning(msg):
-        with open('logs.txt', 'a+') as file:
+    def warning(self, msg):
+        with open(f'{self.ctx.guild.id}_logs.log', 'a+') as file:
             file.write("Warning: " + msg + "\n")
             print("Warning: " + msg)
-    def debug(msg):
-        with open('logs.txt', 'a+') as file:
+    def debug(self, msg):
+        with open(f'{self.ctx.guild.id}_logs.log', 'a+') as file:
             file.write("Log: " + msg + "\n")
-            print("Log: " + msg)
+            print(msg)
 
-def retrieveAudio(url, path:str):
+def retrieveAudio(url, path:str, ctx):
 
     ydl_opts = {
     'format': 'bestaudio/best',
+    'logger': loggerOutputs(ctx=ctx),
     'outtmpl': path + '/%(title)s.%(ext)s',
     'postprocessors': [{
         'key':'FFmpegExtractAudio',

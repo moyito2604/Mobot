@@ -16,7 +16,8 @@ class Listeners(commands.Cog):
         if voice == None:
             return
         if len(voice.channel.members) == 1:
-            await settings.channels[member.guild.id].send('All users have left the voice channel, Mobot will now leave the voice chat')
+            textchannel = nextcord.utils.get(settings.channels[member.guild.id].guild.channels, id=settings.channels[member.guild.id].channel.id)
+            await textchannel.send('All users have left the voice channel, Mobot will now leave the voice chat')
             await voice.disconnect()
             pwd = os.path.dirname(os.path.realpath(__file__))
             shutil.rmtree(pwd + '/' + str(member.guild.id))

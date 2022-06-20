@@ -53,7 +53,7 @@ class Music(commands.Cog):
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
                 settings.timers[ctx.guild.id] = Threaded_timer.RepeatedTimer(1, queue, ctx, self.client)
                 settings.timers[ctx.guild.id].stop()
-                settings.channels[ctx.guild.id] = nextcord.utils.get(ctx.guild.channels, id=ctx.channel.id)
+                settings.channels[ctx.guild.id] = ctx
             else:
                 await ctx.send("I am already connected")
         else:
@@ -102,7 +102,7 @@ class Music(commands.Cog):
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
                 settings.timers[ctx.guild.id] = Threaded_timer.RepeatedTimer(1, queue, ctx, self.client)
                 settings.timers[ctx.guild.id].stop()
-                settings.channels[ctx.guild.id] = nextcord.utils.get(ctx.guild.channels, id=ctx.channel.id)
+                settings.channels[ctx.guild.id] = ctx
         if voice != None:
             if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
                 settings.queues[ctx.guild.id].append(url)
@@ -460,7 +460,6 @@ def queue(ctx, client):
     if (voice.is_playing() or voice.is_paused()):
         pass
     else:
-        settings.channels[ctx.guild.id] = nextcord.utils.get(ctx.guild.channels, id=ctx.channel.id)
         settings.timers[ctx.guild.id].stop()
         if settings.queues[ctx.guild.id]:
             if settings.queues[ctx.guild.id][0].startswith('song'):
@@ -491,7 +490,7 @@ def queue(ctx, client):
                     settings.titles[ctx.guild.id] = title+settings.titles[ctx.guild.id]
                 else:
                     os.system('rm ' + str(ctx.guild.id) + '/*.opus')
-                    source, title = dccommands.retrieveAudio(settings.queues[ctx.guild.id][index], (pwd+'/'+str(ctx.guild.id)))
+                    source, title = dccommands.retrieveAudio(settings.queues[ctx.guild.id][index], (pwd+'/'+str(ctx.guild.id)), ctx)
                     if settings.downloading[ctx.guild.id][1]:
                         settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
                         settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
