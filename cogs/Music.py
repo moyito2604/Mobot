@@ -482,7 +482,7 @@ def queue(ctx, client):
                     os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.webm')
                     source = FFmpegPCMAudio(pwd + '/Dependencies/' + 'Elevator_Music.mp3')
                     player = voice.play(source)
-                    songlist, title = dccommands.retrievePlaylist(settings.queues[ctx.guild.id][index])
+                    songlist, title = dccommands.retrievePlaylist(settings.queues[ctx.guild.id][index], ctx)
                     voice.stop()
                     settings.queues[ctx.guild.id].pop(index)
                     settings.queues[ctx.guild.id] = songlist+settings.queues[ctx.guild.id]

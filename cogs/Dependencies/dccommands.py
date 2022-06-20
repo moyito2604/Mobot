@@ -1,3 +1,4 @@
+from asyncio.log import logger
 from random import randint
 from nextcord import FFmpegOpusAudio
 import settings
@@ -71,8 +72,8 @@ def retrieveAudio(url, path:str, ctx):
     source = FFmpegOpusAudio(path+'/song.opus')
     return source, title
 
-def retrievePlaylist(url):
-    with yt_dlp.YoutubeDL() as ydl:
+def retrievePlaylist(url, ctx):
+    with yt_dlp.YoutubeDL({'logger': loggerOutputs(ctx=ctx)}) as ydl:
         info = ydl.extract_info(url, download = False)
     songlist = []
     title = []
