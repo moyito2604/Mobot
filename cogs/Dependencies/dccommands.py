@@ -38,15 +38,15 @@ class loggerOutputs:
     def __init__(self, ctx):
         self.ctx = ctx
     def error(self, msg):
-        with open(f'{self.ctx.guild.id}_logs.log', 'a+') as file:
+        with open(f'logs/{self.ctx.guild.id}_logs.log', 'a+') as file:
             file.write("Error: " + msg + "\n")
             print("Error: " + msg)
     def warning(self, msg):
-        with open(f'{self.ctx.guild.id}_logs.log', 'a+') as file:
+        with open(f'logs/{self.ctx.guild.id}_logs.log', 'a+') as file:
             file.write("Warning: " + msg + "\n")
             print("Warning: " + msg)
     def debug(self, msg):
-        with open(f'{self.ctx.guild.id}_logs.log', 'a+') as file:
+        with open(f'logs/{self.ctx.guild.id}_logs.log', 'a+') as file:
             file.write("Log: " + msg + "\n")
             print(msg)
 
