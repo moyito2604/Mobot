@@ -25,6 +25,8 @@ mc = mc + extensions + 'stop: stops playing audio and clears the queue\n'
 mc = mc + extensions + 'skip: skips the current track in queue\n'
 mc = mc + extensions + 'showqueue: shows the songs that are currently in queue\n'
 mc = mc + extensions + 'repeat: Allows you to toggle the queue repeat\n'
+mc = mc + extensions + 'shuffle: Allows the user to toggle the queue to shuffle\n'
+mc = mc + extensions + 'status: Shows if repeating and shuffling is turned on or off\n'
 mc = mc + extensions + 'remove: Allows the user to remove a single item from queue\n'
 mc = mc + extensions + 'save: Allows a user to save a queue\n'
 mc = mc + extensions + 'load: Allows a user to load a the saved queue\n'
@@ -32,7 +34,6 @@ mc = mc + extensions + 'song: Searches and adds a song to the queue without sele
 mc = mc + extensions + 'playlist: Searches for playlists and allows the user to select a playlist to add to the queue\n'
 mc = mc + extensions + 'qplaylist: Searches and adds a playlist to the queue without selection\n\n'
 sl = '/ping: Displays the bot\'s ping\n'
-sl = sl + '/unpause: plays any paused music in the bot\n'
 sl = sl + '***All of the Music commands have slash versions as well***'
 helpembed = nextcord.Embed(title="List of Commands you can use", description=cm)
 helpembed.add_field(name="Music Bot Commands", value=mc, inline=False)

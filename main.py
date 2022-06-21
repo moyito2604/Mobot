@@ -26,8 +26,46 @@ pwd = os.path.dirname(os.path.realpath(__file__))
 async def on_ready():
     game = config.extension + 'help'
     activity = nextcord.Game(name=game, type=3)
+    if os.path.exists("Guilds.txt"):
+        os.remove("Guilds.txt")
+    files = open("Guilds.txt", "w")
+    if not os.path.isdir('logs'):
+        os.mkdir('logs')
+    for info in client.guilds:
+        files.write(f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
+    files.close()
     await client.change_presence(status=nextcord.Status.online, activity=activity)
     print('We have logged in as {0.user}\n'.format(client))
+
+@client.event
+async def on_guild_join(guild):
+    print(f"The bot has joined the Guild \"{guild.name}\"")
+    if os.path.exists("Guilds.txt"):
+        os.remove("Guilds.txt")
+    files = open("Guilds.txt", "w")
+    for info in client.guilds:
+        files.write(f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
+    files.close()
+
+@client.event
+async def on_guild_remove(guild):
+    print(f"The bot has left the Guild \"{guild.name}\"")
+    if os.path.exists("Guilds.txt"):
+        os.remove("Guilds.txt")
+    files = open("Guilds.txt", "w")
+    for info in client.guilds:
+        files.write(f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
+    files.close()
+
+@client.event
+async def on_guild_update(before, after):
+    print(f"Guild \"{before.name}\" has changed the name to \"{after.name}\"")
+    if os.path.exists("Guilds.txt"):
+        os.remove("Guilds.txt")
+    files = open("Guilds.txt", "w")
+    for info in client.guilds:
+        files.write(f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
+    files.close()
 
 settings.init()
 

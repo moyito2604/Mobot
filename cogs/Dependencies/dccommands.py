@@ -2,6 +2,9 @@ from random import randint
 from nextcord import FFmpegOpusAudio
 import yt_dlp
 import os
+import scrapetube
+import settings
+import nextcord
 
 pwd = os.path.dirname(os.path.realpath(__file__))
 
@@ -34,23 +37,26 @@ def oneSeam():
     return quote
 
 class loggerOutputs:
-    def error(msg):
-        with open('logs.txt', 'a+') as file:
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def error(self, msg):
+        with open(f'logs/{self.ctx.guild.id}_logs.log', 'a+') as file:
             file.write("Error: " + msg + "\n")
             print("Error: " + msg)
-    def warning(msg):
-        with open('logs.txt', 'a+') as file:
+    def warning(self, msg):
+        with open(f'logs/{self.ctx.guild.id}_logs.log', 'a+') as file:
             file.write("Warning: " + msg + "\n")
             print("Warning: " + msg)
-    def debug(msg):
-        with open('logs.txt', 'a+') as file:
+    def debug(self, msg):
+        with open(f'logs/{self.ctx.guild.id}_logs.log', 'a+') as file:
             file.write("Log: " + msg + "\n")
-            print("Log: " + msg)
+            print(msg)
 
-def retrieveAudio(url, path:str):
+async def retrieveAudio(url, path:str, ctx):
 
     ydl_opts = {
     'format': 'bestaudio/best',
+    'logger': loggerOutputs(ctx=ctx),
     'outtmpl': path + '/%(title)s.%(ext)s',
     'postprocessors': [{
         'key':'FFmpegExtractAudio',
@@ -67,15 +73,15 @@ def retrieveAudio(url, path:str):
     source = FFmpegOpusAudio(path+'/song.opus')
     return source, title
 
-def retrievePlaylist(url):
-    with yt_dlp.YoutubeDL() as ydl:
-        info = ydl.extract_info(url, download = False)
+async def retrievePlaylist(url, ctx):
+    id = url.lstrip('https://www.youtube.com/playlist?list=')
+    videos = scrapetube.get_playlist(id)
     songlist = []
     title = []
-    if 'entries' in info:
-        results = info['entries']
-        for i, item in enumerate(results):
-            songlist.append(info['entries'][i]['webpage_url'])
-            title.append(info['entries'][i]['title'])
+    for video in videos:
+        songlist.append('https://www.youtube.com/watch?v='+ video['videoId'])
+        title.append(video['title']['runs'][0]['text'])
+    channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels, id=settings.channels[ctx.guild.id].channel.id)
+    await channel.send('Playlist Retrieved Successfully')
     return songlist, title
     

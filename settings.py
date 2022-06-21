@@ -1,6 +1,6 @@
 
 def init():
-    global queues, timers, searches, titles, downloading, saveq, savet, saved
+    global queues, timers, searches, titles, downloading, saveq, savet, saved, indexes, channels
     queues = {}
     timers = {}
     searches = {}
@@ -9,3 +9,5 @@ def init():
     saveq = {}
     savet = {}
     saved = {}
+    channels = {}
+    indexes = {}
