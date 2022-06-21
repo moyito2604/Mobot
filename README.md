@@ -34,6 +34,7 @@ To install these, it is necessary to run the three commands below in a Debian ba
 pip3 install nextcord
 pip3 install yt_dlp
 pip3 install youtube-search-python
+pip3 install scrapetube
 apt-get install ffmpeg
 ```
 Once these dependencies are installed, clone the repository to the location desired using this command:
