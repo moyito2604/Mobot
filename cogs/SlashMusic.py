@@ -1,7 +1,6 @@
 import os
 import nextcord
 from nextcord.ext import commands
-from nextcord import FFmpegPCMAudio
 from nextcord import Interaction
 from youtubesearchpython import VideosSearch
 from youtubesearchpython import PlaylistsSearch
@@ -266,10 +265,8 @@ class SlashMusic(commands.Cog):
                     else:
                         if settings.searches[interaction.guild.id][1] == None:
                             await interaction.send('Playlist number ' + playlist + ' selected:\nNow Playing:\n***' + settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title']+'***')
-                            await interaction.send('Please enjoy this music while the playlist is being retrieved.')
                         else:
                             await settings.searches[interaction.guild.id][1].edit('Playlist number ' + playlist + ' selected:\nNow Playing:\n***' + settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title']+'***')
-                            await interaction.send('Please enjoy this music while the playlist is being retrieved.')
                     settings.queues[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['link'])
                     settings.titles[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][int(playlist)-1]['title'])
                     settings.searches[interaction.guild.id][0] = ''
@@ -308,24 +305,40 @@ class SlashMusic(commands.Cog):
             await interaction.response.send_message('I am not in a voice channel')
 
     @nextcord.slash_command(name = "showqueue", description = "allows the user to view the current queue")
-    async def showqueue(self, interaction : Interaction):
+    async def showqueue(self, interaction: Interaction, msg:str=' '):
         queued = ''
         counter = 0
         if interaction.guild.id in settings.titles:
             for title in settings.titles[interaction.guild.id]:
-                queued = queued + str(counter+1) + ': ***' + settings.titles[interaction.guild.id][counter] + '***\n'
-                counter = counter + 1
+                queued = queued + str(counter+1) + ': ***' + title + '***\n'
+                counter+=1
             if queued == '':
-                await interaction.response.send_message('There are no songs currently on queue')
+                await interaction.send('There are no songs currently on queue')
             else:
                 if len(queued) > 1970:
-                    await interaction.response.send_message('The queue is currently too long to print')
+                    await interaction.send('The queue is currently too long to print')
                     queued = ''
-                    for counter in range(0, 10):
-                        queued = queued + str(counter+1) + ': ***' + settings.titles[interaction.guild.id][counter] + '***\n'
-                    await interaction.send('The next 10 songs in queue will be printed instead:\n' + queued)
+                    if msg.lower() == 'dm':
+                        await interaction.send('The queue has been sent to DM')
+                        queued = '***Queue***\n\n\n\nSongs currently on queue:\n'
+                        reset = 0
+                        counter = 0
+                        for title in settings.titles[interaction.guild.id]:
+                            if reset == 10:
+                                reset = 0
+                                await interaction.user.send(queued)
+                                queued = ''
+                            queued = queued + str(counter+1) + ': ***' + title + '***\n'
+                            reset += 1
+                            counter += 1
+                        if queued != '':
+                            await interaction.user.send(queued)
+                    else:    
+                        for counter in range(0, 10):
+                            queued = queued + str(counter+1) + ': ***' + settings.titles[interaction.guild.id][counter] + '***\n'
+                        await interaction.send('The next 10 songs in queue will be printed instead:\n' + queued)
                 else:
-                    await interaction.response.send_message('Songs currently on queue:\n' + queued)
+                    await interaction.send('Songs currently on queue:\n' + queued)
         else:
             await interaction.send('There is no active queue for this server')
     
