@@ -339,22 +339,38 @@ class Music(commands.Cog):
             await ctx.send('I am not in a voice channel')
 
     @commands.command(pass_context = True)
-    async def showqueue(self, ctx):
+    async def showqueue(self, ctx, *, msg:str=''):
         queued = ''
         counter = 0
         if ctx.guild.id in settings.titles:
             for title in settings.titles[ctx.guild.id]:
-                queued = queued + str(counter+1) + ': ***' + settings.titles[ctx.guild.id][counter] + '***\n'
-                counter = counter + 1
+                queued = queued + str(counter+1) + ': ***' + title + '***\n'
+                counter+=1
             if queued == '':
                 await ctx.send('There are no songs currently on queue')
             else:
                 if len(queued) > 1970:
                     await ctx.send('The queue is currently too long to print')
                     queued = ''
-                    for counter in range(0, 10):
-                        queued = queued + str(counter+1) + ': ***' + settings.titles[ctx.guild.id][counter] + '***\n'
-                    await ctx.send('The next 10 songs in queue will be printed instead:\n' + queued)
+                    if msg.lower() == 'dm':
+                        await ctx.send('The queue has been sent to DM')
+                        queued = '***Queue***\n\n\n\nSongs currently on queue:\n'
+                        reset = 0
+                        counter = 0
+                        for title in settings.titles[ctx.guild.id]:
+                            if reset == 10:
+                                reset = 0
+                                await ctx.author.send(queued)
+                                queued = ''
+                            queued = queued + str(counter+1) + ': ***' + title + '***\n'
+                            reset += 1
+                            counter += 1
+                        if queued != '':
+                            await ctx.author.send(queued)
+                    else:    
+                        for counter in range(0, 10):
+                            queued = queued + str(counter+1) + ': ***' + settings.titles[ctx.guild.id][counter] + '***\n'
+                        await ctx.send('The next 10 songs in queue will be printed instead:\n' + queued)
                 else:
                     await ctx.send('Songs currently on queue:\n' + queued)
         else:
