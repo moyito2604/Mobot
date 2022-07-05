@@ -121,7 +121,6 @@ class Music(commands.Cog):
                     await ctx.send('Retrieving from source')
                     if "playlist" in url:
                         await ctx.send('Now playing playlist:\n***' + title + '***')
-                        await ctx.send('Please enjoy this music while the playlist is being retrieved.')
                     else:
                         await ctx.send('Now playing:\n***' + title + '***')
                 if settings.downloading[ctx.guild.id][0] == False:
@@ -224,7 +223,6 @@ class Music(commands.Cog):
                         title = settings.titles[ctx.guild.id][0]
                         if "playlist" in settings.queues[ctx.guild.id][0]:
                             await ctx.send('Now playing playlist:\n***' + title + '***')
-                            await ctx.send('Please enjoy this music while the playlist is being retrieved.')
                         else:
                             await ctx.send('Now playing:\n***' + title + '***')
                     elif "song" in settings.queues[ctx.guild.id][0]:
@@ -253,7 +251,6 @@ class Music(commands.Cog):
                             title = settings.titles[ctx.guild.id][0]
                             if "playlist" in settings.queues[ctx.guild.id][0]:
                                 await ctx.send('Now playing playlist:\n***' + title + '***')
-                                await ctx.send('Please enjoy this music while the playlist is being retrieved.')
                             else:
                                 await ctx.send('Now playing:\n***' + title + '***')
                         elif "song" in settings.queues[ctx.guild.id][0]:
@@ -358,7 +355,7 @@ class Music(commands.Cog):
                         reset = 0
                         counter = 0
                         for title in settings.titles[ctx.guild.id]:
-                            if reset == 10:
+                            if reset == 20:
                                 reset = 0
                                 await ctx.author.send(queued)
                                 queued = ''
@@ -425,42 +422,6 @@ class Music(commands.Cog):
                 await ctx.send("Invalid choice of song removal")
         else:
             await ctx.send('There is no active queue')
-
-    @commands.command(pass_context = True)
-    async def save(self, ctx):
-        if ctx.guild.id in settings.queues:
-            settings.saveq[ctx.guild.id] = settings.queues[ctx.guild.id]
-            settings.saved[ctx.guild.id] = settings.downloading[ctx.guild.id]
-            settings.saved[ctx.guild.id][0] = False
-            settings.savet[ctx.guild.id] = settings.titles[ctx.guild.id]
-            msg = f"{len(settings.savet[ctx.guild.id])} songs have been saved\n"
-            if settings.saved[ctx.guild.id][1] == True:
-                msg = msg + "Repeating was left on"
-            else:
-                msg = msg + "Repeating was left off"
-            await ctx.send(msg)
-            print(settings.saveq)
-        else:
-            await ctx.send('I am not in a voice channel')
-
-    @commands.command(pass_context = True)
-    async def load(self, ctx):
-        print(settings.saveq)
-        if ctx.guild.id in settings.saveq:
-            voice = nextcord.utils.get(self.client.voice_clients, guild=ctx.guild)
-            voice.stop()
-            settings.queues[ctx.guild.id] = settings.saveq[ctx.guild.id]
-            settings.downloading[ctx.guild.id] = settings.saved[ctx.guild.id]
-            settings.titles[ctx.guild.id] = settings.savet[ctx.guild.id]
-            msg = f"{len(settings.titles[ctx.guild.id])} songs have been recovered\n"
-            if settings.downloading[ctx.guild.id][1] == True:
-                msg = msg + "Repeating is on"
-            else:
-                msg = msg + "Repeating is off"
-            await ctx.send(msg)
-            await settings.timers[ctx.guild.id].start()
-        else:
-            await ctx.send('I am not in a voice channel')
 
 def setup(client):
     client.add_cog(Music(client))
