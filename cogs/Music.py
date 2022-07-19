@@ -456,7 +456,6 @@ async def queue(ctx, client):
                     settings.titles[ctx.guild.id].pop(index)
                     settings.titles[ctx.guild.id] = title+settings.titles[ctx.guild.id]
                 else:
-                    os.system('rm ' + str(ctx.guild.id) + '/*.opus')
                     source, title = await dccommands.retrieveAudio(settings.queues[ctx.guild.id][index], (pwd+'/'+str(ctx.guild.id)), ctx)
                     if settings.downloading[ctx.guild.id][1]:
                         settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
@@ -467,6 +466,4 @@ async def queue(ctx, client):
             settings.downloading[ctx.guild.id][0] = False
         else:
             await settings.timers[ctx.guild.id].pause()
-            os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.opus')
-            os.system('rm ' + pwd+'/'+str(ctx.guild.id) + '/*.webm')
             print('No queued items')

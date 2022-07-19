@@ -63,7 +63,8 @@ async def retrieveAudio(url, path:str, ctx):
         'preferredquality': '192',
     }],
     }
-
+    for file in os.listdir(path):
+        os.remove(file)
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url)
         title = info.get('title', None)
