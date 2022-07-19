@@ -437,6 +437,8 @@ async def queue(ctx, client):
                 source = FFmpegPCMAudio(pwd+'/'+str(ctx.guild.id)+'/'+settings.queues[ctx.guild.id][0])
             else:
                 settings.downloading[ctx.guild.id][0] = True
+                os.system('rm ' + str(ctx.guild.id) + '/*.opus')
+                os.system('rm ' + str(ctx.guild.id) + '/*.webm')
                 if settings.downloading[ctx.guild.id][2] and (not settings.indexes[ctx.guild.id]):
                     if len(settings.queues[ctx.guild.id]) > 1:
                         if settings.downloading[ctx.guild.id][1]:
@@ -465,5 +467,7 @@ async def queue(ctx, client):
                     settings.queues[ctx.guild.id].pop(index)
             settings.downloading[ctx.guild.id][0] = False
         else:
+            os.system('rm ' + str(ctx.guild.id) + '/*.opus')
+            os.system('rm ' + str(ctx.guild.id) + '/*.webm')
             await settings.timers[ctx.guild.id].pause()
             print('No queued items')
