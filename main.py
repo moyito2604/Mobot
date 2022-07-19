@@ -1,11 +1,19 @@
 import os
 import nextcord
 from nextcord.ext import commands
-import sys
 import configgen
 import os.path
 import settings
-os.system("clear")
+
+def clear():
+   # for windows
+    if os.name == "nt":
+        os.system('cls')
+   # for mac and linux
+    else:
+        os.system('clear')
+
+clear()
 
 configgen.generateConfiguration('m!', True, 'TOKEN', 'TOKEN')
 import config
@@ -18,7 +26,13 @@ intents.members = True
 client = commands.Bot(command_prefix=extensions, intents=intents, help_command=None, case_insensitive=True)
 
 if Token == 'TOKEN':
-    sys.exit("Please put your Bot's Token in the config.py file")
+    print("No Bot Token Found, please input your Bot Token below")
+    bottoken = input()
+    clear()
+    os.remove("config.py")
+    configgen.generateConfiguration('m!', True, bottoken, seanToken)
+    Token = bottoken
+    
 
 pwd = os.path.dirname(os.path.realpath(__file__))
 
