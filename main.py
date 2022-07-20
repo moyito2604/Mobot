@@ -1,41 +1,45 @@
+#Main executable file for the Mewbot Multipurpose bot
+#This file brings in the configuration file or generates it and sets up the bots to be used
+
+#imports necessary to run the program
 import os
 import nextcord
 from nextcord.ext import commands
 import configgen
 import os.path
 import settings
+os.system('clear')
 
-def clear():
-   # for windows
-    if os.name == "nt":
-        os.system('cls')
-   # for mac and linux
-    else:
-        os.system('clear')
-
-clear()
-
+#This block of code generates a configuration file if it doesn't exist and imports it for use throughout the program
 configgen.generateConfiguration('m!', True, 'TOKEN', 'TOKEN')
 import config
 Token = config.Token
 extensions = config.extension
 seanToken = config.seanToken
 
+#Defines the Intents necessary for the bot to communicate with the discord API
+#Also allows the bot to have the permissions needed to run all of its functions
 intents = nextcord.Intents.default()
 intents.members = True
 client = commands.Bot(command_prefix=extensions, intents=intents, help_command=None, case_insensitive=True)
 
+#When the configuration file is generate for the first time, it sets the token to 'TOKEN'
+#This allows the user to define the bot token through stdin
+#Once the token is properly inputted, it deletes and regenerates the configuration file to include the new token for later use
 if Token == 'TOKEN':
     print("No Bot Token Found, please input your Bot Token below")
     bottoken = input()
-    clear()
+    os.system('clear')
     os.remove("config.py")
     configgen.generateConfiguration('m!', True, bottoken, seanToken)
     Token = bottoken
-    
 
+#This sets the working directory for this section of the program
 pwd = os.path.dirname(os.path.realpath(__file__))
 
+#The nextcord on_ready function is used to prepare several things in the discord bot
+#It generates Guild.txt which contains the information of the servers the bot is in
+#It also sets the presence of the bot to playing the help command and notifies the user of when the bot has logged in and is ready to deploy to servers
 @client.event
 async def on_ready():
     game = config.extension + 'help'
@@ -47,10 +51,12 @@ async def on_ready():
         os.mkdir('logs')
     for info in client.guilds:
         files.write(f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
-    files.close()
+    files.close()    
     await client.change_presence(status=nextcord.Status.online, activity=activity)
     print('We have logged in as {0.user}\n'.format(client))
 
+#The on_guild_join nextcord function is called when someone joins the server
+#This then regenerates the Guild.txt file with refreshed information on the servers stats
 @client.event
 async def on_guild_join(guild):
     print(f"The bot has joined the Guild \"{guild.name}\"")
@@ -61,6 +67,8 @@ async def on_guild_join(guild):
         files.write(f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
     files.close()
 
+#The on_guild_remove nextcord function is called when someone leaves the server
+#This then regenerates the Guild.tet file with refreshed info on the servers stats
 @client.event
 async def on_guild_remove(guild):
     print(f"The bot has left the Guild \"{guild.name}\"")
@@ -71,6 +79,8 @@ async def on_guild_remove(guild):
         files.write(f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
     files.close()
 
+#The on_guild_update function runs when something regarding the server as a whole is changed.
+#Guild.txt is once again regenerated after this.
 @client.event
 async def on_guild_update(before, after):
     print(f"Guild \"{before.name}\" has changed the name to \"{after.name}\"")
@@ -81,10 +91,12 @@ async def on_guild_update(before, after):
         files.write(f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
     files.close()
 
+#This initializes all global variables needed for mewbot
 settings.init()
 
 extensions = []
 
+#From here, all of the cogs used in this bot are loaded in and added to the bots features so that they are usable later
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         extensions.append("cogs." + filename[:-3])

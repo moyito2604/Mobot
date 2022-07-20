@@ -1,3 +1,5 @@
+#dccommands.py defines several different functions necessary for all of the different functions Mobot has
+#It includes several functions that retrieve songs, playlists, Quotes, etc.
 from random import randint
 from nextcord import FFmpegOpusAudio
 import yt_dlp
@@ -6,8 +8,11 @@ import scrapetube
 import settings
 import nextcord
 
+#Sets the working directory
 pwd = os.path.dirname(os.path.realpath(__file__))
 
+#This function retrieves a techquote from the Funnytechquotes.txt repository of quotes
+#It then returns the quote to be used in Mewbot when the command is run
 def techQuotes():
     files = open(pwd + '/Quotes/' + 'Funnytechquotes.txt', 'r')
     quote = ''
@@ -18,6 +23,8 @@ def techQuotes():
     files.close()
     return quote
 
+#Both SeanQuotes() and oneSeam() retrieve a seanQuote from the repository of Sean Quotes
+#As this is not a function of Mewbot, these two functions are useless when this file is included in the Mewbot code
 def seanQuotes():
     files = open(pwd + '/Quotes/' + 'Seanquotes.txt', 'r')
     quote = ''
@@ -36,24 +43,29 @@ def oneSeam():
     files.close()
     return quote
 
+#The loggerOutputs class defines a logger used for yt_dlp
+#This logger is then used to output to STDOUT and STDERR
+#It also generates files with yt_dlp logs for individual servers
 class loggerOutputs:
     def __init__(self, ctx):
         self.ctx = ctx
     def error(self, msg):
-        with open(f'logs/{self.ctx.guild.id}_logs.log', 'a+') as file:
+        with open(f'logs/{self.ctx.guild.name}_logs.log', 'a+') as file:
             file.write("Error: " + msg + "\n")
             print("Error: " + msg)
     def warning(self, msg):
-        with open(f'logs/{self.ctx.guild.id}_logs.log', 'a+') as file:
+        with open(f'logs/{self.ctx.guild.name}_logs.log', 'a+') as file:
             file.write("Warning: " + msg + "\n")
             print("Warning: " + msg)
     def debug(self, msg):
-        with open(f'logs/{self.ctx.guild.id}_logs.log', 'a+') as file:
+        with open(f'logs/{self.ctx.guild.name}_logs.log', 'a+') as file:
             file.write("Log: " + msg + "\n")
             print(msg)
 
+#RetrieveAudio defines a function which downloads a youtube video and converts it to an .opus file to be played by mewbot
 async def retrieveAudio(url, path:str, ctx):
 
+#ydl_ops defines a set of options used to run yt_dlp and get the desired output
     ydl_opts = {
     'format': 'bestaudio/best',
     'logger': loggerOutputs(ctx=ctx),
@@ -63,6 +75,10 @@ async def retrieveAudio(url, path:str, ctx):
         'preferredquality': '192',
     }],
     }
+
+#This then extracts the video from youtube and grabs the necessary information
+#Its all done from the folder for each specific server
+#It then returns the audio source and the title
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url)
         title = info.get('title', None)
@@ -72,6 +88,8 @@ async def retrieveAudio(url, path:str, ctx):
     source = FFmpegOpusAudio(path+'/song.opus')
     return source, title
 
+#This function retrieves a playlist from youtube using scrapetube and pushes the urls to queue
+#It also retrieves the titles of each song and pushes it to queue as well
 async def retrievePlaylist(url, ctx):
     id = url.lstrip('https://www.youtube.com/playlist?list=')
     videos = scrapetube.get_playlist(id)

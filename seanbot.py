@@ -1,3 +1,6 @@
+#This is the source code for seanbot
+#This is completely separate code from Mewbot and is not intended for use by anyone
+
 import nextcord
 import sys
 import os
@@ -10,6 +13,7 @@ seanToken = config.seanToken
 
 seanclient = nextcord.Client()
 
+#Sets the presence of seanbot to 'sean'
 @seanclient.event
 async def on_ready():
     game = 'sean'
@@ -17,6 +21,7 @@ async def on_ready():
     await seanclient.change_presence(status=nextcord.Status.online, activity=activity)
     print('We have logged in as {0.user}\n'.format(seanclient))
 
+#Returns a single sean quote
 @seanclient.event
 async def on_message(message):
     if message.author == seanclient.user:
