@@ -34,6 +34,8 @@ if args.token != None:
 #Also allows the bot to have the permissions needed to run all of its functions
 intents = nextcord.Intents.default()
 intents.members = True
+intents.message_content = True
+
 client = commands.Bot(command_prefix=extensions, intents=intents, help_command=None, case_insensitive=True)
 
 #When the configuration file is generate for the first time, it sets the token to 'TOKEN'
