@@ -1,5 +1,6 @@
 #dccommands.py defines several different functions necessary for all of the different functions Mobot has
 #It includes several functions that retrieve songs, playlists, Quotes, etc.
+import asyncio
 from random import randint
 from nextcord import FFmpegOpusAudio
 import yt_dlp
@@ -79,8 +80,9 @@ async def retrieveAudio(url, path:str, ctx):
 #This then extracts the video from youtube and grabs the necessary information
 #Its all done from the folder for each specific server
 #It then returns the audio source and the title
+    loop = asyncio.get_event_loop()
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url)
+        info = await loop.run_in_executor(None, ydl.extract_info, url)
         title = info.get('title', None)
     for file in os.listdir(path):
         if file.endswith(".opus"):
@@ -92,13 +94,15 @@ async def retrieveAudio(url, path:str, ctx):
 #It also retrieves the titles of each song and pushes it to queue as well
 async def retrievePlaylist(url, ctx):
     id = url.lstrip('https://www.youtube.com/playlist?list=')
-    videos = scrapetube.get_playlist(id)
+    loop = asyncio.get_event_loop()
+    videos = await loop.run_in_executor(None, scrapetube.get_playlist, id)
     songlist = []
     title = []
     for video in videos:
         songlist.append('https://www.youtube.com/watch?v='+ video['videoId'])
         title.append(video['title']['runs'][0]['text'])
     channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels, id=settings.channels[ctx.guild.id].channel.id)
+    print("Playlist retrieved successfully")
     await channel.send('Playlist Retrieved Successfully')
     return songlist, title
     
