@@ -1,3 +1,7 @@
+#This is an asynchronous threaded timer used to run Mobot
+#It generates one instance of a timer per server that it is used in
+#It is then used to periodically check if the next song in queue is ready to play
+
 import asyncio
 from contextlib import suppress
 
@@ -12,6 +16,7 @@ class RepeatedTimer:
         self.is_started = False
         self._task = None
 
+#Function is called to start and run the timer
     async def _run(self):
         while self.is_started:
             await asyncio.sleep(self.time)
