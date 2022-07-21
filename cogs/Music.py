@@ -19,14 +19,6 @@ import Threaded_timer
 import dccommands
 
 extensions = config.extension
-ydl_opts = {
-'format': 'bestaudio/best',
-'postprocessors': [{
-    'key':'FFmpegExtractAudio',
-    'preferredcodec': 'mp3',
-    'preferredquality': '192',
-}]
-}
 
 #The Music Command holds the definitions for all of the commands needed to run the bot
 class Music(commands.Cog):
@@ -86,22 +78,21 @@ class Music(commands.Cog):
         voice = nextcord.utils.get(self.client.voice_clients, guild=ctx.guild)
 
         #It then checks if the bot is in a valid voice channel and if its not, it sends a message saying that its not in a VC
+        #It then cleans up dictionary keys that are used to run the bot and removes directories
         if (ctx.voice_client):
+            shutil.rmtree(pwd + '/' + str(ctx.guild.id))
+            print('directory ' + str(ctx.guild.id) + ' has been deleted')
+            await settings.timers[ctx.guild.id].stop()
+            settings.timers.pop(ctx.guild.id)
+            settings.queues.pop(ctx.guild.id)
+            settings.searches.pop(ctx.guild.id)
+            settings.titles.pop(ctx.guild.id)
+            settings.channels.pop(ctx.guild.id)
+            print('Successfully left the voice Channel')
             await voice.disconnect()
             await ctx.send("Left the voice channel")
         else:
             await ctx.send("I am not in a voice channel")
-        
-        #It then cleans up dictionary keys that are used to run the bot and removes directories
-        shutil.rmtree(pwd + '/' + str(ctx.guild.id))
-        print('directory ' + str(ctx.guild.id) + ' has been deleted')
-        await settings.timers[ctx.guild.id].stop()
-        settings.timers.pop(ctx.guild.id)
-        settings.queues.pop(ctx.guild.id)
-        settings.searches.pop(ctx.guild.id)
-        settings.titles.pop(ctx.guild.id)
-        settings.channels.pop(ctx.guild.id)
-        print('Successfully left the voice Channel')
 
     #This command is the most versatile command used for Mewbot
     #It allows you play a song from a youtube link, load a playlist from a youtube link, allows you to search for a song on youtube
@@ -116,7 +107,6 @@ class Music(commands.Cog):
 
         #It then checks if the bot is in a Voice channel and if not, it sets it up similarly to the join command
         if (ctx.author.voice):
-            print(url)
             if voice == None:
                 if os.path.isdir(pwd + '/' + str(ctx.guild.id)):
                     shutil.rmtree(pwd + '/' + str(ctx.guild.id))
@@ -144,7 +134,7 @@ class Music(commands.Cog):
             #it then starts the threaded timer
             if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
                 settings.queues[ctx.guild.id].append(url)
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                with yt_dlp.YoutubeDL() as ydl:
                     info = ydl.extract_info(url, download=False, process=False)
                     title = info.get('title', None)
                     settings.titles[ctx.guild.id].append(title)

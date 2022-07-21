@@ -21,14 +21,6 @@ import Threaded_timer
 import dccommands
 
 extensions = config.extension
-ydl_opts = {
-'format': 'bestaudio/best',
-'postprocessors': [{
-    'key':'FFmpegExtractAudio',
-    'preferredcodec': 'mp3',
-    'preferredquality': '192',
-}]
-}
 
 #The Music Command holds the definitions for all of the commands needed to run the bot
 class SlashMusic(commands.Cog):
@@ -87,23 +79,22 @@ class SlashMusic(commands.Cog):
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
         
         #It then checks if the bot is in a valid voice channel and if its not, it sends a message saying that its not in a VC
+        #It then cleans up dictionary keys that are used to run the bot and removes directories
         if (interaction.guild.voice_client):
+            shutil.rmtree(pwd + '/' + str(interaction.guild.id))
+            print('directory ' + str(interaction.guild.id) + ' has been deleted')
+            await settings.timers[interaction.guild.id].stop()
+            settings.timers.pop(interaction.guild.id)
+            settings.queues.pop(interaction.guild.id)
+            settings.searches.pop(interaction.guild.id)
+            settings.titles.pop(interaction.guild.id)
+            settings.channels.pop(interaction.guild.id)
+            print('Successfully left the voice Channel')
             await voice.disconnect()
             await interaction.send("Left the voice channel")
         else:
             await interaction.send("I am not in a voice channel")
         
-        #It then cleans up dictionary keys that are used to run the bot and removes directories
-        shutil.rmtree(pwd + '/' + str(interaction.guild.id))
-        print('directory ' + str(interaction.guild.id) + ' has been deleted')
-        await settings.timers[interaction.guild.id].stop()
-        settings.timers.pop(interaction.guild.id)
-        settings.queues.pop(interaction.guild.id)
-        settings.searches.pop(interaction.guild.id)
-        settings.titles.pop(interaction.guild.id)
-        settings.channels.pop(interaction.guild.id)
-        print('Successfully left the voice Channel')
-
     #This command is the most versatile command used for Mewbot
     #It allows you play a song from a youtube link, load a playlist from a youtube link, allows you to search for a song on youtube
     #It also allows a user to select a song to play from the search results
@@ -145,7 +136,7 @@ class SlashMusic(commands.Cog):
                 #it then starts the threaded timer
                 if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
                     settings.queues[interaction.guild.id].append(url)
-                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    with yt_dlp.YoutubeDL() as ydl:
                         info = ydl.extract_info(url, download=False, process=False)
                         title = info.get('title', None)
                         settings.titles[interaction.guild.id].append(title)
