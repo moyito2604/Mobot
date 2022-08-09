@@ -10,8 +10,9 @@ import config
 os.system("clear")
 
 seanToken = config.seanToken
-
-seanclient = nextcord.Client()
+intent = nextcord.Intents.default()
+intent.message_content = True
+seanclient = commands.Bot(command_prefix='!', intents=intent)
 
 #Sets the presence of seanbot to 'sean'
 @seanclient.event
