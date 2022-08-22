@@ -50,7 +50,7 @@ class SlashMusic(commands.Cog):
                 print('directory ' + str(interaction.guild.id) + ' has been created')
                 settings.queues[interaction.guild.id] = []
                 settings.titles[interaction.guild.id] = []
-                settings.downloading[interaction.guild.id] = [False, False, False]
+                settings.downloading[interaction.guild.id] = [False, False, False, False]
                 settings.searches[interaction.guild.id] = ['', '']
                 settings.indexes[interaction.guild.id] = False
                 channel = interaction.user.voice.channel
@@ -117,7 +117,7 @@ class SlashMusic(commands.Cog):
                     print('directory ' + str(interaction.guild.id) + ' has been created')
                     settings.queues[interaction.guild.id] = []
                     settings.titles[interaction.guild.id] = []
-                    settings.downloading[interaction.guild.id] = [False, False, False]
+                    settings.downloading[interaction.guild.id] = [False, False, False, False]
                     settings.searches[interaction.guild.id] = ['', '']
                     settings.indexes[interaction.guild.id] = False
                     channel = interaction.user.voice.channel
@@ -473,6 +473,10 @@ class SlashMusic(commands.Cog):
                 await interaction.send('Shuffling is turned on')
             else:
                 await interaction.send('Shuffling is turned off')
+            if settings.downloading[interaction.guild.id][3]:
+                await interaction.send('Normalized audio is turned on')
+            else:
+                await interaction.send('Normalized audio is turned off')
         else:
             await interaction.send('I am not in a voice channel')
 
@@ -489,6 +493,20 @@ class SlashMusic(commands.Cog):
                 await interaction.send("Invalid choice of song removal")
         else:
             await interaction.send('There is no active queue')
+    
+    #The normalize command allows a user to normalize all audio playing through the bot to a voice channel
+    #It is a toggle that then signals the program to normalize all audio
+    @nextcord.slash_command(name = "normalize", description = "allows a user the option to normalize all audio passing through the bot")
+    async def normalize(self, interaction : Interaction):
+        if interaction.guild.id in settings.downloading:
+            if settings.downloading[interaction.guild.id][3]:
+                settings.downloading[interaction.guild.id][3] = False
+                await interaction.send('Normalzing has been turned off')
+            else:
+                settings.downloading[ctx.guild.id][3] = True
+                await interaction.send('Normalizing has been turned on')
+        else:
+            await interaction.send('I am not in a voice channel')
 
 def setup(client):
     client.add_cog(SlashMusic(client))
