@@ -4,6 +4,7 @@
 import os
 import nextcord
 from nextcord.ext import commands
+from nextcord import FFmpegOpusAudio
 from nextcord import FFmpegPCMAudio
 from youtubesearchpython import VideosSearch
 from youtubesearchpython import PlaylistsSearch
@@ -14,6 +15,7 @@ import shutil
 import config
 import settings
 import random
+from pydub import AudioSegment, effects
 sys.path.insert(1, os.path.dirname(os.path.realpath(__file__)) + '/Dependencies/')
 import Threaded_timer
 import dccommands
@@ -48,7 +50,7 @@ class Music(commands.Cog):
                 print('directory ' + str(ctx.guild.id) + ' has been created')
                 settings.queues[ctx.guild.id] = []
                 settings.titles[ctx.guild.id] = []
-                settings.downloading[ctx.guild.id] = [False, False, False]
+                settings.downloading[ctx.guild.id] = [False, False, False, False]
                 settings.searches[ctx.guild.id] = ['', '']
                 settings.indexes[ctx.guild.id] = False
                 channel = ctx.message.author.voice.channel
@@ -115,7 +117,7 @@ class Music(commands.Cog):
                 print('directory ' + str(ctx.guild.id) + ' has been created')
                 settings.queues[ctx.guild.id] = []
                 settings.titles[ctx.guild.id] = []
-                settings.downloading[ctx.guild.id] = [False, False, False]
+                settings.downloading[ctx.guild.id] = [False, False, False, False]
                 settings.searches[ctx.guild.id] = ['', '']
                 settings.indexes[ctx.guild.id] = False
                 channel = ctx.message.author.voice.channel
@@ -514,6 +516,10 @@ class Music(commands.Cog):
                 await ctx.send('Shuffling is turned on')
             else:
                 await ctx.send('Shuffling is turned off')
+            if settings.downloading[ctx.guild.id][3]:
+                await ctx.send('Normalized audio is turned on')
+            else:
+                await ctx.send('Normalized audio is turned off')
         else:
             await ctx.send('I am not in a voice channel')
 
@@ -530,6 +536,20 @@ class Music(commands.Cog):
                 await ctx.send("Invalid choice of song removal")
         else:
             await ctx.send('There is no active queue')
+
+    #The normalize command allows a user to normalize all audio playing through the bot to a voice channel
+    #It is a toggle that then signals the program to normalize all audio
+    @commands.command(pass_context = True)
+    async def normalize(self, ctx):
+        if ctx.guild.id in settings.downloading:
+            if settings.downloading[ctx.guild.id][3]:
+                settings.downloading[ctx.guild.id][3] = False
+                await ctx.send('Normalizing has been turned off')
+            else:
+                settings.downloading[ctx.guild.id][3] = True
+                await ctx.send('Normalizing has been turned on')
+        else:
+            await ctx.send('I am not in a voice channel')
 
 def setup(client):
     client.add_cog(Music(client))
@@ -587,6 +607,13 @@ async def queue(ctx, client):
                         settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
                         settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
                     settings.titles[ctx.guild.id].pop(index)
+                    if settings.downloading[ctx.guild.id][3]:
+                        print("normalized")
+                        raw = AudioSegment.from_file(f"{pwd}/{ctx.guild.id}/song.opus", codec = "opus")
+                        normalized = effects.normalize(raw, headroom=10)
+                        os.system('rm ' + str(ctx.guild.id) + '/*.opus')
+                        normalized.export(f"{pwd}/{ctx.guild.id}/song.opus", format="opus")
+                        source = FFmpegOpusAudio(f"{pwd}/{ctx.guild.id}/song.opus")
                     player = voice.play(source)
                     settings.queues[ctx.guild.id].pop(index)
             settings.downloading[ctx.guild.id][0] = False
