@@ -28,7 +28,7 @@ Slash Commands
 All of the Music commands have slash versions as well
 ```
 
-The music portion of the bot requires a couple dependencies to run properly as it utilizes **yt_dlp, nextcord, youtube-search-python, scrapetube, and ffmpeg** to process the audio that is recieved through the bot. 
+The music portion of the bot requires a couple dependencies to run properly as it utilizes **yt_dlp, nextcord, youtube-search-python, scrapetube, pydub, argparse, PyNaCl and ffmpeg** to process the audio that is recieved through the bot. 
 To install these, it is necessary to run the commands below in a Debian based distro:
 ```
 pip3 install --upgrade pip

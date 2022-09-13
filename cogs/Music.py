@@ -1,6 +1,7 @@
-#cogs.Music runs the Music message commands for mewbot
-#This file contains all of the commands associated with the mewbot Music commands
+#cogs.Music runs the Music message commands for Mobot
+#This file contains all of the commands associated with the Mobot Music commands
 
+import asyncio
 import os
 import nextcord
 from nextcord.ext import commands
@@ -96,7 +97,7 @@ class Music(commands.Cog):
         else:
             await ctx.send("I am not in a voice channel")
 
-    #This command is the most versatile command used for Mewbot
+    #This command is the most versatile command used for Mobot
     #It allows you play a song from a youtube link, load a playlist from a youtube link, allows you to search for a song on youtube
     #It also allows a user to select a song to play from the search results
     #It can also be used to join the bot automatically and play a song
@@ -149,8 +150,8 @@ class Music(commands.Cog):
                     await ctx.send('Retrieving from source')
                     if "playlist" in url:
                         await ctx.send('Now playing playlist:\n***' + title + '***')
-                    else:
-                        await ctx.send('Now playing:\n***' + title + '***')
+                    #else:
+                        #await ctx.send('Now playing:\n***' + title + '***')
                 if settings.downloading[ctx.guild.id][0] == False:
                     await settings.timers[ctx.guild.id].start()
 
@@ -169,9 +170,11 @@ class Music(commands.Cog):
                             await settings.searches[ctx.guild.id][1].edit('Song number ' + url + ' selected:\n***' + settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title']+'*** has been added to the queue')
                     else:
                         if settings.searches[ctx.guild.id][1] == None:
-                            await ctx.send('Song number ' + url + ' selected:\nNow Playing:\n***' + settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title']+'***')
+                            await ctx.send('Song number ' + url + ' selected:')
+                            #Now Playing:\n***' + settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title']+'***'
                         else:
-                            await settings.searches[ctx.guild.id][1].edit('Song number ' + url + ' selected:\nNow Playing:\n***' + settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title']+'***')
+                            await settings.searches[ctx.guild.id][1].edit('Song number ' + url + ' selected:')
+                            #Now Playing:\n***' + settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title']+'***'
                     settings.queues[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][int(url)-1]['link'])
                     settings.titles[ctx.guild.id].append(settings.searches[ctx.guild.id][0]['result'][int(url)-1]['title'])
                     settings.searches[ctx.guild.id][0] = ''
@@ -282,8 +285,8 @@ class Music(commands.Cog):
                         title = settings.titles[ctx.guild.id][0]
                         if "playlist" in settings.queues[ctx.guild.id][0]:
                             await ctx.send('Now playing playlist:\n***' + title + '***')
-                        else:
-                            await ctx.send('Now playing:\n***' + title + '***')
+                        #else:
+                            #await ctx.send('Now playing:\n***' + title + '***')
                     elif "song" in settings.queues[ctx.guild.id][0]:
                         await ctx.send('Now playing the next item in your playlist')
                 
@@ -323,8 +326,8 @@ class Music(commands.Cog):
                             title = settings.titles[ctx.guild.id][0]
                             if "playlist" in settings.queues[ctx.guild.id][0]:
                                 await ctx.send('Now playing playlist:\n***' + title + '***')
-                            else:
-                                await ctx.send('Now playing:\n***' + title + '***')
+                            #else:
+                                #await ctx.send('Now playing:\n***' + title + '***')
                         elif "song" in settings.queues[ctx.guild.id][0]:
                             await ctx.send('Now playing the next item in your playlist')
                     else:
@@ -539,17 +542,17 @@ class Music(commands.Cog):
 
     #The normalize command allows a user to normalize all audio playing through the bot to a voice channel
     #It is a toggle that then signals the program to normalize all audio
-    @commands.command(pass_context = True)
-    async def normalize(self, ctx):
-        if ctx.guild.id in settings.downloading:
-            if settings.downloading[ctx.guild.id][3]:
-                settings.downloading[ctx.guild.id][3] = False
-                await ctx.send('Normalizing has been turned off')
-            else:
-                settings.downloading[ctx.guild.id][3] = True
-                await ctx.send('Normalizing has been turned on')
-        else:
-            await ctx.send('I am not in a voice channel')
+    #@commands.command(pass_context = True)
+    #async def normalize(self, ctx):
+        #if ctx.guild.id in settings.downloading:
+            #if settings.downloading[ctx.guild.id][3]:
+                #settings.downloading[ctx.guild.id][3] = False
+                #await ctx.send('Normalizing has been turned off')
+            #else:
+                #settings.downloading[ctx.guild.id][3] = True
+                #await ctx.send('Normalizing has been turned on')
+        #else:
+            #await ctx.send('I am not in a voice channel')
 
 def setup(client):
     client.add_cog(Music(client))
@@ -606,14 +609,20 @@ async def queue(ctx, client):
                     if settings.downloading[ctx.guild.id][1]:
                         settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
                         settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
+                    textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels, id=settings.channels[ctx.guild.id].channel.id)
+                    await textchannel.send(f"Now playing:\n***{settings.titles[ctx.guild.id][index]}***")
                     settings.titles[ctx.guild.id].pop(index)
                     if settings.downloading[ctx.guild.id][3]:
+                        #loop = asyncio.get_event_loop()
                         print("normalized")
-                        raw = AudioSegment.from_file(f"{pwd}/{ctx.guild.id}/song.opus", codec = "opus")
-                        normalized = effects.normalize(raw, headroom=10)
-                        os.system('rm ' + str(ctx.guild.id) + '/*.opus')
-                        normalized.export(f"{pwd}/{ctx.guild.id}/song.opus", format="opus")
-                        source = FFmpegOpusAudio(f"{pwd}/{ctx.guild.id}/song.opus")
+                        #raw = await loop.run_in_executor(None, AudioSegment.from_file, f"{pwd}/{ctx.guild.id}/song.opus", codec = "opus")
+                        #raw = AudioSegment.from_file(f"{pwd}/{ctx.guild.id}/song.opus", codec = "opus")
+                        #normalized = effects.normalize(raw, headroom=10)
+                        #normalized = await loop.run_in_executor(None, effects.normalize, raw, headroom=10)
+                        #os.system('rm ' + str(ctx.guild.id) + '/*.opus')
+                        #normalized.export(f"{pwd}/{ctx.guild.id}/song.opus", format="opus")
+                        #await loop.run_in_executor(None, normalized.export, f"{pwd}/{ctx.guild.id}/song.opus", format="opus")
+                        #source = FFmpegOpusAudio(f"{pwd}/{ctx.guild.id}/song.opus")
                     player = voice.play(source)
                     settings.queues[ctx.guild.id].pop(index)
             settings.downloading[ctx.guild.id][0] = False
