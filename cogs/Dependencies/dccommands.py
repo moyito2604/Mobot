@@ -13,7 +13,7 @@ import nextcord
 pwd = os.path.dirname(os.path.realpath(__file__))
 
 #This function retrieves a techquote from the Funnytechquotes.txt repository of quotes
-#It then returns the quote to be used in Mewbot when the command is run
+#It then returns the quote to be used in Mobot when the command is run
 def techQuotes():
     files = open(pwd + '/Quotes/' + 'Funnytechquotes.txt', 'r')
     quote = ''
@@ -25,7 +25,7 @@ def techQuotes():
     return quote
 
 #Both SeanQuotes() and oneSeam() retrieve a seanQuote from the repository of Sean Quotes
-#As this is not a function of Mewbot, these two functions are useless when this file is included in the Mewbot code
+#As this is not a function of Mobot, these two functions are useless when this file is included in the Mobot code
 def seanQuotes():
     files = open(pwd + '/Quotes/' + 'Seanquotes.txt', 'r')
     quote = ''
@@ -63,7 +63,7 @@ class loggerOutputs:
             file.write("Log: " + msg + "\n")
             print(msg)
 
-#RetrieveAudio defines a function which downloads a youtube video and converts it to an .opus file to be played by mewbot
+#RetrieveAudio defines a function which downloads a youtube video and converts it to an .opus file to be played by Mobot
 async def retrieveAudio(url, path:str, ctx):
 
 #ydl_ops defines a set of options used to run yt_dlp and get the desired output

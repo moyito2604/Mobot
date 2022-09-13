@@ -1,4 +1,4 @@
-#Main executable file for the Mewbot Multipurpose bot
+#Main executable file for the Mobot Multipurpose bot
 #This file brings in the configuration file or generates it and sets up the bots to be used
 
 #imports necessary to run the program
@@ -109,7 +109,7 @@ async def on_guild_update(before, after):
         files.write(f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
     files.close()
 
-#This initializes all global variables needed for mewbot
+#This initializes all global variables needed for Mobot
 settings.init()
 
 extensions = []

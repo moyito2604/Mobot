@@ -1,4 +1,4 @@
-#cogs.General allows for some commands for use in for mewbot
+#cogs.General allows for some commands for use in for Mobot
 import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction
@@ -51,13 +51,13 @@ class General(commands.Cog):
         print("General Initialized Successfully")
         self.client = client
 
-#Ping test defines the ping command which allows a user to view the latency of the connection to Mewbot
+#Ping test defines the ping command which allows a user to view the latency of the connection to Mobot
     @nextcord.slash_command(name="ping", description="Check bots ping!")
     async def pingtest(self, interaction : Interaction):
         embed = nextcord.Embed(title=(f"My ping is {round(self.client.latency* 1000)}ms"))
         await interaction.response.send_message(embed=embed)
 
-#Allows the user to change the global default extension to Mewbot
+#Allows the user to change the global default extension to Mobot
 #Mostly useless now this is hidden from the help menu and breaks the bot whenever it is use.
 #DO NOT USE THIS COMMAND
     @commands.command(pass_context = True)

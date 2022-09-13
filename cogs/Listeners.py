@@ -1,4 +1,4 @@
-#cogs.Listeners holds all of the listeners needed for Mewbot
+#cogs.Listeners holds all of the listeners needed for Mobot
 import nextcord
 import settings
 import shutil
@@ -13,7 +13,7 @@ class Listeners(commands.Cog):
         self.client = client
 
 #on_voice_state_update is a nextcord function that detects if there was a change in a voice channel
-#This then checks if all users left the voice chat an removes the bot if there is no one else besides Mewbot
+#This then checks if all users left the voice chat an removes the bot if there is no one else besides Mobot
 #It then also clears all of the global dictionaries from the keys that allowed for Music in a specific server
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):

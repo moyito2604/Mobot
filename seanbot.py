@@ -1,5 +1,5 @@
 #This is the source code for seanbot
-#This is completely separate code from Mewbot and is not intended for use by anyone
+#This is completely separate code from Mobot and is not intended for use by anyone
 
 import nextcord
 import sys

@@ -1,5 +1,5 @@
-#cogs.Music runs the Music slash commands for mewbot
-#This file contains all of the commands associated with the mewbot Music commands
+#cogs.Music runs the Music slash commands for Mobot
+#This file contains all of the commands associated with the Mobot Music commands
 
 import os
 from nextcord import SlashOption
@@ -95,7 +95,7 @@ class SlashMusic(commands.Cog):
         else:
             await interaction.send("I am not in a voice channel")
         
-    #This command is the most versatile command used for Mewbot
+    #This command is the most versatile command used for Mobot
     #It allows you play a song from a youtube link, load a playlist from a youtube link, allows you to search for a song on youtube
     #It also allows a user to select a song to play from the search results
     #It can also be used to join the bot automatically and play a song
@@ -149,8 +149,8 @@ class SlashMusic(commands.Cog):
                         await interaction.send('Retrieving from source')
                         if "playlist" in url:
                             await interaction.send('Now playing playlist:\n***' + title + '***')
-                        else:
-                            await interaction.send('Now playing:\n***' + title + '***')
+                        #else:
+                            #await interaction.send('Now playing:\n***' + title + '***')
                     if settings.downloading[interaction.guild.id][0] == False:
                         await settings.timers[interaction.guild.id].start()
                 
@@ -164,10 +164,11 @@ class SlashMusic(commands.Cog):
                         print('successfully chose a song')
                         if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
                             msgs = 'Song number ' + url + ' selected:\n***' + settings.searches[interaction.guild.id][0]['result'][int(url)-1]['title']+'*** has been added to the queue'
-                            await interaction.send(msgs, ephemeral=True)
+                            await interaction.send(msgs)
                         else:
-                            msgs = 'Song number ' + url + ' selected:\nNow Playing:\n***' + settings.searches[interaction.guild.id][0]['result'][int(url)-1]['title']+'***'
-                            await interaction.send(msgs, ephemeral=True)
+                            msgs = 'Song number ' + url + ' selected:\n'
+                            #Now Playing:\n***' + settings.searches[interaction.guild.id][0]['result'][int(url)-1]['title']+'***'
+                            await interaction.send(msgs)
                         settings.queues[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][int(url)-1]['link'])
                         settings.titles[interaction.guild.id].append(settings.searches[interaction.guild.id][0]['result'][int(url)-1]['title'])
                         settings.searches[interaction.guild.id][0] = ''
@@ -273,8 +274,8 @@ class SlashMusic(commands.Cog):
                         title = settings.titles[interaction.guild.id][0]
                         if "playlist" in settings.queues[interaction.guild.id][0]:
                             await interaction.send('Now playing playlist:\n***' + title + '***')
-                        else:
-                            await interaction.send('Now playing:\n***' + title + '***')
+                        #else:
+                            #await interaction.send('Now playing:\n***' + title + '***')
                     elif "song" in settings.queues[interaction.guild.id][0]:
                         await interaction.send('Now playing the next item in your playlist')
                 
@@ -496,17 +497,17 @@ class SlashMusic(commands.Cog):
     
     #The normalize command allows a user to normalize all audio playing through the bot to a voice channel
     #It is a toggle that then signals the program to normalize all audio
-    @nextcord.slash_command(name = "normalize", description = "allows a user the option to normalize all audio passing through the bot")
-    async def normalize(self, interaction : Interaction):
-        if interaction.guild.id in settings.downloading:
-            if settings.downloading[interaction.guild.id][3]:
-                settings.downloading[interaction.guild.id][3] = False
-                await interaction.send('Normalzing has been turned off')
-            else:
-                settings.downloading[ctx.guild.id][3] = True
-                await interaction.send('Normalizing has been turned on')
-        else:
-            await interaction.send('I am not in a voice channel')
+    #@nextcord.slash_command(name = "normalize", description = "allows a user the option to normalize all audio passing through the bot")
+    #async def normalize(self, interaction : Interaction):
+        #if interaction.guild.id in settings.downloading:
+            #if settings.downloading[interaction.guild.id][3]:
+                #settings.downloading[interaction.guild.id][3] = False
+                #await interaction.send('Normalzing has been turned off')
+            #else:
+                #settings.downloading[interaction.guild.id][3] = True
+                #await interaction.send('Normalizing has been turned on')
+        #else:
+            #await interaction.send('I am not in a voice channel')
 
 def setup(client):
     client.add_cog(SlashMusic(client))
