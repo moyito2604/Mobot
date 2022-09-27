@@ -137,21 +137,32 @@ class Music(commands.Cog):
             #it then starts the threaded timer
             if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
                 settings.queues[ctx.guild.id].append(url)
+                failed = False
                 with yt_dlp.YoutubeDL() as ydl:
-                    info = ydl.extract_info(url, download=False, process=False)
-                    title = info.get('title', None)
-                    settings.titles[ctx.guild.id].append(title)
-                if voice.is_playing() or voice.is_paused() or settings.downloading[ctx.guild.id][0] == True:
-                    if "playlist" in url:
-                        await ctx.send('Playlist ***' + title + '*** has been added to the queue')
+                    try:
+                        info = ydl.extract_info(url, download=False, process=False)
+                        title = info.get('title', None)
+                        settings.titles[ctx.guild.id].append(title)
+                    except:
+                        channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels, id=settings.channels[ctx.guild.id].channel.id)
+                        failed = True
+                        settings.queues[ctx.guild.id].pop(0)
+                        if voice.is_playing() or voice.is_paused() or settings.downloading[ctx.guild.id][0] == True:
+                            await channel.send("The current Track has failed to be added to the queue")
+                        else:
+                            await channel.send("The current Track has failed to play")
+                if not failed:
+                    if voice.is_playing() or voice.is_paused() or settings.downloading[ctx.guild.id][0] == True:
+                        if "playlist" in url:
+                            await ctx.send('Playlist ***' + title + '*** has been added to the queue')
+                        else:
+                            await ctx.send('***' + title + '*** has been added to the queue')
                     else:
-                        await ctx.send('***' + title + '*** has been added to the queue')
-                else:
-                    await ctx.send('Retrieving from source')
-                    if "playlist" in url:
-                        await ctx.send('Now playing playlist:\n***' + title + '***')
-                    #else:
-                        #await ctx.send('Now playing:\n***' + title + '***')
+                        await ctx.send('Retrieving from source')
+                        if "playlist" in url:
+                            await ctx.send('Now playing playlist:\n***' + title + '***')
+                        #else:
+                            #await ctx.send('Now playing:\n***' + title + '***')
                 if settings.downloading[ctx.guild.id][0] == False:
                     await settings.timers[ctx.guild.id].start()
 
@@ -605,13 +616,13 @@ async def queue(ctx, client):
                 #After that it then retrieves the next audio and if it is set to repeating, it places the song back to the end of the queue
                 #It then plays the next song and sets downloading to false
                 else:
-                    source, title = await dccommands.retrieveAudio(settings.queues[ctx.guild.id][index], (pwd+'/'+str(ctx.guild.id)), ctx)
+                    source, title = await dccommands.retrieveAudio(settings.queues[ctx.guild.id][index], (pwd+'/'+str(ctx.guild.id)), ctx, index)
                     if settings.downloading[ctx.guild.id][1]:
                         settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
                         settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
                     textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels, id=settings.channels[ctx.guild.id].channel.id)
-                    await textchannel.send(f"Now playing:\n***{settings.titles[ctx.guild.id][index]}***")
-                    settings.titles[ctx.guild.id].pop(index)
+                    await textchannel.send(f"Now playing:\n***{title}***")
+                    #settings.titles[ctx.guild.id].pop(index)
                     if settings.downloading[ctx.guild.id][3]:
                         #loop = asyncio.get_event_loop()
                         print("normalized")
@@ -624,7 +635,7 @@ async def queue(ctx, client):
                         #await loop.run_in_executor(None, normalized.export, f"{pwd}/{ctx.guild.id}/song.opus", format="opus")
                         #source = FFmpegOpusAudio(f"{pwd}/{ctx.guild.id}/song.opus")
                     player = voice.play(source)
-                    settings.queues[ctx.guild.id].pop(index)
+                    #settings.queues[ctx.guild.id].pop(index)
             settings.downloading[ctx.guild.id][0] = False
         
         #If there is not an active queue, it cleans up and pauses the timer

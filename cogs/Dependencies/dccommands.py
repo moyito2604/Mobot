@@ -4,6 +4,7 @@ import asyncio
 from random import randint
 from nextcord import FFmpegOpusAudio
 import yt_dlp
+from yt_dlp.utils import DownloadError
 import os
 import scrapetube
 import settings
@@ -64,7 +65,7 @@ class loggerOutputs:
             print(msg)
 
 #RetrieveAudio defines a function which downloads a youtube video and converts it to an .opus file to be played by Mobot
-async def retrieveAudio(url, path:str, ctx):
+async def retrieveAudio(url:str, path:str, ctx, index):
 
 #ydl_ops defines a set of options used to run yt_dlp and get the desired output
     ydl_opts = {
@@ -82,8 +83,16 @@ async def retrieveAudio(url, path:str, ctx):
 #It then returns the audio source and the title
     loop = asyncio.get_event_loop()
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = await loop.run_in_executor(None, ydl.extract_info, url)
-        title = info.get('title', None)
+        try:
+            settings.titles[ctx.guild.id].pop(index)
+            settings.queues[ctx.guild.id].pop(index)
+            info = await loop.run_in_executor(None, ydl.extract_info, url)
+            title = info.get('title', None)
+        except DownloadError:
+            print("The Song has failed to Download")
+            channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels, id=settings.channels[ctx.guild.id].channel.id)
+            await channel.send("The current Track has failed to download. The next Track will now Download")
+            return retrieveAudio(settings.queues[ctx.guild.id][0], (pwd+'/'+str(ctx.guild.id)), ctx, 0)
     for file in os.listdir(path):
         if file.endswith(".opus"):
             os.rename(path+'/'+ file, path+'/song.opus')
