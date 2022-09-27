@@ -136,21 +136,31 @@ class SlashMusic(commands.Cog):
                 #it then starts the threaded timer
                 if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
                     settings.queues[interaction.guild.id].append(url)
+                    failed = False
                     with yt_dlp.YoutubeDL() as ydl:
-                        info = ydl.extract_info(url, download=False, process=False)
-                        title = info.get('title', None)
-                        settings.titles[interaction.guild.id].append(title)
-                    if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
-                        if "playlist" in url:
-                            await interaction.send('Playlist ***' + title + '*** has been added to the queue')
+                        try:
+                            info = ydl.extract_info(url, download=False, process=False)
+                            title = info.get('title', None)
+                            settings.titles[interaction.guild.id].append(title)
+                        except:
+                            failed = True
+                            settings.queues[interaction.guild.id].pop(0)
+                            if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
+                                await interaction.send("The current Track has failed to be added to the queue")
+                            else:
+                                await interaction.send("The current Track has failed to play")
+                    if not failed:
+                        if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
+                            if "playlist" in url:
+                                await interaction.send('Playlist ***' + title + '*** has been added to the queue')
+                            else:
+                                await interaction.send('***' + title + '*** has been added to the queue')
                         else:
-                            await interaction.send('***' + title + '*** has been added to the queue')
-                    else:
-                        await interaction.send('Retrieving from source')
-                        if "playlist" in url:
-                            await interaction.send('Now playing playlist:\n***' + title + '***')
-                        #else:
-                            #await interaction.send('Now playing:\n***' + title + '***')
+                            await interaction.send('Retrieving from source')
+                            if "playlist" in url:
+                                await interaction.send('Now playing playlist:\n***' + title + '***')
+                            #else:
+                                #await interaction.send('Now playing:\n***' + title + '***')
                     if settings.downloading[interaction.guild.id][0] == False:
                         await settings.timers[interaction.guild.id].start()
                 
@@ -386,7 +396,7 @@ class SlashMusic(commands.Cog):
     @nextcord.slash_command(name = "showqueue", description = "allows the user to view the current queue")
     async def showqueue(self, interaction: Interaction, msg = SlashOption(name="printing",
     description="Allows the user to send to either print queue to DM or channel", 
-    choices={"DM":"dm", "Channel":"channel"})):
+    choices={"Channel":"channel", "DM":"dm"})):
         queued = ''
         counter = 0
 
