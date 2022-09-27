@@ -144,7 +144,7 @@ class SlashMusic(commands.Cog):
                             settings.titles[interaction.guild.id].append(title)
                         except:
                             failed = True
-                            settings.queues[interaction.guild.id].pop(0)
+                            settings.queues[interaction.guild.id].pop()
                             if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
                                 await interaction.send("The current Track has failed to be added to the queue")
                             else:

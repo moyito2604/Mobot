@@ -146,7 +146,7 @@ class Music(commands.Cog):
                     except:
                         channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels, id=settings.channels[ctx.guild.id].channel.id)
                         failed = True
-                        settings.queues[ctx.guild.id].pop(0)
+                        settings.queues[ctx.guild.id].pop()
                         if voice.is_playing() or voice.is_paused() or settings.downloading[ctx.guild.id][0] == True:
                             await channel.send("The current Track has failed to be added to the queue")
                         else:

@@ -84,15 +84,15 @@ async def retrieveAudio(url:str, path:str, ctx, index):
     loop = asyncio.get_event_loop()
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            settings.titles[ctx.guild.id].pop(index)
             settings.queues[ctx.guild.id].pop(index)
             info = await loop.run_in_executor(None, ydl.extract_info, url)
+            settings.titles[ctx.guild.id].pop(index)
             title = info.get('title', None)
         except DownloadError:
             print("The Song has failed to Download")
             channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels, id=settings.channels[ctx.guild.id].channel.id)
             await channel.send("The current Track has failed to download. The next Track will now Download")
-            return retrieveAudio(settings.queues[ctx.guild.id][0], (pwd+'/'+str(ctx.guild.id)), ctx, 0)
+            return await retrieveAudio(settings.queues[ctx.guild.id][0], (pwd+'/'+str(ctx.guild.id)), ctx, 0)
     for file in os.listdir(path):
         if file.endswith(".opus"):
             os.rename(path+'/'+ file, path+'/song.opus')
