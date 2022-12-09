@@ -616,12 +616,15 @@ async def queue(ctx, client):
                 #After that it then retrieves the next audio and if it is set to repeating, it places the song back to the end of the queue
                 #It then plays the next song and sets downloading to false
                 else:
-                    source, title = await dccommands.retrieveAudio(settings.queues[ctx.guild.id][index], (pwd+'/'+str(ctx.guild.id)), ctx, index)
+                    source, title, thumbnail, duration = await dccommands.retrieveAudio(settings.queues[ctx.guild.id][index], (pwd+'/'+str(ctx.guild.id)), ctx, index)
                     if settings.downloading[ctx.guild.id][1]:
                         settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
                         settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
                     textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels, id=settings.channels[ctx.guild.id].channel.id)
-                    await textchannel.send(f"Now playing:\n***{title}***")
+                    embed = nextcord.Embed(title="Now playing:", description=title)
+                    embed.set_footer(text=f"Duration: {duration}")
+                    embed.set_thumbnail(url=thumbnail)
+                    await textchannel.send(embed=embed)
                     #settings.titles[ctx.guild.id].pop(index)
                     if settings.downloading[ctx.guild.id][3]:
                         #loop = asyncio.get_event_loop()

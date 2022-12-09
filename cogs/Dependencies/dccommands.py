@@ -1,6 +1,7 @@
 #dccommands.py defines several different functions necessary for all of the different functions Mobot has
 #It includes several functions that retrieve songs, playlists, Quotes, etc.
 import asyncio
+import time
 from random import randint
 from nextcord import FFmpegOpusAudio
 import yt_dlp
@@ -80,7 +81,7 @@ async def retrieveAudio(url:str, path:str, ctx, index):
 
 #This then extracts the video from youtube and grabs the necessary information
 #Its all done from the folder for each specific server
-#It then returns the audio source and the title
+#It then returns the audio source, the title, thumbnail, and duration of the video
     loop = asyncio.get_event_loop()
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
@@ -97,7 +98,9 @@ async def retrieveAudio(url:str, path:str, ctx, index):
         if file.endswith(".opus"):
             os.rename(path+'/'+ file, path+'/song.opus')
     source = FFmpegOpusAudio(path+'/song.opus')
-    return source, title
+    times = time.gmtime(info["duration"])
+    duration = time.strftime("%H:%M:%S", times)
+    return source, title, info["thumbnails"][0]["url"], duration
 
 #This function retrieves a playlist from youtube using scrapetube and pushes the urls to queue
 #It also retrieves the titles of each song and pushes it to queue as well
