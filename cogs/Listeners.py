@@ -33,6 +33,7 @@ class Listeners(commands.Cog):
             settings.searches.pop(member.guild.id)
             settings.titles.pop(member.guild.id)
             settings.channels.pop(member.guild.id)
+            settings.current.pop(member.guild.id)
             print('Successfully left the voice Channel')
 
 def setup(client):

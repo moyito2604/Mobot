@@ -54,6 +54,7 @@ class Music(commands.Cog):
                 settings.downloading[ctx.guild.id] = [False, False, False, False]
                 settings.searches[ctx.guild.id] = ['', '']
                 settings.indexes[ctx.guild.id] = False
+                settings.current[ctx.guild.id] = {}
                 channel = ctx.message.author.voice.channel
                 voice = await channel.connect()
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -91,6 +92,7 @@ class Music(commands.Cog):
             settings.searches.pop(ctx.guild.id)
             settings.titles.pop(ctx.guild.id)
             settings.channels.pop(ctx.guild.id)
+            settings.current.pop(ctx.guild.id)
             print('Successfully left the voice Channel')
             await voice.disconnect()
             await ctx.send("Left the voice channel")
@@ -121,6 +123,7 @@ class Music(commands.Cog):
                 settings.downloading[ctx.guild.id] = [False, False, False, False]
                 settings.searches[ctx.guild.id] = ['', '']
                 settings.indexes[ctx.guild.id] = False
+                settings.current[ctx.guild.id] = {}
                 channel = ctx.message.author.voice.channel
                 voice = await channel.connect()
                 await ctx.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -496,9 +499,16 @@ class Music(commands.Cog):
         if ctx.guild.id in settings.downloading:
             if settings.downloading[ctx.guild.id][1]:
                 settings.downloading[ctx.guild.id][1] = False
+                if settings.queues[ctx.guild.id]:
+                    settings.titles[ctx.guild.id].pop()
+                    settings.queues[ctx.guild.id].pop()
+                settings.current[ctx.guild.id] = {}
                 await ctx.send('Repeating has been turned off')
             else:
                 settings.downloading[ctx.guild.id][1] = True
+                if settings.current[ctx.guild.id]:
+                    settings.titles[ctx.guild.id].append(settings.current[ctx.guild.id]["title"])
+                    settings.queues[ctx.guild.id].append(settings.current[ctx.guild.id]["url"])
                 await ctx.send('Repeating has been turned on')
         else:
             await ctx.send('I am not in a voice channel')
@@ -616,15 +626,16 @@ async def queue(ctx, client):
                 #After that it then retrieves the next audio and if it is set to repeating, it places the song back to the end of the queue
                 #It then plays the next song and sets downloading to false
                 else:
-                    source, title, thumbnail, duration = await dccommands.retrieveAudio(settings.queues[ctx.guild.id][index], (pwd+'/'+str(ctx.guild.id)), ctx, index)
                     if settings.downloading[ctx.guild.id][1]:
                         settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
                         settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
+                    source, title, thumbnail, duration = await dccommands.retrieveAudio(settings.queues[ctx.guild.id][index], (pwd+'/'+str(ctx.guild.id)), ctx, index)
                     textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels, id=settings.channels[ctx.guild.id].channel.id)
                     embed = nextcord.Embed(title="Now playing:", description=title)
                     embed.set_footer(text=f"Duration: {duration}")
                     embed.set_thumbnail(url=thumbnail)
                     await textchannel.send(embed=embed)
+                    #Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN dccommands.py
                     #settings.titles[ctx.guild.id].pop(index)
                     if settings.downloading[ctx.guild.id][3]:
                         #loop = asyncio.get_event_loop()

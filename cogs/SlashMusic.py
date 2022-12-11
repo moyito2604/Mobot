@@ -53,6 +53,7 @@ class SlashMusic(commands.Cog):
                 settings.downloading[interaction.guild.id] = [False, False, False, False]
                 settings.searches[interaction.guild.id] = ['', '']
                 settings.indexes[interaction.guild.id] = False
+                settings.current[interaction.guild.id] = {}
                 channel = interaction.user.voice.channel
                 voice = await channel.connect()
                 await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -89,6 +90,7 @@ class SlashMusic(commands.Cog):
             settings.searches.pop(interaction.guild.id)
             settings.titles.pop(interaction.guild.id)
             settings.channels.pop(interaction.guild.id)
+            settings.current.pop(interaction.guild.id)
             print('Successfully left the voice Channel')
             await voice.disconnect()
             await interaction.send("Left the voice channel")
@@ -120,6 +122,7 @@ class SlashMusic(commands.Cog):
                     settings.downloading[interaction.guild.id] = [False, False, False, False]
                     settings.searches[interaction.guild.id] = ['', '']
                     settings.indexes[interaction.guild.id] = False
+                    settings.current[interaction.guild.id] = {}
                     channel = interaction.user.voice.channel
                     voice = await channel.connect()
                     await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
@@ -450,9 +453,16 @@ class SlashMusic(commands.Cog):
         if interaction.guild.id in settings.downloading:
             if settings.downloading[interaction.guild.id][1]:
                 settings.downloading[interaction.guild.id][1] = False
+                if settings.queues[interaction.guild.id]:
+                    settings.titles[interaction.guild.id].pop()
+                    settings.queues[interaction.guild.id].pop()
+                settings.current[interaction.guild.id] = {}
                 await interaction.send('Repeating has been turned off')
             else:
                 settings.downloading[interaction.guild.id][1] = True
+                if settings.current[interaction.guild.id]:
+                    settings.titles[interaction.guild.id].append(settings.current[interaction.guild.id]["title"])
+                    settings.queues[interaction.guild.id].append(settings.current[interaction.guild.id]["url"])
                 await interaction.send('Repeating has been turned on')
         else:
             await interaction.send('I am not in a voice channel')

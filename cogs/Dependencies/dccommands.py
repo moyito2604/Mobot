@@ -85,6 +85,9 @@ async def retrieveAudio(url:str, path:str, ctx, index):
     loop = asyncio.get_event_loop()
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
+            settings.current[ctx.guild.id]["title"] = settings.titles[ctx.guild.id][index]
+            settings.current[ctx.guild.id]["url"] = settings.queues[ctx.guild.id][index]
+            print(f"\n{settings.current[ctx.guild.id]}\n")
             settings.queues[ctx.guild.id].pop(index)
             info = await loop.run_in_executor(None, ydl.extract_info, url)
             settings.titles[ctx.guild.id].pop(index)
