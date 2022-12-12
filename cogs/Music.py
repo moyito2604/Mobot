@@ -5,10 +5,11 @@ import asyncio
 import os
 import nextcord
 from nextcord.ext import commands
-from nextcord import FFmpegOpusAudio
 from nextcord import FFmpegPCMAudio
 from youtubesearchpython import VideosSearch
 from youtubesearchpython import PlaylistsSearch
+import validators
+from validators import ValidationFailure
 import sys
 import os.path
 import yt_dlp
@@ -22,6 +23,14 @@ import Threaded_timer
 import dccommands
 
 extensions = config.extension
+
+def checkurl(url_string: str):
+    result = validators.url(url_string)
+
+    if isinstance(result, ValidationFailure):
+        return False
+
+    return result
 
 #The Music Command holds the definitions for all of the commands needed to run the bot
 class Music(commands.Cog):
@@ -138,7 +147,8 @@ class Music(commands.Cog):
 
             #It then checks if a youtube link was inputted or a search prompt. It then also checks if a youtube link is a playlist or not
             #it then starts the threaded timer
-            if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
+            #if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
+            if checkurl(url):
                 settings.queues[ctx.guild.id].append(url)
                 failed = False
                 with yt_dlp.YoutubeDL() as ydl:
@@ -156,13 +166,13 @@ class Music(commands.Cog):
                             await channel.send("The current Track has failed to play")
                 if not failed:
                     if voice.is_playing() or voice.is_paused() or settings.downloading[ctx.guild.id][0] == True:
-                        if "playlist" in url:
+                        if "playlist" in url and ("youtube" in url or "youtu.be"):
                             await ctx.send('Playlist ***' + title + '*** has been added to the queue')
                         else:
                             await ctx.send('***' + title + '*** has been added to the queue')
                     else:
                         await ctx.send('Retrieving from source')
-                        if "playlist" in url:
+                        if "playlist" in url and ("youtube" in url or "youtu.be"):
                             await ctx.send('Now playing playlist:\n***' + title + '***')
                         #else:
                             #await ctx.send('Now playing:\n***' + title + '***')
@@ -615,7 +625,8 @@ async def queue(ctx, client):
                     settings.indexes[ctx.guild.id] = False
                 
                 #It then checks if the next item is a playlist and retrieves every item in the playlist
-                if "playlist" in settings.queues[ctx.guild.id][index]:
+                url = settings.queues[ctx.guild.id][index]
+                if "playlist" in url and ("youtube" in url or "youtu.be" in url):
                     songlist, title = await dccommands.retrievePlaylist(settings.queues[ctx.guild.id][index], ctx)
                     voice.stop()
                     settings.queues[ctx.guild.id].pop(index)
