@@ -137,7 +137,8 @@ class SlashMusic(commands.Cog):
 
                 #It then checks if a youtube link was inputted or a search prompt. It then also checks if a youtube link is a playlist or not
                 #it then starts the threaded timer
-                if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
+                #if 'https://www.youtube.com' in url or 'https://youtu.be' in url or 'https://youtube.com' in url:
+                if Music.checkurl(url):
                     settings.queues[interaction.guild.id].append(url)
                     failed = False
                     with yt_dlp.YoutubeDL() as ydl:
@@ -154,13 +155,13 @@ class SlashMusic(commands.Cog):
                                 await interaction.send("The current Track has failed to play")
                     if not failed:
                         if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
-                            if "playlist" in url:
+                            if "playlist" in url and ("youtube" in url or "youtu.be" in url):
                                 await interaction.send('Playlist ***' + title + '*** has been added to the queue')
                             else:
                                 await interaction.send('***' + title + '*** has been added to the queue')
                         else:
                             await interaction.send('Retrieving from source')
-                            if "playlist" in url:
+                            if "playlist" in url and ("youtube" in url or "youtu.be" in url):
                                 await interaction.send('Now playing playlist:\n***' + title + '***')
                             #else:
                                 #await interaction.send('Now playing:\n***' + title + '***')
