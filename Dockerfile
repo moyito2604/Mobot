@@ -11,3 +11,9 @@ RUN apt-get -y install ffmpeg
 # Set work directory, copy source code to there
 WORKDIR /app
 COPY . .
+
+# Set Arguments
+ENV token="TOKEN"
+ENV dockerstatus=Yes
+
+CMD [ "python3", "main.py" ]
