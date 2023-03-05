@@ -15,7 +15,7 @@ httpx==0.23.3
 idna==3.4
 multidict==6.0.4
 mutagen==1.46.0
-nextcord==2.3.3
+nextcord==2.4.0
 pycparser==2.21
 pycryptodomex==3.17
 pydub==0.25.1
@@ -30,4 +30,4 @@ validators==0.20.0
 websockets==10.4
 yarl==1.8.2
 youtube-search-python==1.6.6
-yt-dlp==2023.2.17
+yt-dlp==2023.03.04
