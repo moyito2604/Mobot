@@ -1,6 +1,7 @@
 import os
 
-#This short script generates the configuration file for Mobot with the inputted information
+
+# This short script generates the configuration file for Mobot with the inputted information
 def generateConfiguration(extension, newfile, Token, seanToken):
     if os.path.exists('config.py') and newfile == True:
         print("Config File Exists")
