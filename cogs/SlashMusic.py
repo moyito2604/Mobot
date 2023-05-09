@@ -13,7 +13,7 @@ import yt_dlp
 import shutil
 import config
 import settings
-import cogs.Dependencies.Music as Music
+import cogs.Dependencies.dccommands as dccommands
 import cogs.Dependencies.Threaded_timer as Threaded_timer
 
 extensions = config.extension
@@ -55,7 +55,7 @@ class SlashMusic(commands.Cog):
                 voice = await channel.connect()
                 await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
-                settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Music.queue, interaction,
+                settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, dccommands.queue, interaction,
                                                                                      self.client)
                 settings.channels[interaction.guild.id] = interaction
                 if os.path.exists(f'logs/{interaction.guild.name}_logs.log'):
@@ -79,7 +79,7 @@ class SlashMusic(commands.Cog):
         # First it grabs the voice channel that the bot is currently in
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
 
-        # It then checks if the bot is in a valid voice channel and if its not, it sends a message saying that its
+        # It then checks if the bot is in a valid voice channel and if it's not, it sends a message saying that it's
         # not in a VC It then cleans up dictionary keys that are used to run the bot and removes directories
         if (interaction.guild.voice_client):
             shutil.rmtree(pwd + '/' + str(interaction.guild.id))
@@ -126,7 +126,7 @@ class SlashMusic(commands.Cog):
                     voice = await channel.connect()
                     await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
                     print('Successfully Joined the ' + str(channel) + ' voice channel')
-                    settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Music.queue, interaction,
+                    settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, dccommands.queue, interaction,
                                                                                          self.client)
                     settings.channels[interaction.guild.id] = interaction
                     if os.path.exists(f'logs/{interaction.guild.name}_logs.log'):
@@ -138,7 +138,7 @@ class SlashMusic(commands.Cog):
                 # It then checks if a youtube link was inputted or a search prompt. It then also checks if a youtube
                 # link is a playlist or not it then starts the threaded timer if 'https://www.youtube.com' in url or
                 # 'https://youtu.be' in url or 'https://youtube.com' in url:
-                if Music.checkurl(url):
+                if dccommands.checkurl(url):
                     settings.queues[interaction.guild.id].append(url)
                     failed = False
                     with yt_dlp.YoutubeDL() as ydl:
