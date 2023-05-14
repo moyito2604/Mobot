@@ -141,7 +141,8 @@ class SlashMusic(commands.Cog):
                 # link is a playlist or not it then starts the threaded timer if 'https://www.youtube.com' in url or
                 # 'https://youtu.be' in url or 'https://youtube.com' in url:
                 if dccommands.checkurl(url):
-                    settings.queues[interaction.guild.id].append(url)
+                    settings.queues[interaction.guild.id].append({})
+                    settings.queues[interaction.guild.id][-1]['url'] = url
                     failed = False
                     with yt_dlp.YoutubeDL() as ydl:
                         try:
@@ -150,15 +151,14 @@ class SlashMusic(commands.Cog):
                             settings.titles[interaction.guild.id].append(title)
                         except:
                             failed = True
-                            settings.queues[interaction.guild.id].pop()
+                            settings.queues[interaction.guild.id].pop(0)
                             if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][
                                 0] == True:
                                 await interaction.send("The current Track has failed to be added to the queue")
                             else:
                                 await interaction.send("The current Track has failed to play")
                     if not failed:
-                        if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][
-                            0] == True:
+                        if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
                             if "playlist" in url and ("youtube" in url or "youtu.be" in url):
                                 await interaction.send('Playlist ***' + title + '*** has been added to the queue')
                             else:
@@ -185,13 +185,14 @@ class SlashMusic(commands.Cog):
                         await interaction.send('Song number ' + url + ' selected:\n***' +
                                                settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['title'] +
                                                '*** has been added to the queue', ephemeral=True)
-                        settings.queues[interaction.guild.id].append(
-                            settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['link'])
+                        settings.queues[interaction.guild.id].append({})
+                        settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['link']
                         settings.titles[interaction.guild.id].append(
                             settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['title'])
                         settings.searches[interaction.guild.id][usr] = ''
                         if settings.downloading[interaction.guild.id][0] == False:
                             await settings.timers[interaction.guild.id].start()
+                        print(settings.queues[interaction.guild.id])
 
                 # It then checks if a video search is being performed
                 # Once it confirms that it's a video search, it saves the key for the search for later use
@@ -261,8 +262,6 @@ class SlashMusic(commands.Cog):
                 voice.stop()
                 await interaction.send("Music has been stopped and queue has been cleared")
                 print("Music has been stopped and queue has been cleared")
-                os.system('rm ' + str(interaction.guild.id) + '/*.opus')
-                os.system('rm ' + str(interaction.guild.id) + '/*.webm')
                 await settings.timers[interaction.guild.id].pause()
             else:
                 await interaction.send("There is no audio to stop.")
@@ -288,20 +287,17 @@ class SlashMusic(commands.Cog):
                 # It displays what the next item of the queue is
                 for counter in range(1, amount):
                     if settings.downloading[interaction.guild.id][1]:
-                        settings.queues[interaction.guild.id].append(settings.queues[interaction.guild.id][0])
+                        settings.queues[interaction.guild.id].append({})
+                        settings.queues[interaction.guild.id][-1]['url'] = settings.queues[interaction.guild.id][0]
                         settings.titles[interaction.guild.id].append(settings.titles[interaction.guild.id][0])
                     settings.queues[interaction.guild.id].pop(0)
                     settings.titles[interaction.guild.id].pop(0)
                 if settings.queues[interaction.guild.id]:
                     settings.indexes[interaction.guild.id] = True
-                    if "youtube" in settings.queues[interaction.guild.id][0]:
+                    if "youtube" in settings.queues[interaction.guild.id][0]['url']:
                         title = settings.titles[interaction.guild.id][0]
-                        if "playlist" in settings.queues[interaction.guild.id][0]:
+                        if "playlist" in settings.queues[interaction.guild.id][0]['url']:
                             await interaction.send('Now playing playlist:\n***' + title + '***')
-                        # else:
-                        # await interaction.send('Now playing:\n***' + title + '***')
-                    elif "song" in settings.queues[interaction.guild.id][0]:
-                        await interaction.send('Now playing the next item in your playlist')
 
                 # It then checks if the queue is empty
                 else:
@@ -330,8 +326,8 @@ class SlashMusic(commands.Cog):
             settings.searches[interaction.guild.id][usr] = vidsearch.result()
             await interaction.send('***' + settings.searches[interaction.guild.id][usr]['result'][0][
                 'title'] + '*** has been added to the queue', ephemeral=True)
-            settings.queues[interaction.guild.id].append(
-                settings.searches[interaction.guild.id][usr]['result'][0]['link'])
+            settings.queues[interaction.guild.id].append({})
+            settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][0]['link']
             settings.titles[interaction.guild.id].append(
                 settings.searches[interaction.guild.id][usr]['result'][0]['title'])
             settings.searches[interaction.guild.id][usr] = ''
@@ -363,8 +359,8 @@ class SlashMusic(commands.Cog):
                                            settings.searches[interaction.guild.id][usr]['result'][
                                                int(playlist) - 1]['title'] + '*** has been added to the queue',
                                            ephemeral=True)
-                    settings.queues[interaction.guild.id].append(
-                        settings.searches[interaction.guild.id][usr]['result'][int(playlist) - 1]['link'])
+                    settings.queues[interaction.guild.id].append({})
+                    settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][int(playlist) - 1]['link']
                     settings.titles[interaction.guild.id].append(
                         settings.searches[interaction.guild.id][usr]['result'][int(playlist) - 1]['title'])
                     settings.searches[interaction.guild.id][usr] = ''
@@ -406,8 +402,8 @@ class SlashMusic(commands.Cog):
                 'title'] + '*** has been added to the queue\nSize: ' +
                                    settings.searches[interaction.guild.id][usr]['result'][0]['videoCount'],
                                    ephemeral=True)
-            settings.queues[interaction.guild.id].append(
-                settings.searches[interaction.guild.id][usr]['result'][0]['link'])
+            settings.queues[interaction.guild.id].append({})
+            settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][0]['link']
             settings.titles[interaction.guild.id].append(
                 settings.searches[interaction.guild.id][usr]['result'][0]['title'])
             settings.searches[interaction.guild.id][usr] = ''
@@ -486,7 +482,8 @@ class SlashMusic(commands.Cog):
                 settings.downloading[interaction.guild.id][1] = True
                 if settings.current[interaction.guild.id]:
                     settings.titles[interaction.guild.id].append(settings.current[interaction.guild.id]["title"])
-                    settings.queues[interaction.guild.id].append(settings.current[interaction.guild.id]["url"])
+                    settings.queues[interaction.guild.id].append({})
+                    settings.queues[interaction.guild.id][-1]['url'] = settings.current[interaction.guild.id]["url"]
                 await interaction.send('Repeating has been turned on')
         else:
             await interaction.send('I am not in a voice channel')

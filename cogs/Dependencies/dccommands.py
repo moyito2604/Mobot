@@ -98,7 +98,7 @@ async def retrieveAudio(url: str, path: str, ctx, index):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
             settings.current[ctx.guild.id]["title"] = settings.titles[ctx.guild.id][index]
-            settings.current[ctx.guild.id]["url"] = settings.queues[ctx.guild.id][index]
+            settings.current[ctx.guild.id]["url"] = settings.queues[ctx.guild.id][index]['url']
             print(f"\n{settings.current[ctx.guild.id]}\n")
             settings.queues[ctx.guild.id].pop(index)
             info = await loop.run_in_executor(None, ydl.extract_info, url)
@@ -111,7 +111,7 @@ async def retrieveAudio(url: str, path: str, ctx, index):
             channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                          id=settings.channels[ctx.guild.id].channel.id)
             await channel.send("The current Track has failed to download. The next Track will now Download")
-            return await retrieveAudio(settings.queues[ctx.guild.id][0], (pwd + '/' + str(ctx.guild.id)), ctx, 0)
+            return await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (pwd + '/' + str(ctx.guild.id)), ctx, 0)
     if extension == "webm":
         extension = "opus"
     for file in os.listdir(path):
@@ -161,15 +161,13 @@ async def queue(ctx, client):
 
         # It then checks if there is an active queue for an individual server
         if settings.queues[ctx.guild.id]:
-            if settings.queues[ctx.guild.id][0].startswith('song'):
+            if settings.queues[ctx.guild.id][0]['url'].startswith('song'):
                 source = FFmpegPCMAudio(pwd + '/' + str(ctx.guild.id) + '/' + settings.queues[ctx.guild.id][0])
 
             # It then sets up everything for the next song to play properly
             # It clears the guild directory and sets downloading to true
             else:
                 settings.downloading[ctx.guild.id][0] = True
-                os.system('rm ' + str(ctx.guild.id) + '/*.opus')
-                os.system('rm ' + str(ctx.guild.id) + '/*.webm')
 
                 # It then checks if shuffle is turned on and grabs the index for the next shuffle
                 if settings.downloading[ctx.guild.id][2] and (not settings.indexes[ctx.guild.id]):
@@ -185,12 +183,19 @@ async def queue(ctx, client):
                     settings.indexes[ctx.guild.id] = False
 
                 # It then checks if the next item is a playlist and retrieves every item in the playlist
-                url = settings.queues[ctx.guild.id][index]
+                url = settings.queues[ctx.guild.id][index]['url']
                 if "playlist" in url and ("youtube" in url or "youtu.be" in url):
-                    songlist, title = await retrievePlaylist(settings.queues[ctx.guild.id][index], ctx)
+                    songlist, title = await retrievePlaylist(settings.queues[ctx.guild.id][index]['url'], ctx)
                     voice.stop()
                     settings.queues[ctx.guild.id].pop(index)
-                    settings.queues[ctx.guild.id] = songlist + settings.queues[ctx.guild.id]
+                    counter = 0
+                    curqueue = settings.queues[ctx.guild.id]
+                    settings.queues[ctx.guild.id] = []
+                    for item in songlist:
+                        settings.queues[ctx.guild.id].append({})
+                        settings.queues[ctx.guild.id][-1]['url'] = item
+                        counter += 1
+                    settings.queues[ctx.guild.id] = settings.queues[ctx.guild.id] + curqueue
                     settings.titles[ctx.guild.id].pop(index)
                     settings.titles[ctx.guild.id] = title + settings.titles[ctx.guild.id]
 
@@ -201,14 +206,14 @@ async def queue(ctx, client):
                         settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
                         settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
                     source, title, thumbnail, duration = await retrieveAudio(
-                        settings.queues[ctx.guild.id][index], (pwd + '/' + str(ctx.guild.id)), ctx, index)
+                        settings.queues[ctx.guild.id][index]['url'], (pwd + '/' + str(ctx.guild.id)), ctx, index)
                     textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                                      id=settings.channels[ctx.guild.id].channel.id)
                     embed = nextcord.Embed(title="Now playing:", description=title)
                     embed.set_footer(text=f"Duration: {duration}")
                     embed.set_thumbnail(url=thumbnail)
                     await textchannel.send(embed=embed)
-                    # Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN dccommands.py
+                    # Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN retrieveAudio()
                     # settings.titles[ctx.guild.id].pop(index)
                     if settings.downloading[ctx.guild.id][3]:
                         # loop = asyncio.get_event_loop()
@@ -227,7 +232,5 @@ async def queue(ctx, client):
 
         # If there is not an active queue, it cleans up and pauses the timer
         else:
-            os.system('rm ' + str(ctx.guild.id) + '/*.opus')
-            os.system('rm ' + str(ctx.guild.id) + '/*.webm')
             await settings.timers[ctx.guild.id].pause()
             print('No queued items')
