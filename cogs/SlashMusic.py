@@ -143,6 +143,7 @@ class SlashMusic(commands.Cog):
                 if dccommands.checkurl(url):
                     settings.queues[interaction.guild.id].append({})
                     settings.queues[interaction.guild.id][-1]['url'] = url
+                    settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
                     failed = False
                     with yt_dlp.YoutubeDL() as ydl:
                         try:
@@ -187,6 +188,7 @@ class SlashMusic(commands.Cog):
                                                '*** has been added to the queue', ephemeral=True)
                         settings.queues[interaction.guild.id].append({})
                         settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['link']
+                        settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
                         settings.titles[interaction.guild.id].append(
                             settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['title'])
                         settings.searches[interaction.guild.id][usr] = ''
@@ -289,6 +291,7 @@ class SlashMusic(commands.Cog):
                     if settings.downloading[interaction.guild.id][1]:
                         settings.queues[interaction.guild.id].append({})
                         settings.queues[interaction.guild.id][-1]['url'] = settings.queues[interaction.guild.id][0]
+                        settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
                         settings.titles[interaction.guild.id].append(settings.titles[interaction.guild.id][0])
                     settings.queues[interaction.guild.id].pop(0)
                     settings.titles[interaction.guild.id].pop(0)
@@ -328,6 +331,7 @@ class SlashMusic(commands.Cog):
                 'title'] + '*** has been added to the queue', ephemeral=True)
             settings.queues[interaction.guild.id].append({})
             settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][0]['link']
+            settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
             settings.titles[interaction.guild.id].append(
                 settings.searches[interaction.guild.id][usr]['result'][0]['title'])
             settings.searches[interaction.guild.id][usr] = ''
@@ -361,6 +365,7 @@ class SlashMusic(commands.Cog):
                                            ephemeral=True)
                     settings.queues[interaction.guild.id].append({})
                     settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][int(playlist) - 1]['link']
+                    settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
                     settings.titles[interaction.guild.id].append(
                         settings.searches[interaction.guild.id][usr]['result'][int(playlist) - 1]['title'])
                     settings.searches[interaction.guild.id][usr] = ''
@@ -404,6 +409,7 @@ class SlashMusic(commands.Cog):
                                    ephemeral=True)
             settings.queues[interaction.guild.id].append({})
             settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][0]['link']
+            settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
             settings.titles[interaction.guild.id].append(
                 settings.searches[interaction.guild.id][usr]['result'][0]['title'])
             settings.searches[interaction.guild.id][usr] = ''
@@ -484,6 +490,7 @@ class SlashMusic(commands.Cog):
                     settings.titles[interaction.guild.id].append(settings.current[interaction.guild.id]["title"])
                     settings.queues[interaction.guild.id].append({})
                     settings.queues[interaction.guild.id][-1]['url'] = settings.current[interaction.guild.id]["url"]
+                    settings.queues[interaction.guild.id][-1]['user'] = settings.current[interaction.guild.id]["user"]
                 await interaction.send('Repeating has been turned on')
         else:
             await interaction.send('I am not in a voice channel')

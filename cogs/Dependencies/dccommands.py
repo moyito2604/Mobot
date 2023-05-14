@@ -99,7 +99,9 @@ async def retrieveAudio(url: str, path: str, ctx, index):
         try:
             settings.current[ctx.guild.id]["title"] = settings.titles[ctx.guild.id][index]
             settings.current[ctx.guild.id]["url"] = settings.queues[ctx.guild.id][index]['url']
+            settings.current[ctx.guild.id]["user"] = settings.queues[ctx.guild.id][index]['user']
             print(f"\n{settings.current[ctx.guild.id]}\n")
+            user = settings.queues[ctx.guild.id][index]['user']
             settings.queues[ctx.guild.id].pop(index)
             info = await loop.run_in_executor(None, ydl.extract_info, url)
             settings.titles[ctx.guild.id].pop(index)
@@ -120,7 +122,7 @@ async def retrieveAudio(url: str, path: str, ctx, index):
     source = await FFmpegOpusAudio.from_probe(path + f"/song.{extension}")
     times = time.gmtime(info["duration"])
     duration = time.strftime("%H:%M:%S", times)
-    return source, title, info["thumbnails"][0]["url"], duration
+    return source, title, info["thumbnails"][0]["url"], duration, user
 
 
 # This function retrieves a playlist from youtube using scrapetube and pushes the urls to queue
@@ -187,6 +189,7 @@ async def queue(ctx, client):
                 if "playlist" in url and ("youtube" in url or "youtu.be" in url):
                     songlist, title = await retrievePlaylist(settings.queues[ctx.guild.id][index]['url'], ctx)
                     voice.stop()
+                    users = settings.queues[ctx.guild.id][index]['user']
                     settings.queues[ctx.guild.id].pop(index)
                     counter = 0
                     curqueue = settings.queues[ctx.guild.id]
@@ -194,6 +197,7 @@ async def queue(ctx, client):
                     for item in songlist:
                         settings.queues[ctx.guild.id].append({})
                         settings.queues[ctx.guild.id][-1]['url'] = item
+                        settings.queues[ctx.guild.id][-1]['user'] = users
                         counter += 1
                     settings.queues[ctx.guild.id] = settings.queues[ctx.guild.id] + curqueue
                     settings.titles[ctx.guild.id].pop(index)
@@ -205,14 +209,15 @@ async def queue(ctx, client):
                     if settings.downloading[ctx.guild.id][1]:
                         settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
                         settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
-                    source, title, thumbnail, duration = await retrieveAudio(
+                    source, title, thumbnail, duration, user = await retrieveAudio(
                         settings.queues[ctx.guild.id][index]['url'], (pwd + '/' + str(ctx.guild.id)), ctx, index)
                     textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                                      id=settings.channels[ctx.guild.id].channel.id)
                     embed = nextcord.Embed(title="Now playing:", description=title)
+                    embed.add_field(name="Added By:", value=user, inline=False)
                     embed.set_footer(text=f"Duration: {duration}")
                     embed.set_thumbnail(url=thumbnail)
-                    await textchannel.send(embed=embed)
+                    await textchannel.send(mention_author=True, embed=embed)
                     # Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN retrieveAudio()
                     # settings.titles[ctx.guild.id].pop(index)
                     if settings.downloading[ctx.guild.id][3]:

@@ -99,7 +99,7 @@ pwd = os.path.dirname(os.path.realpath(__file__))
 # command and notifies the user of when the bot has logged in and is ready to deploy to servers
 @client.event
 async def on_ready():
-    game = config.extension + 'help'
+    game = '/help'
     activity = nextcord.Game(name=game, type=3)
     if os.path.exists("Guilds.txt"):
         os.remove("Guilds.txt")
