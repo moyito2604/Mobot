@@ -16,6 +16,7 @@ import config
 import settings
 import cogs.Dependencies.dccommands as dccommands
 import cogs.Dependencies.Threaded_timer as Threaded_timer
+import cogs.Dependencies.Buttons as Buttons
 
 extensions = config.extension
 
@@ -49,7 +50,6 @@ class SlashMusic(commands.Cog):
                 settings.queues[interaction.guild.id] = []
                 settings.titles[interaction.guild.id] = []
                 settings.downloading[interaction.guild.id] = [False, False, False, False]
-                settings.searches[interaction.guild.id] = {}
                 settings.indexes[interaction.guild.id] = False
                 settings.current[interaction.guild.id] = {}
                 channel = interaction.user.voice.channel
@@ -88,7 +88,6 @@ class SlashMusic(commands.Cog):
             await settings.timers[interaction.guild.id].stop()
             settings.timers.pop(interaction.guild.id)
             settings.queues.pop(interaction.guild.id)
-            settings.searches.pop(interaction.guild.id)
             settings.titles.pop(interaction.guild.id)
             settings.channels.pop(interaction.guild.id)
             settings.current.pop(interaction.guild.id)
@@ -121,7 +120,6 @@ class SlashMusic(commands.Cog):
                     settings.queues[interaction.guild.id] = []
                     settings.titles[interaction.guild.id] = []
                     settings.downloading[interaction.guild.id] = [False, False, False, False]
-                    settings.searches[interaction.guild.id] = {}
                     settings.indexes[interaction.guild.id] = False
                     settings.current[interaction.guild.id] = {}
                     channel = interaction.user.voice.channel
@@ -160,7 +158,8 @@ class SlashMusic(commands.Cog):
                             else:
                                 await interaction.send("The current Track has failed to play")
                     if not failed:
-                        if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
+                        if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][
+                            0] == True:
                             if "playlist" in url and ("youtube" in url or "youtu.be" in url):
                                 await interaction.send('Playlist ***' + title + '*** has been added to the queue')
                                 settings.queues[interaction.guild.id][-1]['items'] = info['playlist_count']
@@ -177,47 +176,40 @@ class SlashMusic(commands.Cog):
                     if settings.downloading[interaction.guild.id][0] == False:
                         await settings.timers[interaction.guild.id].start()
 
-                # Once it checks that its not a youtube link, it checks if it is selecting a song from the search
-                # function Once it verifies that it is a search, it then selects the song and adds it to the queue
-                # and clears the search It then starts the timer
-                elif url == '1' or url == '2' or url == '3' or url == '4' or url == '5':
-                    if settings.searches[interaction.guild.id][usr] == '':
-                        await interaction.send(
-                            'There is currently no searched music, please search for a song and try again.',
-                            ephemeral=True)
-                    else:
-                        print('successfully chose a song')
-                        await interaction.send('Song number ' + url + ' selected:\n***' +
-                                               settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['title'] +
-                                               '*** has been added to the queue', ephemeral=True)
-                        settings.queues[interaction.guild.id].append({})
-                        settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['link']
-                        settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
-                        with yt_dlp.YoutubeDL() as ydl:
-                            info = ydl.extract_info(settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['link'], download=False, process=False)
-                            times = time.gmtime(info["duration"])
-                            settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
-                        settings.titles[interaction.guild.id].append(
-                            settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['title'])
-                        settings.searches[interaction.guild.id][usr] = ''
-                        if settings.downloading[interaction.guild.id][0] == False:
-                            await settings.timers[interaction.guild.id].start()
-                        print(settings.queues[interaction.guild.id])
-
                 # It then checks if a video search is being performed
                 # Once it confirms that it's a video search, it saves the key for the search for later use
                 else:
                     vidsearch = VideosSearch(url, limit=5)
-                    settings.searches[interaction.guild.id][usr] = vidsearch.result()
-                    msg = await interaction.send(
-                        'Please select a song from the following results:\n1: ***' +
-                        settings.searches[interaction.guild.id][usr]['result'][0]['title'] + '***\n'
-                                                                                             '2: ***' +
-                        settings.searches[interaction.guild.id][usr]['result'][1]['title'] + '***\n' +
-                        '3: ***' + settings.searches[interaction.guild.id][usr]['result'][2]['title'] + '***\n' +
-                        '4: ***' + settings.searches[interaction.guild.id][usr]['result'][3]['title'] + '***\n' +
-                        '5: ***' + settings.searches[interaction.guild.id][usr]['result'][4]['title'] + '***\n',
-                        ephemeral=True)
+                    view = Buttons.searchButton()
+                    search = vidsearch.result()
+                    embed = nextcord.Embed(title="Search Results")
+                    counter = 1
+                    for result in search['result']:
+                        embed.add_field(name=f"{counter}: ***{result['title']}***",
+                                        value=f"Duration: {result['duration']}",
+                                        inline=False)
+                        counter += 1
+                    await interaction.send(embed=embed, ephemeral=True, view=view, delete_after=20)
+                    await view.wait()
+                    if view.value is None:
+                        return
+                    else:
+                        await interaction.send('Song number ' + str(view.value) + ' selected:\n***' +
+                                               search['result'][int(view.value) - 1]['title'] +
+                                               '*** has been added to the queue', ephemeral=True)
+                        print('successfully chose a song')
+                        settings.queues[interaction.guild.id].append({})
+                        settings.queues[interaction.guild.id][-1]['url'] = search['result'][int(view.value) - 1]['link']
+                        settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                        with yt_dlp.YoutubeDL() as ydl:
+                            info = ydl.extract_info(search['result'][int(view.value) - 1]['link'], download=False, process=False)
+                            times = time.gmtime(info['duration'])
+                            settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
+                        settings.titles[interaction.guild.id].append(search['result'][int(view.value) - 1]['title'])
+                        if not settings.downloading[interaction.guild.id][0]:
+                            await settings.timers[interaction.guild.id].start()
+                        print(settings.queues[interaction.guild.id])
+
 
             # This then checks if the bot is not in a voice channel and if its not, it sends a message reminding a
             # user to join the voice channel to bring the bot in
@@ -326,7 +318,6 @@ class SlashMusic(commands.Cog):
     @nextcord.slash_command(name="song", description="allows the user to search for a song and add it to the queue")
     async def song(self, interaction: Interaction, song: str):
 
-        usr = interaction.user.id
         # It checks for voice
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
 
@@ -334,20 +325,17 @@ class SlashMusic(commands.Cog):
         # It also starts the threaded timer if it is not downloading
         if voice != None:
             vidsearch = VideosSearch(song, limit=1)
-            settings.searches[interaction.guild.id][usr] = vidsearch.result()
-            await interaction.send('***' + settings.searches[interaction.guild.id][usr]['result'][0][
-                'title'] + '*** has been added to the queue', ephemeral=True)
+            search = vidsearch.result()
+            await interaction.send('***' + search['result'][0]['title'] + '*** has been added to the queue', ephemeral=True)
             settings.queues[interaction.guild.id].append({})
-            settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][0]['link']
+            settings.queues[interaction.guild.id][-1]['url'] = search['result'][0]['link']
             settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
             with yt_dlp.YoutubeDL() as ydl:
-                info = ydl.extract_info(settings.searches[interaction.guild.id][usr]['result'][0]['link'], download=False, process=False)
+                info = ydl.extract_info(search['result'][0]['link'], download=False, process=False)
                 times = time.gmtime(info["duration"])
                 settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
-            settings.titles[interaction.guild.id].append(
-                settings.searches[interaction.guild.id][usr]['result'][0]['title'])
-            settings.searches[interaction.guild.id][usr] = ''
-            if settings.downloading[interaction.guild.id][0] == False:
+            settings.titles[interaction.guild.id].append(search['result'][0]['title'])
+            if not settings.downloading[interaction.guild.id][0]:
                 await settings.timers[interaction.guild.id].start()
         else:
             await interaction.response.send_message('I am not in a voice channel')
@@ -357,51 +345,39 @@ class SlashMusic(commands.Cog):
                             description="allows a user to search for and select a playlist and add it to the queue")
     async def playlist(self, interaction: Interaction, playlist: str):
 
-        usr = interaction.user.id
         # First it checks for a voice channel once again
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
         if voice != None:
 
-            # It then checks if the user has selected a specific playlist from the search key for their server
-            # If it is true, then it adds the song to the end of the queue
-            # Once this is done, it adds the song to the end of the queue
-            if playlist == '1' or playlist == '2' or playlist == '3' or playlist == '4' or playlist == '5':
-                if settings.searches[interaction.guild.id][usr] == '':
-                    await interaction.send(
-                        'There is currently no searched music, please search for a playlist and try again.')
-                else:
-                    print('successfully chose a playlist')
-                    await interaction.send('Playlist number ' + playlist + ' selected:\n***' +
-                                           settings.searches[interaction.guild.id][usr]['result'][
-                                               int(playlist) - 1]['title'] + '*** has been added to the queue',
-                                           ephemeral=True)
-                    settings.queues[interaction.guild.id].append({})
-                    settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][int(playlist) - 1]['link']
-                    settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
-                    settings.queues[interaction.guild.id][-1]['items'] = settings.searches[interaction.guild.id][usr]['result'][int(playlist) - 1]['videoCount']
-                    settings.titles[interaction.guild.id].append(
-                        settings.searches[interaction.guild.id][usr]['result'][int(playlist) - 1]['title'])
-                    settings.searches[interaction.guild.id][usr] = ''
-                    if settings.downloading[interaction.guild.id][0] == False:
-                        await settings.timers[interaction.guild.id].start()
-
             # Then it checks if the user has put a search term, if it is, then it provides the user with the top 5
             # options It then saves it to the search key for later use
+            vidsearch = PlaylistsSearch(playlist, limit=5)
+            search = vidsearch.result()
+            view = Buttons.searchButton()
+            embed = nextcord.Embed(title="Search Results")
+            counter = 1
+            for result in search['result']:
+                embed.add_field(name=f"{counter}: ***{result['title']}***",
+                                value=f"Playlist Items: {result['videoCount']}",
+                                inline=False)
+                counter += 1
+            await interaction.send(embed=embed, ephemeral=True, view=view, delete_after=20)
+            await view.wait()
+            if view.value is None:
+                return
             else:
-                vidsearch = PlaylistsSearch(playlist, limit=5)
-                settings.searches[interaction.guild.id][usr] = vidsearch.result()
-                msg = await interaction.send(
-                    'Please select a playlist from the following results:\n1: ***' +
-                    settings.searches[interaction.guild.id][usr]['result'][0]['title'] +
-                    '*** \tSize: ' + settings.searches[interaction.guild.id][usr]['result'][0]['videoCount'] + '\n' +
-                    f'2: ***' + settings.searches[interaction.guild.id][usr]['result'][1]['title'] + '*** \tSize:' +
-                    settings.searches[interaction.guild.id][usr]['result'][1]['videoCount'] + '\n' +
-                    f'3: ***' + settings.searches[interaction.guild.id][usr]['result'][2]['title'] + '*** \tSize:' +
-                    settings.searches[interaction.guild.id][usr]['result'][2]['videoCount'] + '\n' +
-                    f'4: ***' + settings.searches[interaction.guild.id][usr]['result'][3]['title'] + '*** \tSize:' +
-                    settings.searches[interaction.guild.id][usr]['result'][3]['videoCount'] + '\n' +
-                    f'5: ***' + settings.searches[interaction.guild.id][usr]['result'][4]['title'] + '*** \tSize:' +
-                    settings.searches[interaction.guild.id][usr]['result'][4]['videoCount'] + '\n', ephemeral=True)
+                print('successfully chose a playlist')
+                await interaction.send('Playlist number ' + playlist + ' selected:\n***' +
+                                       search['result'][int(view.value) - 1]['title'] + '*** has been added to the queue',
+                                       ephemeral=True)
+                settings.queues[interaction.guild.id].append({})
+                settings.queues[interaction.guild.id][-1]['url'] = search['result'][int(view.value) - 1]['link']
+                settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                settings.queues[interaction.guild.id][-1]['items'] = search['result'][int(view.value) - 1]['videoCount']
+                settings.titles[interaction.guild.id].append(search['result'][int(view.value) - 1]['title'])
+                if not settings.downloading[interaction.guild.id][0]:
+                    await settings.timers[interaction.guild.id].start()
+
         else:
             await interaction.send('I am not in a voice channel')
 
@@ -411,23 +387,20 @@ class SlashMusic(commands.Cog):
                             description="allows the user to search and add a playlist to the queue quickly")
     async def qplaylist(self, interaction: Interaction, playlist: str):
 
-        usr = interaction.user.id
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
+
         if voice != None:
             vidsearch = PlaylistsSearch(playlist, limit=1)
-            settings.searches[interaction.guild.id][usr] = vidsearch.result()
-            await interaction.send('***' + settings.searches[interaction.guild.id][usr]['result'][0][
-                'title'] + '*** has been added to the queue\nSize: ' +
-                                   settings.searches[interaction.guild.id][usr]['result'][0]['videoCount'],
+            search = vidsearch.result()
+            await interaction.send('***' + search['result'][0]['title'] + '*** has been added to the queue\nSize: ' +
+                                   search['result'][0]['videoCount'],
                                    ephemeral=True)
             settings.queues[interaction.guild.id].append({})
-            settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][0]['link']
+            settings.queues[interaction.guild.id][-1]['url'] = search['result'][0]['link']
             settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
-            settings.queues[interaction.guild.id][-1]['items'] = settings.searches[interaction.guild.id][usr]['result'][0]['videoCount']
-            settings.titles[interaction.guild.id].append(
-                settings.searches[interaction.guild.id][usr]['result'][0]['title'])
-            settings.searches[interaction.guild.id][usr] = ''
-            if settings.downloading[interaction.guild.id][0] == False:
+            settings.queues[interaction.guild.id][-1]['items'] = search['result'][0]['videoCount']
+            settings.titles[interaction.guild.id].append(search['result'][0]['title'])
+            if not settings.downloading[interaction.guild.id][0]:
                 await settings.timers[interaction.guild.id].start()
         else:
             await interaction.response.send_message('I am not in a voice channel')
@@ -437,6 +410,7 @@ class SlashMusic(commands.Cog):
     async def showqueue(self, interaction: Interaction):
         # First it checks if their guild id is in the queue dictionary
         if interaction.guild.id in settings.titles:
+            view = Buttons.queueButton()
             embed = nextcord.Embed(title=f"{interaction.guild.name}'s Queue")
             for counter in range(0, len(settings.queues[interaction.guild.id])):
                 value = f"Added by: {settings.queues[interaction.guild.id][counter]['user']}\n"
@@ -444,13 +418,12 @@ class SlashMusic(commands.Cog):
                     value += f"Duration: {settings.queues[interaction.guild.id][counter]['duration']}"
                 else:
                     value += f"Playlist Items: {settings.queues[interaction.guild.id][counter]['items']}"
-                embed.add_field(name=f"{counter+1}: ***{settings.titles[interaction.guild.id][counter]}***",
+                embed.add_field(name=f"{counter + 1}: ***{settings.titles[interaction.guild.id][counter]}***",
                                 value=value,
                                 inline=False)
-            await interaction.send(embed=embed)
+            await interaction.send(embed=embed, view=view)
         else:
             await interaction.send('There is no active queue for this server')
-
 
     # The repeat function allows a user to repeat the queue
     # If the bot is in a voice channel, this function allows the user to toggle the repeat key off and on

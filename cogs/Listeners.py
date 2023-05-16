@@ -32,7 +32,6 @@ class Listeners(commands.Cog):
             await settings.timers[member.guild.id].stop()
             settings.timers.pop(member.guild.id)
             settings.queues.pop(member.guild.id)
-            settings.searches.pop(member.guild.id)
             settings.titles.pop(member.guild.id)
             settings.channels.pop(member.guild.id)
             settings.current.pop(member.guild.id)
