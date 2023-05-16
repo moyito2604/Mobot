@@ -133,14 +133,17 @@ async def retrievePlaylist(url, ctx):
     videos = await loop.run_in_executor(None, scrapetube.get_playlist, id)
     songlist = []
     title = []
+    lengths = []
     for video in videos:
         songlist.append('https://www.youtube.com/watch?v=' + video['videoId'])
         title.append(video['title']['runs'][0]['text'])
+        times = time.gmtime(int(video['lengthSeconds']))
+        lengths.append(time.strftime("%H:%M:%S", times))
     channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                  id=settings.channels[ctx.guild.id].channel.id)
     print("Playlist retrieved successfully")
     await channel.send('Playlist Retrieved Successfully')
-    return songlist, title
+    return songlist, title, lengths
 
 def checkurl(url_string: str):
     result = validators.url(url_string)
@@ -187,7 +190,7 @@ async def queue(ctx, client):
                 # It then checks if the next item is a playlist and retrieves every item in the playlist
                 url = settings.queues[ctx.guild.id][index]['url']
                 if "playlist" in url and ("youtube" in url or "youtu.be" in url):
-                    songlist, title = await retrievePlaylist(settings.queues[ctx.guild.id][index]['url'], ctx)
+                    songlist, title, durations = await retrievePlaylist(settings.queues[ctx.guild.id][index]['url'], ctx)
                     voice.stop()
                     users = settings.queues[ctx.guild.id][index]['user']
                     settings.queues[ctx.guild.id].pop(index)
@@ -198,6 +201,7 @@ async def queue(ctx, client):
                         settings.queues[ctx.guild.id].append({})
                         settings.queues[ctx.guild.id][-1]['url'] = item
                         settings.queues[ctx.guild.id][-1]['user'] = users
+                        settings.queues[ctx.guild.id][-1]['duration'] = durations[counter]
                         counter += 1
                     settings.queues[ctx.guild.id] = settings.queues[ctx.guild.id] + curqueue
                     settings.titles[ctx.guild.id].pop(index)
