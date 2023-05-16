@@ -2,6 +2,7 @@
 # This file contains all the commands associated with the Mobot Music commands
 
 import os
+import time
 from nextcord import SlashOption
 import nextcord
 from nextcord.ext import commands
@@ -34,7 +35,7 @@ class SlashMusic(commands.Cog):
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
 
         # It then checks if the author is in a voice channel currently
-        # It then checks if the bot is in a voice channel and if its not, it joins the voice channel
+        # It then checks if the bot is in a voice channel and if it's not, it joins the voice channel
         # It also arranges server specific dictionary keys to run the bot as well and sets up logging
         # It sets up the threaded timer to monitor the voice activity of the bot as well.
         if interaction.user.voice:
@@ -162,8 +163,11 @@ class SlashMusic(commands.Cog):
                         if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
                             if "playlist" in url and ("youtube" in url or "youtu.be" in url):
                                 await interaction.send('Playlist ***' + title + '*** has been added to the queue')
+                                settings.queues[interaction.guild.id][-1]['items'] = info['playlist_count']
                             else:
                                 await interaction.send('***' + title + '*** has been added to the queue')
+                                times = time.gmtime(info["duration"])
+                                settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
                         else:
                             await interaction.send('Retrieving from source')
                             if "playlist" in url and ("youtube" in url or "youtu.be" in url):
@@ -189,6 +193,10 @@ class SlashMusic(commands.Cog):
                         settings.queues[interaction.guild.id].append({})
                         settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['link']
                         settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                        with yt_dlp.YoutubeDL() as ydl:
+                            info = ydl.extract_info(settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['link'], download=False, process=False)
+                            times = time.gmtime(info["duration"])
+                            settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
                         settings.titles[interaction.guild.id].append(
                             settings.searches[interaction.guild.id][usr]['result'][int(url) - 1]['title'])
                         settings.searches[interaction.guild.id][usr] = ''
@@ -332,6 +340,10 @@ class SlashMusic(commands.Cog):
             settings.queues[interaction.guild.id].append({})
             settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][0]['link']
             settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+            with yt_dlp.YoutubeDL() as ydl:
+                info = ydl.extract_info(settings.searches[interaction.guild.id][usr]['result'][0]['link'], download=False, process=False)
+                times = time.gmtime(info["duration"])
+                settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
             settings.titles[interaction.guild.id].append(
                 settings.searches[interaction.guild.id][usr]['result'][0]['title'])
             settings.searches[interaction.guild.id][usr] = ''
@@ -366,6 +378,7 @@ class SlashMusic(commands.Cog):
                     settings.queues[interaction.guild.id].append({})
                     settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][int(playlist) - 1]['link']
                     settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                    settings.queues[interaction.guild.id][-1]['items'] = settings.searches[interaction.guild.id][usr]['result'][int(playlist) - 1]['videoCount']
                     settings.titles[interaction.guild.id].append(
                         settings.searches[interaction.guild.id][usr]['result'][int(playlist) - 1]['title'])
                     settings.searches[interaction.guild.id][usr] = ''
@@ -410,6 +423,7 @@ class SlashMusic(commands.Cog):
             settings.queues[interaction.guild.id].append({})
             settings.queues[interaction.guild.id][-1]['url'] = settings.searches[interaction.guild.id][usr]['result'][0]['link']
             settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+            settings.queues[interaction.guild.id][-1]['items'] = settings.searches[interaction.guild.id][usr]['result'][0]['videoCount']
             settings.titles[interaction.guild.id].append(
                 settings.searches[interaction.guild.id][usr]['result'][0]['title'])
             settings.searches[interaction.guild.id][usr] = ''
@@ -420,56 +434,23 @@ class SlashMusic(commands.Cog):
 
     # The showqueue function allows a user to see the queue key for their specific server
     @nextcord.slash_command(name="showqueue", description="allows the user to view the current queue")
-    async def showqueue(self, interaction: Interaction, msg=SlashOption(name="printing",
-                                                                        description="Allows the user to send to "
-                                                                                    "either print queue to DM or "
-                                                                                    "channel",
-                                                                        choices={"Channel": "channel", "DM": "dm"})):
-        queued = ''
-        counter = 0
-
+    async def showqueue(self, interaction: Interaction):
         # First it checks if their guild id is in the queue dictionary
         if interaction.guild.id in settings.titles:
-
-            # Once it checks that the queue is available, it generates the queue into a printable string
-            for title in settings.titles[interaction.guild.id]:
-                queued = queued + str(counter + 1) + ': ***' + title + '***\n'
-                counter += 1
-            if queued == '':
-                await interaction.send('There are no songs currently on queue')
-
-            # It then checks the size of the queue If the queue is too long to print in a text channel, it gives the
-            # user the option too be able to print it to a place of their choosing If the user chooses to print it in
-            # a text channel, it prints the first 10 songs in queue However, if the user chooses DM, it allows the
-            # user to see the entire queue through a DM message from the bot
-            else:
-                if len(queued) > 1970:
-                    await interaction.send('The queue is currently too long to print')
-                    queued = ''
-                    if msg.lower() == 'dm':
-                        await interaction.send('The queue has been sent to DM')
-                        queued = '***Queue***\n\n\n\nSongs currently on queue:\n'
-                        reset = 0
-                        counter = 0
-                        for title in settings.titles[interaction.guild.id]:
-                            if reset == 20:
-                                reset = 0
-                                await interaction.user.send(queued)
-                                queued = ''
-                            queued = queued + str(counter + 1) + ': ***' + title + '***\n'
-                            reset += 1
-                            counter += 1
-                        if queued != '':
-                            await interaction.user.send(queued)
-                    else:
-                        for counter in range(0, 10):
-                            queued = queued + str(counter + 1) + ': ***' + settings.titles[interaction.guild.id][
-                                counter] + '***\n'
-                        await interaction.send('The next 10 songs in queue will be printed instead:\n' + queued)
+            embed = nextcord.Embed(title=f"{interaction.guild.name}'s Queue")
+            for counter in range(0, len(settings.queues[interaction.guild.id])):
+                value = f"Added by: {settings.queues[interaction.guild.id][counter]['user']}\n"
+                if 'duration' in settings.queues[interaction.guild.id][counter]:
+                    value += f"Duration: {settings.queues[interaction.guild.id][counter]['duration']}"
                 else:
-                    await interaction.send('Songs currently on queue:\n' + queued)
+                    value += f"Playlist Items: {settings.queues[interaction.guild.id][counter]['items']}"
+                embed.add_field(name=f"{counter+1}: ***{settings.titles[interaction.guild.id][counter]}***",
+                                value=value,
+                                inline=False)
+            await interaction.send(embed=embed)
         else:
             await interaction.send('There is no active queue for this server')
+
 
     # The repeat function allows a user to repeat the queue
     # If the bot is in a voice channel, this function allows the user to toggle the repeat key off and on
