@@ -1,6 +1,8 @@
+# Buttons.py holds all the buttons necessary for use in Mobot
 import nextcord
 
 
+# The class queueButton is used for the queue command to move through the pages
 class queueButton(nextcord.ui.View):
     def __init__(self):
         super().__init__(timeout=5)
@@ -14,7 +16,8 @@ class queueButton(nextcord.ui.View):
     async def next(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         self.value = True
 
-
+# THe class searchButton holds all the buttons used to make a selection in a search. The buttons correspond to the
+# 1-5 buttons needed for a search
 class searchButton(nextcord.ui.View):
     def __init(self):
         super().__init__(timeout=5)

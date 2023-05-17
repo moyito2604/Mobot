@@ -1,4 +1,4 @@
-# dccommands.py defines several different functions necessary for all the different functions Mobot has
+# Functions.py defines several different functions necessary for all the different functions Mobot has
 # It includes several functions that retrieve songs, playlists, Quotes, etc.
 import asyncio
 import time
@@ -18,6 +18,7 @@ import random
 
 # Sets the working directory
 pwd = os.path.dirname(os.path.realpath(__file__))
+
 
 # This function retrieves a techquote from the Funnytechquotes.txt repository of quotes
 # It then returns the quote to be used in Mobot when the command is run
@@ -77,7 +78,7 @@ class loggerOutputs:
             print(msg)
 
 
-# RetrieveAudio defines a function which downloads a youtube video and converts it to an .opus file to be played by
+# RetrieveAudio defines a function which downloads a YouTube video and converts it to an .opus file to be played by
 # Mobot
 async def retrieveAudio(url: str, path: str, ctx, index):
     # ydl_ops defines a set of options used to run yt_dlp and get the desired output
@@ -91,8 +92,8 @@ async def retrieveAudio(url: str, path: str, ctx, index):
         }],
     }
 
-    # This then extracts the video from youtube and grabs the necessary information
-    # Its all done from the folder for each specific server
+    # This then extracts the video and grabs the necessary information
+    # It's all done from the folder for each specific server
     # It then returns the audio source, the title, thumbnail, and duration of the video
     loop = asyncio.get_event_loop()
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -108,12 +109,16 @@ async def retrieveAudio(url: str, path: str, ctx, index):
             title = info.get('title', None)
             extension = info.get('ext')
             print(f"\n{extension}\n")
+
+        # If there is an error with downloading, it then tries to download the next song
         except DownloadError:
             print("The Song has failed to Download")
             channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                          id=settings.channels[ctx.guild.id].channel.id)
             await channel.send("The current Track has failed to download. The next Track will now Download")
             return await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (pwd + '/' + str(ctx.guild.id)), ctx, 0)
+
+    # It then renames the song and gets it ready to be played
     if extension == "webm":
         extension = "opus"
     for file in os.listdir(path):
@@ -125,8 +130,8 @@ async def retrieveAudio(url: str, path: str, ctx, index):
     return source, title, info["thumbnails"][0]["url"], duration, user
 
 
-# This function retrieves a playlist from youtube using scrapetube and pushes the urls to queue
-# It also retrieves the titles of each song and pushes it to queue as well
+# This function retrieves a playlist from YouTube using scrapetube and pushes the urls to queue
+# It also retrieves the titles, duration, and the user who placed each song and pushes it to queue as well
 async def retrievePlaylist(url, ctx):
     id = url.lstrip('https://www.youtube.com/playlist?list=')
     loop = asyncio.get_event_loop()
@@ -145,6 +150,8 @@ async def retrievePlaylist(url, ctx):
     await channel.send('Playlist Retrieved Successfully')
     return songlist, title, lengths
 
+
+# Checkurl is a function that ensures that the given URL is a valid url
 def checkurl(url_string: str):
     result = validators.url(url_string)
 
@@ -223,7 +230,6 @@ async def queue(ctx, client):
                     embed.set_thumbnail(url=thumbnail)
                     await textchannel.send(mention_author=True, embed=embed)
                     # Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN retrieveAudio()
-                    # settings.titles[ctx.guild.id].pop(index)
                     if settings.downloading[ctx.guild.id][3]:
                         # loop = asyncio.get_event_loop()
                         print("normalized")
@@ -236,7 +242,6 @@ async def queue(ctx, client):
                         # await loop.run_in_executor(None, normalized.export, f"{pwd}/{ctx.guild.id}/song.opus", format="opus")
                         # source = FFmpegOpusAudio(f"{pwd}/{ctx.guild.id}/song.opus")
                     player = voice.play(source)
-                    # settings.queues[ctx.guild.id].pop(index)
             settings.downloading[ctx.guild.id][0] = False
 
         # If there is not an active queue, it cleans up and pauses the timer

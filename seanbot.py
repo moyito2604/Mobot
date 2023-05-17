@@ -4,7 +4,7 @@
 import nextcord
 import os
 from nextcord.ext import commands
-import cogs.Dependencies.dccommands as dccommands
+import cogs.Dependencies.Functions as Functions
 import config
 
 os.system("clear")
@@ -31,11 +31,11 @@ async def on_message(message):
         return
 
     if message.content.lower() == 'sean':
-        await message.channel.send(dccommands.seanQuotes())
+        await message.channel.send(Functions.seanQuotes())
         print("Response to sean printed")
 
     elif message.content.lower() == 'seam':
-        await message.channel.send(dccommands.oneSeam())
+        await message.channel.send(Functions.oneSeam())
         print("Response to seam printed")
 
 
