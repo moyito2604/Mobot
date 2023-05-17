@@ -3,7 +3,6 @@
 
 import os
 import time
-from nextcord import SlashOption
 import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction
@@ -14,7 +13,7 @@ import yt_dlp
 import shutil
 import config
 import settings
-import cogs.Dependencies.dccommands as dccommands
+import cogs.Dependencies.Functions as Functions
 import cogs.Dependencies.Threaded_timer as Threaded_timer
 import cogs.Dependencies.Buttons as Buttons
 
@@ -56,7 +55,7 @@ class SlashMusic(commands.Cog):
                 voice = await channel.connect()
                 await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
                 print('Successfully Joined the ' + str(channel) + ' voice channel')
-                settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, dccommands.queue, interaction,
+                settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Functions.queue, interaction,
                                                                                      self.client)
                 settings.channels[interaction.guild.id] = interaction
                 if os.path.exists(f'logs/{interaction.guild.name}_logs.log'):
@@ -100,12 +99,12 @@ class SlashMusic(commands.Cog):
     # This command is the most versatile command used for Mobot It allows you to play a song from a YouTube link,
     # load a playlist from a YouTube link, allows you to search for a song on YouTube It also allows a user to select
     # a song to play from the search results It can also be used to join the bot automatically and play a song
-    @nextcord.slash_command(name="play", description="Allows the bot to play music from a youtube link or search")
+    @nextcord.slash_command(name="play",
+                            description="Allows the bot to play music from a link or search")
     async def play(self, interaction: Interaction, url: str = ' '):
 
         # First it grabs the voice channel to check if the bot is in a voice channel
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
-        usr = interaction.user.id
         if url != ' ':
 
             # It then checks if the bot is in a Voice channel and if not, it sets it up similarly to the join command
@@ -126,7 +125,7 @@ class SlashMusic(commands.Cog):
                     voice = await channel.connect()
                     await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
                     print('Successfully Joined the ' + str(channel) + ' voice channel')
-                    settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, dccommands.queue,
+                    settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Functions.queue,
                                                                                          interaction,
                                                                                          self.client)
                     settings.channels[interaction.guild.id] = interaction
@@ -139,7 +138,7 @@ class SlashMusic(commands.Cog):
                 # It then checks if a youtube link was inputted or a search prompt. It then also checks if a youtube
                 # link is a playlist or not it then starts the threaded timer if 'https://www.youtube.com' in url or
                 # 'https://youtu.be' in url or 'https://youtube.com' in url:
-                if dccommands.checkurl(url):
+                if Functions.checkurl(url):
                     settings.queues[interaction.guild.id].append({})
                     settings.queues[interaction.guild.id][-1]['url'] = url
                     settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
@@ -158,8 +157,7 @@ class SlashMusic(commands.Cog):
                             else:
                                 await interaction.send("The current Track has failed to play")
                     if not failed:
-                        if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][
-                            0] == True:
+                        if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
                             if "playlist" in url and ("youtube" in url or "youtu.be" in url):
                                 await interaction.send('Playlist ***' + title + '*** has been added to the queue')
                                 settings.queues[interaction.guild.id][-1]['items'] = info['playlist_count']
@@ -173,13 +171,14 @@ class SlashMusic(commands.Cog):
                                 await interaction.send('Now playing playlist:\n***' + title + '***')
                             # else:
                             # await interaction.send('Now playing:\n***' + title + '***')
-                    if settings.downloading[interaction.guild.id][0] == False:
+                    if not settings.downloading[interaction.guild.id][0]:
                         await settings.timers[interaction.guild.id].start()
 
                 # It then checks if a video search is being performed
-                # Once it confirms that it's a video search, it saves the key for the search for later use
                 else:
                     vidsearch = VideosSearch(url, limit=5)
+
+                    # It generates the buttons necessary for the search select
                     view = Buttons.searchButton()
                     search = vidsearch.result()
                     embed = nextcord.Embed(title="Search Results")
@@ -193,6 +192,8 @@ class SlashMusic(commands.Cog):
                     await view.wait()
                     if view.value is None:
                         return
+
+                    # Once the user inputs the value, it is then saved to the queue
                     else:
                         await interaction.send('Song number ' + str(view.value) + ' selected:\n***' +
                                                search['result'][int(view.value) - 1]['title'] +
@@ -228,7 +229,7 @@ class SlashMusic(commands.Cog):
                     await interaction.send("There is no paused audio in the voice channel.")
 
     # The pause function is pretty self-explanatory
-    @nextcord.slash_command(name="pause", description="pauses any music currently playing in the voice channel")
+    @nextcord.slash_command(name="pause", description="Pauses any music currently playing in the voice channel")
     async def pause(self, interaction: Interaction):
 
         # It grabs the voice channel and checks if the bot is in
@@ -247,7 +248,7 @@ class SlashMusic(commands.Cog):
 
     # The stop command is also self-explanatory, it allows the user stop any audio playing from the bot
     # It also allows the bot to cleanup the dictionary keys that run the bot
-    @nextcord.slash_command(name="stop", description="stops the music in a voice channel and clears the queue")
+    @nextcord.slash_command(name="stop", description="Stops the music in a voice channel and clears the queue")
     async def stop(self, interaction: Interaction):
 
         # First it checks for a voice channel
@@ -269,7 +270,7 @@ class SlashMusic(commands.Cog):
                 await interaction.send("There is no audio to stop.")
 
     # The skip function allows for a user to skip a certain amount of songs ahead
-    @nextcord.slash_command(name="skip", description="skips the current song")
+    @nextcord.slash_command(name="skip", description="Skips the current song or a user-defined amount of songs")
     async def skip(self, interaction: Interaction, amount: int = 1):
 
         # It checks for a voice channel
@@ -315,7 +316,8 @@ class SlashMusic(commands.Cog):
     # The song command allows a user to search for a song and automatically play the first search result for this
     # song The search terms for this one has to be very specific or it will not be very useful since the first result
     # may be irrelevant
-    @nextcord.slash_command(name="song", description="allows the user to search for a song and add it to the queue")
+    @nextcord.slash_command(name="song",
+                            description="Allows the user to search for a song and automatically adds it to the queue")
     async def song(self, interaction: Interaction, song: str):
 
         # It checks for voice
@@ -342,7 +344,7 @@ class SlashMusic(commands.Cog):
 
     # The playlist command allows a user to search and select for a playlist of their choosing
     @nextcord.slash_command(name="playlist",
-                            description="allows a user to search for and select a playlist and add it to the queue")
+                            description="Allows a user to search for and select a playlist and add it to the queue")
     async def playlist(self, interaction: Interaction, playlist: str):
 
         # First it checks for a voice channel once again
@@ -350,9 +352,11 @@ class SlashMusic(commands.Cog):
         if voice != None:
 
             # Then it checks if the user has put a search term, if it is, then it provides the user with the top 5
-            # options It then saves it to the search key for later use
+            # options.
             vidsearch = PlaylistsSearch(playlist, limit=5)
             search = vidsearch.result()
+
+            # It then generates the buttons for selection
             view = Buttons.searchButton()
             embed = nextcord.Embed(title="Search Results")
             counter = 1
@@ -365,10 +369,13 @@ class SlashMusic(commands.Cog):
             await view.wait()
             if view.value is None:
                 return
+
+            # Once that's done, it saves it to the queue
             else:
                 print('successfully chose a playlist')
                 await interaction.send('Playlist number ' + playlist + ' selected:\n***' +
-                                       search['result'][int(view.value) - 1]['title'] + '*** has been added to the queue',
+                                       search['result'][int(view.value) - 1][
+                                           'title'] + '*** has been added to the queue',
                                        ephemeral=True)
                 settings.queues[interaction.guild.id].append({})
                 settings.queues[interaction.guild.id][-1]['url'] = search['result'][int(view.value) - 1]['link']
@@ -384,7 +391,7 @@ class SlashMusic(commands.Cog):
     # The qplaylist function provides a similar function to playlist This command however instead of allowing a user
     # to quickly search for a playlist and automatically add it to the queue
     @nextcord.slash_command(name="qplaylist",
-                            description="allows the user to search and add a playlist to the queue quickly")
+                            description="Allows the user to search for a playlist and automatically adds it to the queue")
     async def qplaylist(self, interaction: Interaction, playlist: str):
 
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
@@ -405,12 +412,17 @@ class SlashMusic(commands.Cog):
         else:
             await interaction.response.send_message('I am not in a voice channel')
 
-    # The showqueue function allows a user to see the queue key for their specific server
-    @nextcord.slash_command(name="showqueue", description="allows the user to view the current queue")
-    async def showqueue(self, interaction: Interaction):
+    # The queue function allows a user to see the queue key for their specific server
+    @nextcord.slash_command(name="queue", description="Shows the user the current server's queue")
+    async def queue(self, interaction: Interaction):
+
         # First it checks if their guild id is in the queue dictionary
         if interaction.guild.id in settings.titles:
+
+            # Then a view with the necessary buttons is retrieved
             view = Buttons.queueButton()
+
+            # An embed is then generated holding all the items in queue in pages (not yet done)
             embed = nextcord.Embed(title=f"{interaction.guild.name}'s Queue")
             for counter in range(0, len(settings.queues[interaction.guild.id])):
                 value = f"Added by: {settings.queues[interaction.guild.id][counter]['user']}\n"
@@ -421,6 +433,8 @@ class SlashMusic(commands.Cog):
                 embed.add_field(name=f"{counter + 1}: ***{settings.titles[interaction.guild.id][counter]}***",
                                 value=value,
                                 inline=False)
+
+            # Finally, the embed is sent to the channel
             await interaction.send(embed=embed, view=view)
         else:
             await interaction.send('There is no active queue for this server')
@@ -428,7 +442,7 @@ class SlashMusic(commands.Cog):
     # The repeat function allows a user to repeat the queue
     # If the bot is in a voice channel, this function allows the user to toggle the repeat key off and on
     # This is off by default
-    @nextcord.slash_command(name="repeat", description="allows user to repeat the queue")
+    @nextcord.slash_command(name="repeat", description="Toggles repeat on or off")
     async def repeat(self, interaction: Interaction):
         if interaction.guild.id in settings.downloading:
             if settings.downloading[interaction.guild.id][1]:
@@ -452,7 +466,7 @@ class SlashMusic(commands.Cog):
     # The shuffle function allows a user to shuffle the queue
     # If the bot is in a voice channel, this function allows the user to toggle the shuffle key off and on
     # This is off by default
-    @nextcord.slash_command(name="shuffle", description="allows user to shuffle the queue")
+    @nextcord.slash_command(name="shuffle", description="Toggles shuffle on or off")
     async def shuffle(self, interaction: Interaction):
         if interaction.guild.id in settings.downloading:
             if settings.downloading[interaction.guild.id][2]:
@@ -465,7 +479,7 @@ class SlashMusic(commands.Cog):
             await interaction.send('I am not in a voice channel')
 
     # The status command allows a user to see if repeating and shuffling both are turned on or off
-    @nextcord.slash_command(name="status", description="show the user if repeating and shuffle is turned on or off")
+    @nextcord.slash_command(name="status", description="Shows the user if repeat and shuffle are turned on or off")
     async def status(self, interaction: Interaction):
         if interaction.guild.id in settings.downloading:
             if settings.downloading[interaction.guild.id][1]:
@@ -476,16 +490,16 @@ class SlashMusic(commands.Cog):
                 await interaction.send('Shuffling is turned on')
             else:
                 await interaction.send('Shuffling is turned off')
-            if settings.downloading[interaction.guild.id][3]:
-                await interaction.send('Normalized audio is turned on')
-            else:
-                await interaction.send('Normalized audio is turned off')
+            # if settings.downloading[interaction.guild.id][3]:
+            #     await interaction.send('Normalized audio is turned on')
+            # else:
+            #     await interaction.send('Normalized audio is turned off')
         else:
             await interaction.send('I am not in a voice channel')
 
     # The remove command allows a user to remove a single song from the queue
     # This is used with the index number retrieved from the showqueue command
-    @nextcord.slash_command(name="remove", description="allows a user to remove one item from queue")
+    @nextcord.slash_command(name="remove", description="Allows a user to remove one item from queue")
     async def remove(self, interaction: Interaction, song: int):
         if interaction.guild.id in settings.queues:
             if song <= len(settings.queues[interaction.guild.id]) and song > 0:
