@@ -1,6 +1,6 @@
 # cogs.Music runs the Music slash commands for Mobot
 # This file contains all the commands associated with the Mobot Music commands
-
+import math
 import os
 import time
 import nextcord
@@ -420,22 +420,49 @@ class SlashMusic(commands.Cog):
         if interaction.guild.id in settings.titles:
 
             # Then a view with the necessary buttons is retrieved
-            view = Buttons.queueButton()
+            items = 5
+            pos = 0
 
             # An embed is then generated holding all the items in queue in pages (not yet done)
             embed = nextcord.Embed(title=f"{interaction.guild.name}'s Queue")
-            for counter in range(0, len(settings.queues[interaction.guild.id])):
-                value = f"Added by: {settings.queues[interaction.guild.id][counter]['user']}\n"
-                if 'duration' in settings.queues[interaction.guild.id][counter]:
-                    value += f"Duration: {settings.queues[interaction.guild.id][counter]['duration']}"
-                else:
-                    value += f"Playlist Items: {settings.queues[interaction.guild.id][counter]['items']}"
-                embed.add_field(name=f"{counter + 1}: ***{settings.titles[interaction.guild.id][counter]}***",
-                                value=value,
-                                inline=False)
+            await interaction.send(embed=embed)
 
-            # Finally, the embed is sent to the channel
-            await interaction.send(embed=embed, view=view)
+            while True:
+                pages = math.ceil(len(settings.queues[interaction.guild.id])/items)
+                if pos == 0:
+                    view = Buttons.queueButtonBackDisabled()
+                elif pos+1 >= pages:
+                    view = Buttons.queueButtonFrontDisabled()
+                else:
+                    view = Buttons.queueButton()
+                embed = nextcord.Embed(title=f"{interaction.guild.name}'s Queue")
+                minimum = pos*items
+                if minimum+items > len(settings.queues[interaction.guild.id]):
+                    maximum = len(settings.queues[interaction.guild.id])
+                else:
+                    maximum = (pos*items)+items
+                for counter in range(minimum, maximum):
+                    value = f"Added by: {settings.queues[interaction.guild.id][counter]['user']}\n"
+                    if 'duration' in settings.queues[interaction.guild.id][counter]:
+                        value += f"Duration: {settings.queues[interaction.guild.id][counter]['duration']}"
+                    else:
+                        value += f"Playlist Items: {settings.queues[interaction.guild.id][counter]['items']}"
+                    embed.add_field(name=f"{counter + 1}: ***{settings.titles[interaction.guild.id][counter]}***",
+                                    value=value,
+                                    inline=False)
+                embed.set_footer(text=f"Page {pos+1}/{pages}")
+                if pages <= 1:
+                    await interaction.edit_original_message(embed=embed)
+                else:
+                    await interaction.edit_original_message(embed=embed, view=view)
+                    await view.wait()
+                if view.value is None:
+                    break
+                elif view.value:
+                    pos += 1
+                else:
+                    pos -= 1
+
         else:
             await interaction.send('There is no active queue for this server')
 
