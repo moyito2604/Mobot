@@ -5,16 +5,57 @@ import nextcord
 # The class queueButton is used for the queue command to move through the pages
 class queueButton(nextcord.ui.View):
     def __init__(self):
-        super().__init__(timeout=5)
+        super().__init__()
         self.value = None
 
     @nextcord.ui.button(label='Back', style=nextcord.ButtonStyle.red)
     async def back(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
-        self.value = True
+        self.value = False
+        await interaction.response.edit_message(view=self)
+        self.stop()
 
     @nextcord.ui.button(label='Next', style=nextcord.ButtonStyle.green)
     async def next(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         self.value = True
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+
+class queueButtonBackDisabled(nextcord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.value = None
+
+    @nextcord.ui.button(label='Back', style=nextcord.ButtonStyle.red, disabled=True)
+    async def back(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = False
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+    @nextcord.ui.button(label='Next', style=nextcord.ButtonStyle.green)
+    async def next(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = True
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+
+class queueButtonFrontDisabled(nextcord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.value = None
+
+    @nextcord.ui.button(label='Back', style=nextcord.ButtonStyle.red)
+    async def back(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = False
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+    @nextcord.ui.button(label='Next', style=nextcord.ButtonStyle.green, disabled=True)
+    async def next(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = True
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
 
 # THe class searchButton holds all the buttons used to make a selection in a search. The buttons correspond to the
 # 1-5 buttons needed for a search
