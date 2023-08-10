@@ -101,8 +101,8 @@ class SlashMusic(commands.Cog):
     # a song to play from the search results It can also be used to join the bot automatically and play a song
     @nextcord.slash_command(name="play",
                             description="Allows the bot to play music from a link or search")
-    async def play(self, interaction: Interaction, url: str = ' '):
-
+    async def play(self, interaction: Interaction, song: str = ' '):
+        url = song
         # First it grabs the voice channel to check if the bot is in a voice channel
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
         if url != ' ':
@@ -136,8 +136,7 @@ class SlashMusic(commands.Cog):
             if voice != None:
 
                 # It then checks if a youtube link was inputted or a search prompt. It then also checks if a youtube
-                # link is a playlist or not it then starts the threaded timer if 'https://www.youtube.com' in url or
-                # 'https://youtu.be' in url or 'https://youtube.com' in url:
+                # link is a playlist or not it then starts the threaded timer
                 if Functions.checkurl(url):
                     settings.queues[interaction.guild.id].append({})
                     failed = False

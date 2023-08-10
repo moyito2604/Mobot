@@ -61,7 +61,7 @@ class queueButtonFrontDisabled(nextcord.ui.View):
 # 1-5 buttons needed for a search
 class searchButton(nextcord.ui.View):
     def __init__(self):
-        super().__init__(timeout=5)
+        super().__init__(timeout=20)
         self.value = None
 
     @nextcord.ui.button(label='1', style=nextcord.ButtonStyle.blurple)
@@ -101,7 +101,7 @@ class searchButton(nextcord.ui.View):
         
 class playlistSelectButton(nextcord.ui.View):
     def __init__(self):
-        super().__init__(timeout=5)
+        super().__init__(timeout=20)
         self.value = None
     
     @nextcord.ui.button(label='Playlist', style=nextcord.ButtonStyle.blurple)
