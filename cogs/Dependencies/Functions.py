@@ -90,6 +90,7 @@ async def retrieveAudio(url: str, path: str, ctx, index):
             'key': 'FFmpegExtractAudio',
             'preferredquality': '0',
         }],
+        'noplaylist': True
     }
 
     # This then extracts the video and grabs the necessary information
