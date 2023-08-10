@@ -140,14 +140,11 @@ class SlashMusic(commands.Cog):
                 # 'https://youtu.be' in url or 'https://youtube.com' in url:
                 if Functions.checkurl(url):
                     settings.queues[interaction.guild.id].append({})
-                    settings.queues[interaction.guild.id][-1]['url'] = url
-                    settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
                     failed = False
                     with yt_dlp.YoutubeDL() as ydl:
                         try:
                             info = ydl.extract_info(url, download=False, process=False)
                             title = info.get('title', None)
-                            settings.titles[interaction.guild.id].append(title)
                         except:
                             failed = True
                             settings.queues[interaction.guild.id].pop(0)
@@ -157,20 +154,47 @@ class SlashMusic(commands.Cog):
                             else:
                                 await interaction.send("The current Track has failed to play")
                     if not failed:
-                        if voice.is_playing() or voice.is_paused() or settings.downloading[interaction.guild.id][0] == True:
-                            if "playlist" in url and ("youtube" in url or "youtu.be" in url):
-                                await interaction.send('Playlist ***' + title + '*** has been added to the queue')
-                                settings.queues[interaction.guild.id][-1]['items'] = info['playlist_count']
-                            else:
-                                await interaction.send('***' + title + '*** has been added to the queue')
-                                times = time.gmtime(info["duration"])
-                                settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
+                        if "playlist" in url and ("youtube" in url or "youtu.be" in url):
+                            await interaction.send('Playlist ***' + title + '*** has been added to the queue')
+                            settings.queues[interaction.guild.id][-1]['items'] = info['playlist_count']
+                            settings.queues[interaction.guild.id][-1]['url'] = url
+                            settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                            settings.titles[interaction.guild.id].append(title)
+                        elif 'url' in info:
+                            og_url = info['url']
+                            if "playlist" in og_url and ("youtube" in url or "youtu.be" in url):
+                                embed = nextcord.Embed(title="**Playlist Detected**")
+                                embed.add_field(name="", value="The link previously placed has a reference to a playlist and a song. Please specify if the song or playlist is needed")
+                                view = Buttons.playlistSelectButton()
+                                await interaction.send(embed=embed, ephemeral=True, view=view, delete_after=20)
+                                await view.wait()
+                                if view.value is None:
+                                    return
+                                elif view.value == 1:
+                                    info = ydl.extract_info(og_url, download=False, process=False)
+                                    title = info.get('title', None)
+                                    await interaction.send('Playlist ***' + title + '*** has been added to the queue')
+                                    settings.queues[interaction.guild.id][-1]['items'] = info['playlist_count']
+                                    settings.queues[interaction.guild.id][-1]['url'] = og_url
+                                    settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                                    settings.titles[interaction.guild.id].append(title)
+                                elif view.value == 2:
+                                    with yt_dlp.YoutubeDL({'noplaylist': True}) as ydltemp:
+                                        info = ydltemp.extract_info(url, download=False)
+                                    title = info.get('title', None)
+                                    times = time.gmtime(info["duration"])
+                                    await interaction.send('***' + title + '*** has been added to the queue')
+                                    settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
+                                    settings.queues[interaction.guild.id][-1]['url'] = "https://www.youtube.com/watch?v=" + info['id']
+                                    settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                                    settings.titles[interaction.guild.id].append(title)
                         else:
-                            await interaction.send('Retrieving from source')
-                            if "playlist" in url and ("youtube" in url or "youtu.be" in url):
-                                await interaction.send('Now playing playlist:\n***' + title + '***')
-                            # else:
-                            # await interaction.send('Now playing:\n***' + title + '***')
+                            await interaction.send('***' + title + '*** has been added to the queue')
+                            times = time.gmtime(info["duration"])
+                            settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
+                            settings.queues[interaction.guild.id][-1]['url'] = url
+                            settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                            settings.titles[interaction.guild.id].append(title)
                     if not settings.downloading[interaction.guild.id][0]:
                         await settings.timers[interaction.guild.id].start()
 

@@ -60,7 +60,7 @@ class queueButtonFrontDisabled(nextcord.ui.View):
 # THe class searchButton holds all the buttons used to make a selection in a search. The buttons correspond to the
 # 1-5 buttons needed for a search
 class searchButton(nextcord.ui.View):
-    def __init(self):
+    def __init__(self):
         super().__init__(timeout=5)
         self.value = None
 
@@ -95,6 +95,25 @@ class searchButton(nextcord.ui.View):
     @nextcord.ui.button(label='5', style=nextcord.ButtonStyle.blurple)
     async def five(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         self.value = 5
+        self.clear_items()
+        await interaction.response.edit_message(view=self)
+        self.stop()
+        
+class playlistSelectButton(nextcord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=5)
+        self.value = None
+    
+    @nextcord.ui.button(label='Playlist', style=nextcord.ButtonStyle.blurple)
+    async def playlist(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = 1
+        self.clear_items()
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+    @nextcord.ui.button(label='Song', style=nextcord.ButtonStyle.blurple)
+    async def song(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = 2
         self.clear_items()
         await interaction.response.edit_message(view=self)
         self.stop()
