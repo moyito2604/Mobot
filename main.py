@@ -11,6 +11,8 @@ from nextcord.ext import commands
 import configgen
 import os.path
 import settings
+import mysql.connector
+from mysql.connector import Error
 
 os.system('clear')
 
@@ -93,6 +95,36 @@ os.system('clear')
 # This sets the working directory for this section of the program
 pwd = os.path.dirname(os.path.realpath(__file__))
 
+#This function simplifies the creation of Guild.txt for the multiple instances that it may be created
+async def guildSave():
+    if os.path.exists("Guilds.txt"):
+        os.remove("Guilds.txt")
+    files = open("Guilds.txt", "w")
+    for info in client.guilds:
+        files.write(
+            f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
+    files.close()
+    
+# This initializes all global variables needed for Mobot
+settings.init()
+
+#Grabs Environment Variables for 
+SQLHost = os.environ.get('MYSQL_HOST', None)
+database = os.environ.get('MYSQL_DATABASE', None)
+dbuser = os.environ.get('MYSQL_USER', None)
+dbpassword = os.environ.get('MYSQL_PASSWORD', None)
+
+#Initializes the MySQL connection
+SQLconnect = True
+try:
+    connection = mysql.connector.connect(host=SQLHost,
+                                         database=database,
+                                         user=dbuser,
+                                         password=dbpassword)
+    settings.connection = connection
+except Error as e:
+    print("Error while connecting to MySQL", e)
+    SQLconnect = False
 
 # The nextcord on_ready function is used to prepare several things in the discord bot It generates Guild.txt which
 # contains the information of the servers the bot is in It also sets the presence of the bot to playing the help
@@ -101,15 +133,20 @@ pwd = os.path.dirname(os.path.realpath(__file__))
 async def on_ready():
     game = '/help'
     activity = nextcord.Game(name=game, type=3)
-    if os.path.exists("Guilds.txt"):
-        os.remove("Guilds.txt")
-    files = open("Guilds.txt", "w")
     if not os.path.isdir('logs'):
         os.mkdir('logs')
-    for info in client.guilds:
-        files.write(
-            f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
-    files.close()
+    await guildSave()
+    for guild in client.guilds:
+        try:
+            cursor = settings.connection.cursor()
+            cursor.execute(f"""CREATE TABLE {guild.id}_Halls (
+                    Channel varchar(50) NOT NULL,
+                    Emote varchar(100) NOT NULL,
+                    Amount int NOT NULL,
+                    Hall varchar(50) NOT NULL)""")
+            settings.connection.commit()
+        except Error as e:
+            pass
     await client.change_presence(status=nextcord.Status.online, activity=activity)
     print('We have logged in as {0.user}\n'.format(client))
 
@@ -119,27 +156,14 @@ async def on_ready():
 @client.event
 async def on_guild_join(guild):
     print(f"The bot has joined the Guild \"{guild.name}\"")
-    if os.path.exists("Guilds.txt"):
-        os.remove("Guilds.txt")
-    files = open("Guilds.txt", "w")
-    for info in client.guilds:
-        files.write(
-            f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
-    files.close()
-
+    await guildSave()
 
 # The on_guild_remove nextcord function is called when someone leaves the server
 # This then regenerates the Guild.tet file with refreshed info on the servers stats
 @client.event
 async def on_guild_remove(guild):
     print(f"The bot has left the Guild \"{guild.name}\"")
-    if os.path.exists("Guilds.txt"):
-        os.remove("Guilds.txt")
-    files = open("Guilds.txt", "w")
-    for info in client.guilds:
-        files.write(
-            f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
-    files.close()
+    await guildSave()
 
 
 # The on_guild_update function runs when something regarding the server as a whole is changed.
@@ -147,24 +171,17 @@ async def on_guild_remove(guild):
 @client.event
 async def on_guild_update(before, after):
     print(f"Guild \"{before.name}\" has changed the name to \"{after.name}\"")
-    if os.path.exists("Guilds.txt"):
-        os.remove("Guilds.txt")
-    files = open("Guilds.txt", "w")
-    for info in client.guilds:
-        files.write(
-            f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
-    files.close()
-
-
-# This initializes all global variables needed for Mobot
-settings.init()
+    await guildSave()
 
 extensions = []
 
 # From here, all of the cogs used in this bot are loaded in and added to the bots features so that they are usable later
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
-        extensions.append("cogs." + filename[:-3])
+        if filename == "Halls.py" and not SQLconnect:
+            print("Database connection failed, Halls are disabled")
+        else:
+            extensions.append("cogs." + filename[:-3])
 
 if __name__ == '__main__':
     for extension in extensions:
