@@ -3,11 +3,10 @@
 
 # imports necessary to run the program
 import argparse
-import importlib
-import asyncio
 import os
 import nextcord
 from nextcord.ext import commands
+from nextcord.errors import LoginFailure
 import configgen
 import os.path
 import settings
@@ -20,13 +19,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--token', type=str, required=False)
 args = parser.parse_args()
 # This block of code generates a configuration file if it doesn't exist and imports it for use throughout the program
-configgen.generateConfiguration('m!', True, 'TOKEN', 'TOKEN')
+configgen.generateConfiguration(True, 'TOKEN')
 import config
 
 Token = config.Token
-extensions = config.extension
-seanToken = config.seanToken
-newtoken = Token
 
 # Defines the Intents necessary for the bot to communicate with the discord API
 # Also allows the bot to have the permissions needed to run all of its functions
@@ -34,63 +30,23 @@ intents = nextcord.Intents.default()
 intents.members = True
 intents.message_content = True
 
-client = commands.Bot(command_prefix=extensions, intents=intents, help_command=None, case_insensitive=True)
+client = commands.Bot(command_prefix='m!', intents=intents, help_command=None, case_insensitive=True)
 
 # This grabs any environment variables from something such as docker
 dockerstat = os.environ.get('dockerstatus', False)
 
-
-# This function allows the user to quickly check if a discord token is valid or not
-async def tokenCheck(token):
-    try:
-        await client.login(token)
-    except nextcord.LoginFailure:
-        await client.close()
-        client.clear()
-        return False
-    return True
-
+os.system('clear')
 
 # This conditional first checks if it is in a docker container
-# If it is not, then it runs checks for the token and prompts the user to input a different token
-# until it is a correcct token
+# If not, it then checks if it recieved a token through commandline arguments
 if dockerstat:
     print("Docker Container Detected, Using environment variables instead")
     newtoken = os.environ.get('token', "TOKEN")
-    checkedtoken = asyncio.run(tokenCheck(newtoken))
-    if not checkedtoken:
-        print("Invalid Token, please try running the container with a different Token")
-        exit(1)
     Token = newtoken
-else:
-    # This allows for the token through be inputted through command line arguments with syntax --token TOKEN
-    if args.token != None:
-        configgen.generateConfiguration('m!', False, args.token, seanToken)
-        importlib.reload(config)
-        Token = config.Token
-        extensions = config.extension
-        seanToken = config.seanToken
-        newtoken = Token
-
-    checkedtoken = asyncio.run(tokenCheck(newtoken))
-
-    # When the configuration file is generate for the first time, it sets the token to 'TOKEN' This allows the user
-    # to define the bot token through stdin Once the token is properly inputed, it deletes and regenerates the
-    # configuration file to include the new token for later use
-    while not checkedtoken:
-        print("Invalid Bot Token, please input your Bot Token below")
-        newtoken = input()
-        checkedtoken = asyncio.run(tokenCheck(newtoken))
-        os.system('clear')
-        if checkedtoken:
-            os.remove("config.py")
-            configgen.generateConfiguration('m!', False, newtoken, seanToken)
-            importlib.reload(config)
-            Token = config.Token
-            extensions = config.extension
-            seanToken = config.seanToken
-
-os.system('clear')
+# This allows for the token through be inputted through command line arguments with syntax --token TOKEN
+elif args.token != None:
+    configgen.generateConfiguration(False, args.token)
+    Token = args.token
 
 # This sets the working directory for this section of the program
 pwd = os.path.dirname(os.path.realpath(__file__))
@@ -126,6 +82,9 @@ except Error as e:
     print("Error while connecting to MySQL", e)
     SQLconnect = False
 
+if SQLconnect:
+    print("Connected to MySQL Server Version", settings.connection.get_server_info())
+
 # The nextcord on_ready function is used to prepare several things in the discord bot It generates Guild.txt which
 # contains the information of the servers the bot is in It also sets the presence of the bot to playing the help
 # command and notifies the user of when the bot has logged in and is ready to deploy to servers
@@ -136,17 +95,18 @@ async def on_ready():
     if not os.path.isdir('logs'):
         os.mkdir('logs')
     await guildSave()
-    for guild in client.guilds:
-        try:
-            cursor = settings.connection.cursor()
-            cursor.execute(f"""CREATE TABLE {guild.id}_Halls (
-                    Channel varchar(50) NOT NULL,
-                    Emote varchar(100) NOT NULL,
-                    Amount int NOT NULL,
-                    Hall varchar(50) NOT NULL)""")
-            settings.connection.commit()
-        except Error as e:
-            pass
+    if SQLconnect:
+        for guild in client.guilds:
+            try:
+                cursor = settings.connection.cursor()
+                cursor.execute(f"""CREATE TABLE {guild.id}_Halls (
+                        Channel varchar(50) NOT NULL,
+                        Emote varchar(100) NOT NULL,
+                        Amount int NOT NULL,
+                        Hall varchar(50) NOT NULL)""")
+                settings.connection.commit()
+            except Error as e:
+                pass
     await client.change_presence(status=nextcord.Status.online, activity=activity)
     print('We have logged in as {0.user}\n'.format(client))
 
@@ -187,4 +147,10 @@ if __name__ == '__main__':
     for extension in extensions:
         client.load_extension(extension)
 
-client.run(Token)
+try:
+    client.run(Token)
+except LoginFailure as error:
+    if dockerstat:
+        print("Invalid Token, please try running the container with a different token")
+    else:
+        print("Bot Login Error:", error, "Please input a proper token through the --token flag")

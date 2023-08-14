@@ -11,7 +11,7 @@ import os
 import nextcord
 from nextcord import FFmpegPCMAudio
 import validators
-from validators import ValidationFailure
+from validators.utils import ValidationError
 import os.path
 import settings
 import random
@@ -31,29 +31,6 @@ def techQuotes():
     print('\nQuote number ' + str(randomquote) + ' was printed')
     files.close()
     return quote
-
-
-# Both SeanQuotes() and oneSeam() retrieve a seanQuote from the repository of Sean Quotes
-# As this is not a function of Mobot, these two functions are useless when this file is included in the Mobot code
-def seanQuotes():
-    files = open(pwd + '/Quotes/' + 'Seanquotes.txt', 'r')
-    quote = ''
-    randomquote = randint(2, 117)
-    for counter in range(randomquote):
-        quote = files.readline()
-    print('\nSean Quote number ' + str(randomquote) + ' was printed')
-    files.close()
-    return quote
-
-
-def oneSeam():
-    files = open(pwd + '/Quotes/' + 'Seanquotes.txt', 'r')
-    quote = ''
-    quote = files.readline()
-    print('\nSean Quote number ' + str(1) + ' was printed')
-    files.close()
-    return quote
-
 
 # The loggerOutputs class defines a logger used for yt_dlp
 # This logger is then used to output to STDOUT and STDERR
@@ -156,7 +133,7 @@ async def retrievePlaylist(url, ctx):
 def checkurl(url_string: str):
     result = validators.url(url_string)
 
-    if isinstance(result, ValidationFailure):
+    if isinstance(result, ValidationError):
         return False
 
     return result
