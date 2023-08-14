@@ -11,13 +11,10 @@ from youtubesearchpython import PlaylistsSearch
 import os.path
 import yt_dlp
 import shutil
-import config
 import settings
 import cogs.Dependencies.Functions as Functions
 import cogs.Dependencies.Threaded_timer as Threaded_timer
 import cogs.Dependencies.Buttons as Buttons
-
-extensions = config.extension
 
 
 # The Music Command holds the definitions for all the commands needed to run the bot
