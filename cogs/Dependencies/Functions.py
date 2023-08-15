@@ -19,6 +19,22 @@ import random
 # Sets the working directory
 pwd = os.path.dirname(os.path.realpath(__file__))
 
+#Returns true if the person is allowed to run the command, else false
+async def rolecheck(interaction):
+    cursor = settings.connection.cursor(dictionary=True, buffered=True)
+    
+    #This ensures that person running the command is allowed to
+    cursor.execute(f"SELECT * FROM Admin_Roles WHERE Guild_id = {interaction.guild.id}")
+    record = cursor.fetchone()
+    
+    found = None
+    if record:
+        found = interaction.user.get_role(int(record['Role']))
+    
+    if not interaction.user.guild_permissions.administrator and not found:
+        await interaction.send(f"You must have the <@&{record['Role']}> role to use this command")
+        return False
+    return True
 
 # This function retrieves a techquote from the Funnytechquotes.txt repository of quotes
 # It then returns the quote to be used in Mobot when the command is run

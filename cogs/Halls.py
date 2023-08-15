@@ -3,6 +3,7 @@ import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction
 import settings
+import cogs.Dependencies.Functions as Functions
 
 class Halls(commands.Cog):
     
@@ -61,10 +62,16 @@ class Halls(commands.Cog):
             await interaction.send("Invalid Emoji Provided, Please provide a server Emoji")
             return
         
-        #It sets up the database connection and cursor, where it queries to make sure the hall exists or not
-        #It also grabs the entire table of Halls for the guild
+        #Sets up the connection to the database and sets up the cursor
         settings.connection.commit()
         cursor = settings.connection.cursor(dictionary=True, buffered=True)
+        
+        #This ensures that person running the command is allowed to
+        if not await Functions.rolecheck(interaction):
+            return
+
+        #It sets up the database connection and cursor, where it queries to make sure the hall exists or not
+        #It also grabs the entire table of Halls for the guild
         cursor.execute(f"SELECT * FROM {interaction.guild.id}_Halls WHERE Channel = {channel}")
         record = cursor.fetchall()
         cursor.execute(f"SELECT * FROM {interaction.guild.id}_Halls")
@@ -113,9 +120,15 @@ class Halls(commands.Cog):
             await interaction.send("Invalid Channel or Hall Channel Provided")
             return
         
-        #It then prepares the database and checks to make sure that the hall exists
+        #It then prepares the database
         settings.connection.commit()
         cursor = settings.connection.cursor(dictionary=True, buffered=True)
+        
+        #This ensures that person running the command is allowed to
+        if not await Functions.rolecheck(interaction):
+            return
+        
+        #checks to make sure that the hall exists
         cursor.execute(f"SELECT * FROM {interaction.guild.id}_Halls WHERE Channel = {channel}")
         record = cursor.fetchall()
         
