@@ -29,5 +29,5 @@ The syntax for linux is:
 
 To make a prebuilt container, you will have to run the following command
 ```
-docker run -e token='TOKEN' -e MYSQL_HOST='hostname' -e MYSQL_DATABASE='database' -e MYSQL_USER='username' -e MYSQL_PASSWORD='password'
+docker run -e token='TOKEN' -e MYSQL_HOST='hostname' -e MYSQL_DATABASE='database' -e MYSQL_USER='username' -e MYSQL_PASSWORD='password' moyito2604/mobot:latest
 ```
