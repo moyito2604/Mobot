@@ -29,6 +29,7 @@ Token = config.Token
 intents = nextcord.Intents.default()
 intents.members = True
 intents.message_content = True
+intents.emojis = True
 
 client = commands.Bot(command_prefix='m!', intents=intents, help_command=None, case_insensitive=True)
 
@@ -50,16 +51,6 @@ elif args.token != None:
 
 # This sets the working directory for this section of the program
 pwd = os.path.dirname(os.path.realpath(__file__))
-
-#This function simplifies the creation of Guild.txt for the multiple instances that it may be created
-async def guildSave():
-    if os.path.exists("Guilds.txt"):
-        os.remove("Guilds.txt")
-    files = open("Guilds.txt", "w")
-    for info in client.guilds:
-        files.write(
-            f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
-    files.close()
     
 # This initializes all global variables needed for Mobot
 settings.init()
@@ -85,6 +76,37 @@ except Error as e:
 if SQLconnect:
     print("Connected to MySQL Server Version", settings.connection.get_server_info())
 
+#This function simplifies the creation of Guild.txt for the multiple instances that it may be created
+async def guildSave():
+    if SQLconnect:
+        cursor = settings.connection.cursor(dictionary=True, buffered=True)
+        cursor.execute(f"SELECT * FROM Guild_Info")
+        table = cursor.fetchall()
+        for guild in client.guilds:
+            cursor.execute(f"SELECT * FROM Guild_Info WHERE Guild_id = {guild.id}")
+            record = cursor.fetchall()
+            if record:
+                cursor.execute(f"""UPDATE Guild_Info SET
+                               Guild_name = '{guild.name}',
+                               Members = {guild.member_count},
+                               Owner = '{guild.owner}',
+                               Owner_id = '{guild.owner.id}' WHERE
+                               Guild_id = '{guild.id}'""")
+            else:
+                cursor.execute(f"""INSERT INTO Guild_Info
+                                (Guild_id, Guild_name, Members, Owner, Owner_id) VALUES
+                                ('{guild.id}', '{guild.name}', {guild.member_count}, '{guild.owner}', '{guild.owner.id}')""")
+        settings.connection.commit()
+        cursor.close()
+    else:    
+        if os.path.exists("Guilds.txt"):
+            os.remove("Guilds.txt")
+        files = open("Guilds.txt", "w")
+        for info in client.guilds:
+            files.write(
+                f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
+        files.close()
+
 # The nextcord on_ready function is used to prepare several things in the discord bot It generates Guild.txt which
 # contains the information of the servers the bot is in It also sets the presence of the bot to playing the help
 # command and notifies the user of when the bot has logged in and is ready to deploy to servers
@@ -94,19 +116,41 @@ async def on_ready():
     activity = nextcord.Game(name=game, type=3)
     if not os.path.isdir('logs'):
         os.mkdir('logs')
-    await guildSave()
     if SQLconnect:
         for guild in client.guilds:
             try:
-                cursor = settings.connection.cursor()
+                cursor = settings.connection.cursor(dictionary=True, buffered=True)
                 cursor.execute(f"""CREATE TABLE {guild.id}_Halls (
                         Channel varchar(50) NOT NULL,
                         Emote varchar(100) NOT NULL,
                         Amount int NOT NULL,
                         Hall varchar(50) NOT NULL)""")
                 settings.connection.commit()
-            except Error as e:
+                cursor.close()
+            except Error:
                 pass
+        try:
+            cursor = settings.connection.cursor(dictionary=True, buffered=True)            
+            cursor.execute(f"""CREATE TABLE Guild_Info (
+                    Guild_id varchar(50) NOT NULL,
+                    Guild_name varchar(100) NOT NULL,
+                    Members int NOT NULL,
+                    Owner varchar(50) NOT NULL,
+                    Owner_id varchar(50) NOT NULL)""")
+        except Error:
+            pass
+        settings.connection.commit()
+        cursor.close()
+        try:
+            cursor = settings.connection.cursor(dictionary=True, buffered=True)
+            cursor.execute(f"""CREATE TABLE Admin_Roles (
+                    Guild_id varchar(50) NOT NULL,
+                    Role varchar(50) NOT NULL)""")
+            settings.connection.commit()
+            cursor.close()
+        except Error:
+            pass
+    await guildSave()
     await client.change_presence(status=nextcord.Status.online, activity=activity)
     print('We have logged in as {0.user}\n'.format(client))
 
@@ -140,6 +184,8 @@ for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         if filename == "Halls.py" and not SQLconnect:
             print("Database connection failed, Halls are disabled")
+        elif filename == "Admin.py" and not SQLconnect:
+            print("Database connection failed, Admin Commands are disabled")
         else:
             extensions.append("cogs." + filename[:-3])
 
