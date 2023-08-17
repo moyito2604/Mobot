@@ -15,5 +15,9 @@ COPY . .
 # Set Arguments
 ENV token="TOKEN"
 ENV dockerstatus=Yes
+ENV MYSQL_HOST="None"
+ENV MYSQL_DATABASE="None"
+ENV MYSQL_USER="None"
+ENV MYSQL_PASSWORD="None"
 
 CMD [ "python3", "main.py" ]

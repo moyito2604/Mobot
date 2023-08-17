@@ -29,7 +29,7 @@ Token = config.Token
 intents = nextcord.Intents.default()
 intents.members = True
 intents.message_content = True
-intents.emojis = True
+intents.reactions = True
 
 client = commands.Bot(command_prefix='m!', intents=intents, help_command=None, case_insensitive=True)
 
@@ -124,7 +124,8 @@ async def on_ready():
                         Channel varchar(50) NOT NULL,
                         Emote varchar(100) NOT NULL,
                         Amount int NOT NULL,
-                        Hall varchar(50) NOT NULL)""")
+                        Hall varchar(50) NOT NULL,
+                        Hall_Emote varchar(100) NOT NULL)""")
                 settings.connection.commit()
                 cursor.close()
             except Error:

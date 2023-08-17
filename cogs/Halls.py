@@ -4,6 +4,8 @@ from nextcord.ext import commands
 from nextcord import Interaction
 import settings
 import cogs.Dependencies.Functions as Functions
+import asyncio
+import os
 
 class Halls(commands.Cog):
     
@@ -27,14 +29,14 @@ class Halls(commands.Cog):
         #It then embeds them, sends them to the current guild, and closes the cursor
         embed = nextcord.Embed(title=f"{interaction.guild.name}'s Halls")
         for row in records:
-            embed.add_field(name="", value=f"<#{row['Channel']}>{row['Emote']}x{row['Amount']} >> <#{row['Hall']}>", inline=False)
+            embed.add_field(name="", value=f"<#{row['Channel']}>{row['Emote']}x{row['Amount']} >> <#{row['Hall']}>{row['Hall_Emote']}", inline=False)
         await interaction.send(embed=embed)
         cursor.close()
     
     #The hall command adds a hall to the current guild's database
     @nextcord.slash_command(name="hall", 
-                            description="Updates or Adds a Hall")
-    async def hall(self, interaction: Interaction, channel:str, emote:str, amount:int, hall:str):
+                            description="Updates or Adds a Hall. Note: Hall emote is to prevent spam by adding the emote when a hall is added")
+    async def hall(self, interaction: Interaction, channel:str, emote:str, amount:int, hall:str, hall_emote:str):
         
         #First it strips the string to ensure it is in the right format
         channel = channel.lstrip('<#')
@@ -55,11 +57,19 @@ class Halls(commands.Cog):
         #It also makes sure that the emote is valid
         emojis = await interaction.guild.fetch_emojis()
         emotefound = False
+        hallemotef = False
         for emoji in emojis:
             if str(emoji.id) in emote:
-                emotefound = True
-        if not emotefound:
+                emotefound = emoji.id
+                emote = str(emoji)
+            if str(emoji.id) in hall_emote:
+                hallemotef = emoji.id
+                hall_emote = str(emoji)
+        if not emotefound or not hallemotef:
             await interaction.send("Invalid Emoji Provided, Please provide a server Emoji")
+            return
+        elif emotefound == hallemotef:
+            await interaction.send("Hall Emoji and Emoji can't be the same")
             return
         
         #Sets up the connection to the database and sets up the cursor
@@ -86,20 +96,21 @@ class Halls(commands.Cog):
         #If the hall exists, then it queries the database to update it with the information provided
         if record:
             await interaction.send(f"Hall found, Updating according to the following specifications:\n"+
-                                   f"Channel: <#{channel}>\nEmote: {emote}\nAmount: {amount}\nHall: <#{hall}>")
+                                   f"Channel: <#{channel}>\nEmote: {emote}\nAmount: {amount}\nHall: <#{hall}>\n Hall_emote: {hall_emote}")
             cursor.execute(f"""UPDATE {interaction.guild.id}_Halls SET
                             Emote = '{emote}',
                             Amount = {amount},
-                            Hall = '{hall}' WHERE
+                            Hall = '{hall}', 
+                            Hall_Emote = '{hall_emote}' WHERE
                             Channel = '{channel}'""")
             
         #If not, then the database is queried to make a new record for the hall in the guild's database
         else:
             await interaction.send(f"Hall not found, adding according to the following specifications:\n"+
-                                   f"Channel: <#{channel}>\nEmote: {emote}\nAmount: {amount}\nHall: <#{hall}>")
+                                   f"Channel: <#{channel}>\nEmote: {emote}\nAmount: {amount}\nHall: <#{hall}>\n Hall_emote: {hall_emote}")
             cursor.execute(f"""INSERT INTO {interaction.guild.id}_Halls
-                            (Channel, Emote, Amount, Hall) VALUES
-                            ('{channel}', '{emote}', {amount}, '{hall}')""")
+                            (Channel, Emote, Amount, Hall, Hall_Emote) VALUES
+                            ('{channel}', '{emote}', {amount}, '{hall}', '{hall_emote}')""")
         
         #It then commits the changes and closes the cursor
         settings.connection.commit()
@@ -144,5 +155,43 @@ class Halls(commands.Cog):
         settings.connection.commit()
         cursor.close()
         
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author == self.client.user:
+            return
+
+        await asyncio.sleep(0.5)
+        if message.attachments or message.embeds:
+            settings.connection.commit()
+            cursor = settings.connection.cursor(dictionary=True, buffered=True)
+            cursor.execute(f"SELECT * FROM {message.guild.id}_Halls WHERE Channel = '{message.channel.id}'")
+            record = cursor.fetchone()
+            if record:
+                await message.add_reaction(record['Emote'])
+            
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction, user):
+        if reaction.message.attachments or reaction.message.embeds:
+            settings.connection.commit()
+            cursor = settings.connection.cursor(dictionary=True, buffered=True)
+            cursor.execute(f"SELECT * FROM {reaction.message.guild.id}_Halls WHERE Channel = '{reaction.message.channel.id}'")
+            record = cursor.fetchone()
+            if record['Emote'] == str(reaction) and reaction.count == record['Amount']:
+                for emote in reaction.message.reactions:
+                    if str(emote) == record['Hall_Emote'] and emote.me:
+                        return
+                channel = nextcord.utils.get(reaction.message.guild.channels, id=int(record['Hall']))
+                string = f"Posted by <@{reaction.message.author.id}>:"
+                for embed in reaction.message.embeds:
+                    string = string + f"\n{embed.url}"
+                files = []
+                for attachment in reaction.message.attachments:
+                    await attachment.save(attachment.filename)
+                    files.append(nextcord.File(attachment.filename))
+                await channel.send(string, files=files)
+                for file in files:
+                    os.remove(file.filename)
+                await reaction.message.add_reaction(record['Hall_Emote'])                
+            
 def setup(client):
     client.add_cog(Halls(client))
