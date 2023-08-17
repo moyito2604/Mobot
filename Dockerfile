@@ -20,4 +20,6 @@ ENV MYSQL_DATABASE="None"
 ENV MYSQL_USER="None"
 ENV MYSQL_PASSWORD="None"
 
+#Can add MYSQL_PORT for the port number
+
 CMD [ "python3", "main.py" ]

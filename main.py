@@ -60,6 +60,7 @@ SQLHost = os.environ.get('MYSQL_HOST', None)
 database = os.environ.get('MYSQL_DATABASE', None)
 dbuser = os.environ.get('MYSQL_USER', None)
 dbpassword = os.environ.get('MYSQL_PASSWORD', None)
+port = os.environ.get('MYSQL_PORT', 3306)
 
 #Initializes the MySQL connection
 SQLconnect = True
@@ -67,7 +68,8 @@ try:
     connection = mysql.connector.connect(host=SQLHost,
                                          database=database,
                                          user=dbuser,
-                                         password=dbpassword)
+                                         password=dbpassword,
+                                         port=port)
     settings.connection = connection
 except Error as e:
     print("Error while connecting to MySQL", e)
