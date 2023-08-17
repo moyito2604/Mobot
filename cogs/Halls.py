@@ -181,7 +181,7 @@ class Halls(commands.Cog):
                     if str(emote) == record['Hall_Emote'] and emote.me:
                         return
                 channel = nextcord.utils.get(reaction.message.guild.channels, id=int(record['Hall']))
-                string = f"Posted by <@{reaction.message.author.id}>:"
+                string = f"Posted by <@{reaction.message.author.id}>:\n{reaction.message.content}"
                 for embed in reaction.message.embeds:
                     string = string + f"\n{embed.url}"
                 files = []
