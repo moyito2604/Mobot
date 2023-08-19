@@ -3,6 +3,7 @@ import nextcord
 
 
 # The class queueButton is used for the queue command to move through the pages
+# This is specifically the buttons are both enabled
 class queueButton(nextcord.ui.View):
     def __init__(self):
         super().__init__()
@@ -20,7 +21,8 @@ class queueButton(nextcord.ui.View):
         await interaction.response.edit_message(view=self)
         self.stop()
 
-
+# The class queueButton is used for the queue command to move through the pages
+# This is specifically for when the Back Button is supposed to be disabled
 class queueButtonBackDisabled(nextcord.ui.View):
     def __init__(self):
         super().__init__()
@@ -38,7 +40,8 @@ class queueButtonBackDisabled(nextcord.ui.View):
         await interaction.response.edit_message(view=self)
         self.stop()
 
-
+# The class queueButton is used for the queue command to move through the pages
+# This is specifically for when the Next Button is supposed to be disabled
 class queueButtonFrontDisabled(nextcord.ui.View):
     def __init__(self):
         super().__init__()
@@ -99,6 +102,7 @@ class searchButton(nextcord.ui.View):
         await interaction.response.edit_message(view=self)
         self.stop()
         
+#This class is for buttons to prompt a user to select a playlist or song when a conflict is detected
 class playlistSelectButton(nextcord.ui.View):
     def __init__(self):
         super().__init__(timeout=20)

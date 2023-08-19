@@ -27,6 +27,8 @@ class Halls(commands.Cog):
         
         #It then embeds them, sends them to the current guild, and closes the cursor
         embed = nextcord.Embed(title=f"{interaction.guild.name}'s Halls")
+        
+        #Iterates through database records and prints all of the halls for the current server
         for row in records:
             embed.add_field(name="", value=f"<#{row['Channel']}>{row['Emote']}x{row['Amount']} >> <#{row['Hall']}>{row['Hall_Emote']}", inline=False)
         await interaction.send(embed=embed)
@@ -53,7 +55,7 @@ class Halls(commands.Cog):
             await interaction.send("Channel cannot be its own Hall")
             return
         
-        #It also makes sure that the emote is valid
+        #It also makes sure that the emote and the Hall_Emote is valid
         emojis = await interaction.guild.fetch_emojis()
         emotefound = False
         hallemotef = False
@@ -114,6 +116,8 @@ class Halls(commands.Cog):
         #It then commits the changes and closes the cursor
         settings.connection.commit()
         cursor.close()
+        
+        #Checks older messages for a hall
         await Functions.historycheck(interaction.guild, channel, hall, amount, emote, hall_emote)
         
     #The remove hall command removes a single hall from the database
@@ -155,31 +159,49 @@ class Halls(commands.Cog):
         settings.connection.commit()
         cursor.close()
         
+    #on_message listens for messages coming in to make sure if they have attachments or embeds
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author == self.client.user:
             return
 
         await asyncio.sleep(0.5)
+        
+        #This checks for attachments or embeds so to add the emote
         if message.attachments or message.embeds:
+            
+            #First it updates the database and sets up a cursor to make a query for that specific channel
             settings.connection.commit()
             cursor = settings.connection.cursor(dictionary=True, buffered=True)
             cursor.execute(f"SELECT * FROM {message.guild.id}_Halls WHERE Channel = '{message.channel.id}'")
             record = cursor.fetchone()
+            
+            #If the record for the channel exists, then it adds the emote to the message
             if record:
                 await message.add_reaction(record['Emote'])
-            
+
+    #On_reaction_add listens for emotes to send items to halls
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
+        
+        #Checks if a message has attachments or embeds
         if reaction.message.attachments or reaction.message.embeds:
+            
+            #Updates the database and sets up a cursor to make a query for that specfic channel
             settings.connection.commit()
             cursor = settings.connection.cursor(dictionary=True, buffered=True)
             cursor.execute(f"SELECT * FROM {reaction.message.guild.id}_Halls WHERE Channel = '{reaction.message.channel.id}'")
             record = cursor.fetchone()
+            
+            #Checks if the emote is in the message and if the count is greater than or equal to the amount necessary for a hall
             if record['Emote'] == str(reaction) and reaction.count >= record['Amount']:
+                
+                #Checks to make sure it isn't in a hall yet
                 for emote in reaction.message.reactions:
                     if str(emote) == record['Hall_Emote'] and emote.me:
                         return
+                
+                #if it isn't, then it grabs the channel and sends it to the hall
                 channel = nextcord.utils.get(reaction.message.guild.channels, id=int(record['Hall']))
                 await Functions.halladd(reaction.message, channel, record['Hall_Emote'])            
             

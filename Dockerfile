@@ -22,4 +22,4 @@ ENV MYSQL_PASSWORD="None"
 
 #Can add MYSQL_PORT for the port number
 
-CMD [ "python3", "main.py" ]
+CMD [ "python3", "-u", "main.py" ]

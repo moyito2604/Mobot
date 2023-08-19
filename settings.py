@@ -1,7 +1,7 @@
 # This is a function which generates all the global variables necessary for Mobot
 # These variables are used by Music.py and SlashMusic.py
 def init():
-    global queues, timers, titles, downloading, indexes, channels, current
+    global queues, timers, titles, downloading, indexes, channels, current, connection
     # Holds all the Music Queues
     queues = {}
     # Holds all the Titles for the Music Queues
