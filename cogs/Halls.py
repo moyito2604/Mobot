@@ -5,7 +5,6 @@ from nextcord import Interaction
 import settings
 import cogs.Dependencies.Functions as Functions
 import asyncio
-import os
 
 class Halls(commands.Cog):
     
@@ -115,6 +114,7 @@ class Halls(commands.Cog):
         #It then commits the changes and closes the cursor
         settings.connection.commit()
         cursor.close()
+        await Functions.historycheck(interaction.guild, channel, hall, amount, emote, hall_emote)
         
     #The remove hall command removes a single hall from the database
     @nextcord.slash_command(name="removehall", 
@@ -176,22 +176,12 @@ class Halls(commands.Cog):
             cursor = settings.connection.cursor(dictionary=True, buffered=True)
             cursor.execute(f"SELECT * FROM {reaction.message.guild.id}_Halls WHERE Channel = '{reaction.message.channel.id}'")
             record = cursor.fetchone()
-            if record['Emote'] == str(reaction) and reaction.count == record['Amount']:
+            if record['Emote'] == str(reaction) and reaction.count >= record['Amount']:
                 for emote in reaction.message.reactions:
                     if str(emote) == record['Hall_Emote'] and emote.me:
                         return
                 channel = nextcord.utils.get(reaction.message.guild.channels, id=int(record['Hall']))
-                string = f"Posted by <@{reaction.message.author.id}>:\n{reaction.message.content}"
-                for embed in reaction.message.embeds:
-                    string = string + f"\n{embed.url}"
-                files = []
-                for attachment in reaction.message.attachments:
-                    await attachment.save(attachment.filename)
-                    files.append(nextcord.File(attachment.filename))
-                await channel.send(string, files=files)
-                for file in files:
-                    os.remove(file.filename)
-                await reaction.message.add_reaction(record['Hall_Emote'])                
+                await Functions.halladd(reaction.message, channel, record['Hall_Emote'])            
             
 def setup(client):
     client.add_cog(Halls(client))

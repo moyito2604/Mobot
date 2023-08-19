@@ -3,6 +3,8 @@
 
 # imports necessary to run the program
 import argparse
+import asyncio
+import cogs.Dependencies.Functions as Functions
 import os
 import nextcord
 from nextcord.ext import commands
@@ -89,7 +91,7 @@ async def guildSave():
             record = cursor.fetchall()
             if record:
                 cursor.execute(f"""UPDATE Guild_Info SET
-                               Guild_name = '{guild.name}',
+                               Guild_name = "{guild.name}",
                                Members = {guild.member_count},
                                Owner = '{guild.owner}',
                                Owner_id = '{guild.owner.id}' WHERE
@@ -156,6 +158,16 @@ async def on_ready():
     await guildSave()
     await client.change_presence(status=nextcord.Status.online, activity=activity)
     print('We have logged in as {0.user}\n'.format(client))
+    while True:
+        for guild in client.guilds:
+            settings.connection.commit()
+            cursor = settings.connection.cursor(dictionary=True, buffered=True)
+            cursor.execute(f"""SELECT * FROM {guild.id}_Halls""")
+            records = cursor.fetchall()
+            for record in records:
+                await Functions.historycheck(guild, record['Channel'], record['Hall'], record['Amount'], record['Emote'], record['Hall_Emote'])
+        print("Halls Check Finished")
+        await asyncio.sleep(60*60)
 
 
 # The on_guild_join nextcord function is called when someone joins the server
