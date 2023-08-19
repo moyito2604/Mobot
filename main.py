@@ -38,8 +38,6 @@ client = commands.Bot(command_prefix='m!', intents=intents, help_command=None, c
 # This grabs any environment variables from something such as docker
 dockerstat = os.environ.get('dockerstatus', False)
 
-os.system('clear')
-
 # This conditional first checks if it is in a docker container
 # If not, it then checks if it recieved a token through commandline arguments
 if dockerstat:
@@ -48,6 +46,7 @@ if dockerstat:
     Token = newtoken
 # This allows for the token through be inputted through command line arguments with syntax --token TOKEN
 elif args.token != None:
+    os.system('clear')
     configgen.generateConfiguration(False, args.token)
     Token = args.token
 
@@ -81,6 +80,7 @@ if SQLconnect:
     print("Connected to MySQL Server Version", settings.connection.get_server_info())
 
 #This function simplifies the creation of Guild.txt for the multiple instances that it may be created
+#If a database exists, then it places the information in a database
 async def guildSave():
     if SQLconnect:
         cursor = settings.connection.cursor(dictionary=True, buffered=True)
@@ -99,7 +99,7 @@ async def guildSave():
             else:
                 cursor.execute(f"""INSERT INTO Guild_Info
                                 (Guild_id, Guild_name, Members, Owner, Owner_id) VALUES
-                                ('{guild.id}', '{guild.name}', {guild.member_count}, '{guild.owner}', '{guild.owner.id}')""")
+                                ('{guild.id}', "{guild.name}", {guild.member_count}, '{guild.owner}', '{guild.owner.id}')""")
         settings.connection.commit()
         cursor.close()
     else:    
@@ -158,16 +158,17 @@ async def on_ready():
     await guildSave()
     await client.change_presence(status=nextcord.Status.online, activity=activity)
     print('We have logged in as {0.user}\n'.format(client))
-    while True:
-        for guild in client.guilds:
-            settings.connection.commit()
-            cursor = settings.connection.cursor(dictionary=True, buffered=True)
-            cursor.execute(f"""SELECT * FROM {guild.id}_Halls""")
-            records = cursor.fetchall()
-            for record in records:
-                await Functions.historycheck(guild, record['Channel'], record['Hall'], record['Amount'], record['Emote'], record['Hall_Emote'])
-        print("Halls Check Finished")
-        await asyncio.sleep(60*60)
+    if SQLconnect:
+        while True:
+            for guild in client.guilds:
+                settings.connection.commit()
+                cursor = settings.connection.cursor(dictionary=True, buffered=True)
+                cursor.execute(f"""SELECT * FROM {guild.id}_Halls""")
+                records = cursor.fetchall()
+                for record in records:
+                    await Functions.historycheck(guild, record['Channel'], record['Hall'], record['Amount'], record['Emote'], record['Hall_Emote'])
+            print("Halls Check Finished")
+            await asyncio.sleep(60*60)
 
 
 # The on_guild_join nextcord function is called when someone joins the server
@@ -178,7 +179,7 @@ async def on_guild_join(guild):
     await guildSave()
 
 # The on_guild_remove nextcord function is called when someone leaves the server
-# This then regenerates the Guild.tet file with refreshed info on the servers stats
+# This then regenerates the Guild.txt file with refreshed info on the servers stats
 @client.event
 async def on_guild_remove(guild):
     print(f"The bot has left the Guild \"{guild.name}\"")
