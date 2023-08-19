@@ -36,6 +36,35 @@ async def rolecheck(interaction):
         return False
     return True
 
+async def historycheck(guild, channel_id, hall_id, amount, emoji, hall_emoji):
+    channel = nextcord.utils.get(guild.channels, id=int(channel_id))
+    hall = nextcord.utils.get(guild.channels, id=int(hall_id))
+    async for message in channel.history(limit=100):
+        if message.attachments or message.embeds:
+            hall_found = False
+            emote_amount = 0
+            await message.add_reaction(emoji)
+            for emote in message.reactions:
+                if str(emote) == hall_emoji and emote.me:
+                    hall_found = True
+                if str(emote) == emoji:
+                    emote_amount = emote.count
+            if not hall_found and emote_amount >= amount:
+                await halladd(message, hall, hall_emoji)
+
+async def halladd(message, hall_channel, hall_emote):
+    string = f"Posted by <@{message.author.id}>:\n{message.content}"
+    for embed in message.embeds:
+        string = string + f"\n{embed.url}"
+    files = []
+    for attachment in message.attachments:
+        await attachment.save(attachment.filename)
+        files.append(nextcord.File(attachment.filename))
+    await hall_channel.send(string, files=files)
+    for file in files:
+        os.remove(file.filename)
+    await message.add_reaction(hall_emote)
+
 # This function retrieves a techquote from the Funnytechquotes.txt repository of quotes
 # It then returns the quote to be used in Mobot when the command is run
 def techQuotes():
