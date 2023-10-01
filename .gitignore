@@ -3,3 +3,4 @@
 config.py
 *.log
 Guilds.txt
+.idea

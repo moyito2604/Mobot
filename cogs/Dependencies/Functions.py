@@ -19,22 +19,24 @@ import random
 # Sets the working directory
 pwd = os.path.dirname(os.path.realpath(__file__))
 
-#Returns true if the person is allowed to run the command, else false
+
+# Returns true if the person is allowed to run the command, else false
 async def rolecheck(interaction):
     cursor = settings.connection.cursor(dictionary=True, buffered=True)
-    
-    #This ensures that person running the command is allowed to
+
+    # This ensures that person running the command is allowed to
     cursor.execute(f"SELECT * FROM Admin_Roles WHERE Guild_id = {interaction.guild.id}")
     record = cursor.fetchone()
-    
+
     found = None
     if record:
         found = interaction.user.get_role(int(record['Role']))
-    
+
     if not interaction.user.guild_permissions.administrator and not found:
         await interaction.send(f"You must have the <@&{record['Role']}> role to use this command")
         return False
     return True
+
 
 async def historycheck(guild, channel_id, hall_id, amount, emoji, hall_emoji):
     channel = nextcord.utils.get(guild.channels, id=int(channel_id))
@@ -52,6 +54,7 @@ async def historycheck(guild, channel_id, hall_id, amount, emoji, hall_emoji):
             if not hall_found and emote_amount >= amount:
                 await halladd(message, hall, hall_emoji)
 
+
 async def halladd(message, hall_channel, hall_emote):
     string = f"Posted by <@{message.author.id}>:\n{message.content}"
     for embed in message.embeds:
@@ -65,6 +68,7 @@ async def halladd(message, hall_channel, hall_emote):
         os.remove(file.filename)
     await message.add_reaction(hall_emote)
 
+
 # This function retrieves a techquote from the Funnytechquotes.txt repository of quotes
 # It then returns the quote to be used in Mobot when the command is run
 def techQuotes():
@@ -76,6 +80,7 @@ def techQuotes():
     print('\nQuote number ' + str(randomquote) + ' was printed')
     files.close()
     return quote
+
 
 # The loggerOutputs class defines a logger used for yt_dlp
 # This logger is then used to output to STDOUT and STDERR
@@ -121,9 +126,8 @@ async def retrieveAudio(url: str, path: str, ctx, index):
     loop = asyncio.get_event_loop()
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
+            settings.current[ctx.guild.id] = settings.queues[ctx.guild.id][index]
             settings.current[ctx.guild.id]["title"] = settings.titles[ctx.guild.id][index]
-            settings.current[ctx.guild.id]["url"] = settings.queues[ctx.guild.id][index]['url']
-            settings.current[ctx.guild.id]["user"] = settings.queues[ctx.guild.id][index]['user']
             print(f"\n{settings.current[ctx.guild.id]}\n")
             user = settings.queues[ctx.guild.id][index]['user']
             settings.queues[ctx.guild.id].pop(index)
@@ -220,7 +224,8 @@ async def queue(ctx, client):
                 # It then checks if the next item is a playlist and retrieves every item in the playlist
                 url = settings.queues[ctx.guild.id][index]['url']
                 if "playlist" in url and ("youtube" in url or "youtu.be" in url):
-                    songlist, title, durations = await retrievePlaylist(settings.queues[ctx.guild.id][index]['url'], ctx)
+                    songlist, title, durations = await retrievePlaylist(settings.queues[ctx.guild.id][index]['url'],
+                                                                        ctx)
                     voice.stop()
                     users = settings.queues[ctx.guild.id][index]['user']
                     settings.queues[ctx.guild.id].pop(index)
