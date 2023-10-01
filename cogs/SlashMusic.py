@@ -471,9 +471,9 @@ class SlashMusic(commands.Cog):
                                     value=value,
                                     inline=False)
                 embed.set_footer(text=f"Page {pos+1}/{pages}")
-                if pages <= 1:
+                if pages == 1:
                     await interaction.edit_original_message(embed=embed)
-                else:
+                elif pages != 0:
                     await interaction.edit_original_message(embed=embed, view=view)
                     await view.wait()
                 if view.value is None:
@@ -497,15 +497,15 @@ class SlashMusic(commands.Cog):
                 if settings.queues[interaction.guild.id]:
                     settings.titles[interaction.guild.id].pop()
                     settings.queues[interaction.guild.id].pop()
-                settings.current[interaction.guild.id] = {}
                 await interaction.send('Repeating has been turned off')
             else:
                 settings.downloading[interaction.guild.id][1] = True
                 if settings.current[interaction.guild.id]:
-                    settings.titles[interaction.guild.id].append(settings.current[interaction.guild.id]["title"])
+                    print(settings.current)
+                    settings.titles[interaction.guild.id].append({})
                     settings.queues[interaction.guild.id].append({})
-                    settings.queues[interaction.guild.id][-1]['url'] = settings.current[interaction.guild.id]["url"]
-                    settings.queues[interaction.guild.id][-1]['user'] = settings.current[interaction.guild.id]["user"]
+                    settings.titles[interaction.guild.id][-1] = settings.current[interaction.guild.id]["title"]
+                    settings.queues[interaction.guild.id][-1] = settings.current[interaction.guild.id]
                 await interaction.send('Repeating has been turned on')
         else:
             await interaction.send('I am not in a voice channel')

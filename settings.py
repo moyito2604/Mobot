@@ -16,5 +16,5 @@ def init():
     indexes = {}
     # Holds the current title and url of the current song for each guild
     current = {}
-    #Holds the connection to the SQL Database
+    # Holds the connection to the SQL Database
     connection = None

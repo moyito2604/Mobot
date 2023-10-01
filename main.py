@@ -52,18 +52,18 @@ elif args.token != None:
 
 # This sets the working directory for this section of the program
 pwd = os.path.dirname(os.path.realpath(__file__))
-    
+
 # This initializes all global variables needed for Mobot
 settings.init()
 
-#Grabs Environment Variables for 
+# Grabs Environment Variables for
 SQLHost = os.environ.get('MYSQL_HOST', None)
 database = os.environ.get('MYSQL_DATABASE', None)
 dbuser = os.environ.get('MYSQL_USER', None)
 dbpassword = os.environ.get('MYSQL_PASSWORD', None)
 port = os.environ.get('MYSQL_PORT', 3306)
 
-#Initializes the MySQL connection
+# Initializes the MySQL connection
 SQLconnect = True
 try:
     connection = mysql.connector.connect(host=SQLHost,
@@ -79,8 +79,9 @@ except Error as e:
 if SQLconnect:
     print("Connected to MySQL Server Version", settings.connection.get_server_info())
 
-#This function simplifies the creation of Guild.txt for the multiple instances that it may be created
-#If a database exists, then it places the information in a database
+
+# This function simplifies the creation of Guild.txt for the multiple instances that it may be created
+# If a database exists, then it places the information in a database
 async def guildSave():
     if SQLconnect:
         cursor = settings.connection.cursor(dictionary=True, buffered=True)
@@ -102,7 +103,7 @@ async def guildSave():
                                 ('{guild.id}', "{guild.name}", {guild.member_count}, '{guild.owner}', '{guild.owner.id}')""")
         settings.connection.commit()
         cursor.close()
-    else:    
+    else:
         if os.path.exists("Guilds.txt"):
             os.remove("Guilds.txt")
         files = open("Guilds.txt", "w")
@@ -110,6 +111,7 @@ async def guildSave():
             files.write(
                 f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
         files.close()
+
 
 # The nextcord on_ready function is used to prepare several things in the discord bot It generates Guild.txt which
 # contains the information of the servers the bot is in It also sets the presence of the bot to playing the help
@@ -135,7 +137,7 @@ async def on_ready():
             except Error:
                 pass
         try:
-            cursor = settings.connection.cursor(dictionary=True, buffered=True)            
+            cursor = settings.connection.cursor(dictionary=True, buffered=True)
             cursor.execute(f"""CREATE TABLE Guild_Info (
                     Guild_id varchar(50) NOT NULL,
                     Guild_name varchar(100) NOT NULL,
@@ -166,9 +168,10 @@ async def on_ready():
                 cursor.execute(f"""SELECT * FROM {guild.id}_Halls""")
                 records = cursor.fetchall()
                 for record in records:
-                    await Functions.historycheck(guild, record['Channel'], record['Hall'], record['Amount'], record['Emote'], record['Hall_Emote'])
+                    await Functions.historycheck(guild, record['Channel'], record['Hall'], record['Amount'],
+                                                 record['Emote'], record['Hall_Emote'])
             print("Halls Check Finished")
-            await asyncio.sleep(60*60)
+            await asyncio.sleep(60 * 60)
 
 
 # The on_guild_join nextcord function is called when someone joins the server
@@ -177,6 +180,7 @@ async def on_ready():
 async def on_guild_join(guild):
     print(f"The bot has joined the Guild \"{guild.name}\"")
     await guildSave()
+
 
 # The on_guild_remove nextcord function is called when someone leaves the server
 # This then regenerates the Guild.txt file with refreshed info on the servers stats
@@ -193,9 +197,10 @@ async def on_guild_update(before, after):
     print(f"Guild \"{before.name}\" has changed the name to \"{after.name}\"")
     await guildSave()
 
+
 extensions = []
 
-# From here, all of the cogs used in this bot are loaded in and added to the bots features so that they are usable later
+# From here, all the cogs used in this bot are loaded in and added to the bots features so that they are usable later
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         if filename == "Halls.py" and not SQLconnect:
