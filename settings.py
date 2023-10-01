@@ -18,3 +18,5 @@ def init():
     current = {}
     # Holds the connection to the SQL Database
     connection = None
+    # Holds the Halls timer
+    halltimer = None

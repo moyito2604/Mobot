@@ -3,8 +3,9 @@
 
 # imports necessary to run the program
 import argparse
-import asyncio
+from datetime import datetime
 import cogs.Dependencies.Functions as Functions
+import cogs.Dependencies.Threaded_timer as Threaded_timer
 import os
 import nextcord
 from nextcord.ext import commands
@@ -113,6 +114,18 @@ async def guildSave():
         files.close()
 
 
+async def hallscheck():
+    for guild in client.guilds:
+        settings.connection.commit()
+        cursor = settings.connection.cursor(dictionary=True, buffered=True)
+        cursor.execute(f"""SELECT * FROM {guild.id}_Halls""")
+        records = cursor.fetchall()
+        for record in records:
+            await Functions.historycheck(guild, record['Channel'], record['Hall'], record['Amount'],
+                                         record['Emote'], record['Hall_Emote'])
+    print("Halls Check Finished at", datetime.utcnow())
+
+
 # The nextcord on_ready function is used to prepare several things in the discord bot It generates Guild.txt which
 # contains the information of the servers the bot is in It also sets the presence of the bot to playing the help
 # command and notifies the user of when the bot has logged in and is ready to deploy to servers
@@ -161,17 +174,9 @@ async def on_ready():
     await client.change_presence(status=nextcord.Status.online, activity=activity)
     print('We have logged in as {0.user}\n'.format(client))
     if SQLconnect:
-        while True:
-            for guild in client.guilds:
-                settings.connection.commit()
-                cursor = settings.connection.cursor(dictionary=True, buffered=True)
-                cursor.execute(f"""SELECT * FROM {guild.id}_Halls""")
-                records = cursor.fetchall()
-                for record in records:
-                    await Functions.historycheck(guild, record['Channel'], record['Hall'], record['Amount'],
-                                                 record['Emote'], record['Hall_Emote'])
-            print("Halls Check Finished")
-            await asyncio.sleep(60 * 60)
+        await hallscheck()
+        settings.halltimer = Threaded_timer.RepeatedTimer(5 * 60, hallscheck)
+        await settings.halltimer.start()
 
 
 # The on_guild_join nextcord function is called when someone joins the server

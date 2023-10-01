@@ -78,7 +78,7 @@ class SlashMusic(commands.Cog):
 
         # It then checks if the bot is in a valid voice channel and if it's not, it sends a message saying that it's
         # not in a VC It then cleans up dictionary keys that are used to run the bot and removes directories
-        if (interaction.guild.voice_client):
+        if interaction.guild.voice_client:
             shutil.rmtree(pwd + '/' + str(interaction.guild.id))
             print('directory ' + str(interaction.guild.id) + ' has been deleted')
             await settings.timers[interaction.guild.id].stop()
@@ -160,7 +160,9 @@ class SlashMusic(commands.Cog):
                             og_url = info['url']
                             if "playlist" in og_url and ("youtube" in url or "youtu.be" in url):
                                 embed = nextcord.Embed(title="**Playlist Detected**")
-                                embed.add_field(name="", value="The link previously placed has a reference to a playlist and a song. Please specify if the song or playlist is needed")
+                                embed.add_field(name="",
+                                                value="The link previously placed has a reference to a playlist and a "
+                                                      "song. Please specify if the song or playlist is needed")
                                 view = Buttons.playlistSelectButton()
                                 await interaction.send(embed=embed, ephemeral=True, view=view, delete_after=20)
                                 await view.wait()
@@ -180,8 +182,10 @@ class SlashMusic(commands.Cog):
                                     title = info.get('title', None)
                                     times = time.gmtime(info["duration"])
                                     await interaction.send('***' + title + '*** has been added to the queue')
-                                    settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
-                                    settings.queues[interaction.guild.id][-1]['url'] = "https://www.youtube.com/watch?v=" + info['id']
+                                    settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S",
+                                                                                                          times)
+                                    settings.queues[interaction.guild.id][-1][
+                                        'url'] = "https://www.youtube.com/watch?v=" + info['id']
                                     settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
                                     settings.titles[interaction.guild.id].append(title)
                         else:
@@ -223,7 +227,8 @@ class SlashMusic(commands.Cog):
                         settings.queues[interaction.guild.id][-1]['url'] = search['result'][int(view.value) - 1]['link']
                         settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
                         with yt_dlp.YoutubeDL() as ydl:
-                            info = ydl.extract_info(search['result'][int(view.value) - 1]['link'], download=False, process=False)
+                            info = ydl.extract_info(search['result'][int(view.value) - 1]['link'], download=False,
+                                                    process=False)
                             times = time.gmtime(info['duration'])
                             settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
                         settings.titles[interaction.guild.id].append(search['result'][int(view.value) - 1]['title'])
@@ -348,7 +353,8 @@ class SlashMusic(commands.Cog):
         if voice != None:
             vidsearch = VideosSearch(song, limit=1)
             search = vidsearch.result()
-            await interaction.send('***' + search['result'][0]['title'] + '*** has been added to the queue', ephemeral=True)
+            await interaction.send('***' + search['result'][0]['title'] + '*** has been added to the queue',
+                                   ephemeral=True)
             settings.queues[interaction.guild.id].append({})
             settings.queues[interaction.guild.id][-1]['url'] = search['result'][0]['link']
             settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
@@ -448,19 +454,19 @@ class SlashMusic(commands.Cog):
             await interaction.send(embed=embed)
 
             while True:
-                pages = math.ceil(len(settings.queues[interaction.guild.id])/items)
+                pages = math.ceil(len(settings.queues[interaction.guild.id]) / items)
                 if pos == 0:
                     view = Buttons.queueButtonBackDisabled()
-                elif pos+1 >= pages:
+                elif pos + 1 >= pages:
                     view = Buttons.queueButtonFrontDisabled()
                 else:
                     view = Buttons.queueButton()
                 embed = nextcord.Embed(title=f"{interaction.guild.name}'s Queue")
-                minimum = pos*items
-                if minimum+items > len(settings.queues[interaction.guild.id]):
+                minimum = pos * items
+                if minimum + items > len(settings.queues[interaction.guild.id]):
                     maximum = len(settings.queues[interaction.guild.id])
                 else:
-                    maximum = (pos*items)+items
+                    maximum = (pos * items) + items
                 for counter in range(minimum, maximum):
                     value = f"Added by: {settings.queues[interaction.guild.id][counter]['user']}\n"
                     if 'duration' in settings.queues[interaction.guild.id][counter]:
@@ -470,7 +476,7 @@ class SlashMusic(commands.Cog):
                     embed.add_field(name=f"{counter + 1}: ***{settings.titles[interaction.guild.id][counter]}***",
                                     value=value,
                                     inline=False)
-                embed.set_footer(text=f"Page {pos+1}/{pages}")
+                embed.set_footer(text=f"Page {pos + 1}/{pages}")
                 if pages == 1:
                     await interaction.edit_original_message(embed=embed)
                 elif pages != 0:
