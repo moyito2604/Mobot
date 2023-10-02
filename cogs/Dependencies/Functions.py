@@ -20,6 +20,20 @@ import random
 pwd = os.path.dirname(os.path.realpath(__file__))
 
 
+# This provides colors for output in terminal
+class Color:
+    PURPLE = '\033[95m'
+    CYAN = '\033[96m'
+    DARKCYAN = '\033[36m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'
+
+
 # Returns true if the person is allowed to run the command, else false
 async def rolecheck(interaction):
     cursor = settings.connection.cursor(dictionary=True, buffered=True)
@@ -92,17 +106,14 @@ class loggerOutputs:
     def error(self, msg):
         with open(f'logs/{self.ctx.guild.name}_logs.log', 'a+') as file:
             file.write("Error: " + msg + "\n")
-            print("Error: " + msg)
 
     def warning(self, msg):
         with open(f'logs/{self.ctx.guild.name}_logs.log', 'a+') as file:
             file.write("Warning: " + msg + "\n")
-            print("Warning: " + msg)
 
     def debug(self, msg):
         with open(f'logs/{self.ctx.guild.name}_logs.log', 'a+') as file:
             file.write("Log: " + msg + "\n")
-            print(msg)
 
 
 # RetrieveAudio defines a function which downloads a YouTube video and converts it to an .opus file to be played by
@@ -128,14 +139,12 @@ async def retrieveAudio(url: str, path: str, ctx, index):
         try:
             settings.current[ctx.guild.id] = settings.queues[ctx.guild.id][index]
             settings.current[ctx.guild.id]["title"] = settings.titles[ctx.guild.id][index]
-            print(f"\n{settings.current[ctx.guild.id]}\n")
             user = settings.queues[ctx.guild.id][index]['user']
             settings.queues[ctx.guild.id].pop(index)
             info = await loop.run_in_executor(None, ydl.extract_info, url)
             settings.titles[ctx.guild.id].pop(index)
             title = info.get('title', None)
             extension = info.get('ext')
-            print(f"\n{extension}\n")
 
         # If there is an error with downloading, it then tries to download the next song
         except DownloadError:
@@ -159,7 +168,7 @@ async def retrieveAudio(url: str, path: str, ctx, index):
 
 # This function retrieves a playlist from YouTube using scrapetube and pushes the urls to queue
 # It also retrieves the titles, duration, and the user who placed each song and pushes it to queue as well
-async def retrievePlaylist(url, ctx):
+async def retrievePlaylist(url, titles, ctx):
     id = url.lstrip('https://www.youtube.com/playlist?list=')
     loop = asyncio.get_event_loop()
     videos = await loop.run_in_executor(None, scrapetube.get_playlist, id)
@@ -173,8 +182,9 @@ async def retrievePlaylist(url, ctx):
         lengths.append(time.strftime("%H:%M:%S", times))
     channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                  id=settings.channels[ctx.guild.id].channel.id)
-    print("Playlist retrieved successfully")
-    await channel.send('Playlist Retrieved Successfully')
+    print(f"Playlist {Color.RED}{Color.BOLD}{titles}{Color.END} Extracted Successfully for {Color.BLUE}{Color.BOLD}"
+          f"{ctx.guild.name}{Color.END}")
+    await channel.send(f"Playlist ***{titles}*** Retrieved Successfully")
     return songlist, title, lengths
 
 
@@ -194,7 +204,7 @@ async def queue(ctx, client):
     # First it sets the working directory and checks if the bot is playing a song
     pwd = os.path.dirname(os.path.realpath(__file__))
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
-    if (voice.is_playing() or voice.is_paused()):
+    if voice.is_playing() or voice.is_paused():
         pass
     else:
 
@@ -225,7 +235,7 @@ async def queue(ctx, client):
                 url = settings.queues[ctx.guild.id][index]['url']
                 if "playlist" in url and ("youtube" in url or "youtu.be" in url):
                     songlist, title, durations = await retrievePlaylist(settings.queues[ctx.guild.id][index]['url'],
-                                                                        ctx)
+                                                                        settings.titles[ctx.guild.id][index], ctx)
                     voice.stop()
                     users = settings.queues[ctx.guild.id][index]['user']
                     settings.queues[ctx.guild.id].pop(index)
@@ -256,6 +266,8 @@ async def queue(ctx, client):
                     embed.add_field(name="Added By:", value=user, inline=False)
                     embed.set_footer(text=f"Duration: {duration}")
                     embed.set_thumbnail(url=thumbnail)
+                    print(f"Song {Color.RED}{Color.BOLD}{title}{Color.END} is playing in {Color.BLUE}{Color.BOLD}"
+                          f"{ctx.guild.name}{Color.END}")
                     await textchannel.send(mention_author=True, embed=embed)
                     # Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN retrieveAudio()
                     if settings.downloading[ctx.guild.id][3]:
@@ -275,4 +287,4 @@ async def queue(ctx, client):
         # If there is not an active queue, it cleans up and pauses the timer
         else:
             await settings.timers[ctx.guild.id].pause()
-            print('No queued items')
+            print(f"No queued items for {Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")

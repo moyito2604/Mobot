@@ -18,6 +18,9 @@ from mysql.connector import Error
 
 os.system('clear')
 
+# Provides colors for outputs
+color = Functions.Color
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--token', type=str, required=False)
 args = parser.parse_args()
@@ -123,7 +126,7 @@ async def hallscheck():
         for record in records:
             await Functions.historycheck(guild, record['Channel'], record['Hall'], record['Amount'],
                                          record['Emote'], record['Hall_Emote'])
-    print("Halls Check Finished at", datetime.utcnow())
+    print(f"Halls Check Finished at {color.DARKCYAN}{color.BOLD}{datetime.utcnow()}{color.END}")
 
 
 # The nextcord on_ready function is used to prepare several things in the discord bot It generates Guild.txt which
