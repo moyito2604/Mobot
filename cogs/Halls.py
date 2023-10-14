@@ -172,19 +172,16 @@ class Halls(commands.Cog):
             return
 
         await asyncio.sleep(2)
+        
+        # First it updates the database and sets up a cursor to make a query for that specific channel
+        settings.connection.commit()
+        cursor = settings.connection.cursor(dictionary=True, buffered=True)
+        cursor.execute(f"SELECT * FROM {message.guild.id}_Halls WHERE Channel = '{message.channel.id}'")
+        record = cursor.fetchone()
 
-        # This checks for attachments or embeds so to add the emote
-        if message.attachments or message.embeds:
-
-            # First it updates the database and sets up a cursor to make a query for that specific channel
-            settings.connection.commit()
-            cursor = settings.connection.cursor(dictionary=True, buffered=True)
-            cursor.execute(f"SELECT * FROM {message.guild.id}_Halls WHERE Channel = '{message.channel.id}'")
-            record = cursor.fetchone()
-
-            # If the record for the channel exists, then it adds the emote to the message
-            if record:
-                await message.add_reaction(record['Emote'])
+        # If the record for the channel exists and checks for attachments or embeds, then it adds the emote
+        if record and (message.attachments or message.embeds):
+            await message.add_reaction(record['Emote'])
 
     # On_reaction_add listens for emotes to send items to halls
     @commands.Cog.listener()

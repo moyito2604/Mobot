@@ -160,6 +160,8 @@ class SlashMusic(commands.Cog):
                             settings.queues[interaction.guild.id][-1]['items'] = info['playlist_count']
                             settings.queues[interaction.guild.id][-1]['url'] = url
                             settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                            settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
+                            settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
                             settings.titles[interaction.guild.id].append(title)
                         elif 'url' in info:
                             og_url = info['url']
@@ -180,6 +182,9 @@ class SlashMusic(commands.Cog):
                                     settings.queues[interaction.guild.id][-1]['items'] = info['playlist_count']
                                     settings.queues[interaction.guild.id][-1]['url'] = og_url
                                     settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                                    settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
+                                    settings.queues[interaction.guild.id][-1][
+                                        'avatar'] = interaction.user.display_avatar.url
                                     settings.titles[interaction.guild.id].append(title)
                                 elif view.value == 2:
                                     with yt_dlp.YoutubeDL({'noplaylist': True, 'quiet': True}) as ydltemp:
@@ -192,6 +197,9 @@ class SlashMusic(commands.Cog):
                                     settings.queues[interaction.guild.id][-1][
                                         'url'] = "https://www.youtube.com/watch?v=" + info['id']
                                     settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                                    settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
+                                    settings.queues[interaction.guild.id][-1][
+                                        'avatar'] = interaction.user.display_avatar.url
                                     settings.titles[interaction.guild.id].append(title)
                         else:
                             await interaction.send('***' + title + '*** has been added to the queue')
@@ -199,6 +207,8 @@ class SlashMusic(commands.Cog):
                             settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
                             settings.queues[interaction.guild.id][-1]['url'] = url
                             settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                            settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
+                            settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
                             settings.titles[interaction.guild.id].append(title)
                         print(f"Successfully added {color.RED}{color.BOLD}{title}{color.END} to the queue for "
                               f"{color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
@@ -232,6 +242,8 @@ class SlashMusic(commands.Cog):
                         settings.queues[interaction.guild.id].append({})
                         settings.queues[interaction.guild.id][-1]['url'] = search['result'][int(view.value) - 1]['link']
                         settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                        settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
+                        settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
                         with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
                             info = ydl.extract_info(search['result'][int(view.value) - 1]['link'], download=False,
                                                     process=False)
@@ -321,9 +333,7 @@ class SlashMusic(commands.Cog):
                 # It displays what the next item of the queue is
                 for counter in range(1, amount):
                     if settings.downloading[interaction.guild.id][1]:
-                        settings.queues[interaction.guild.id].append({})
-                        settings.queues[interaction.guild.id][-1]['url'] = settings.queues[interaction.guild.id][0]
-                        settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                        settings.queues[interaction.guild.id].append(settings.queues[interaction.guild.id][0])
                         settings.titles[interaction.guild.id].append(settings.titles[interaction.guild.id][0])
                     settings.queues[interaction.guild.id].pop(0)
                     settings.titles[interaction.guild.id].pop(0)
@@ -364,6 +374,8 @@ class SlashMusic(commands.Cog):
             settings.queues[interaction.guild.id].append({})
             settings.queues[interaction.guild.id][-1]['url'] = search['result'][0]['link']
             settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+            settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
+            settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
             with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
                 info = ydl.extract_info(search['result'][0]['link'], download=False, process=False)
                 times = time.gmtime(info["duration"])
@@ -413,6 +425,8 @@ class SlashMusic(commands.Cog):
                 settings.queues[interaction.guild.id].append({})
                 settings.queues[interaction.guild.id][-1]['url'] = search['result'][int(view.value) - 1]['link']
                 settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
+                settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
                 settings.queues[interaction.guild.id][-1]['items'] = search['result'][int(view.value) - 1]['videoCount']
                 settings.titles[interaction.guild.id].append(search['result'][int(view.value) - 1]['title'])
                 if not settings.downloading[interaction.guild.id][0]:
@@ -440,6 +454,8 @@ class SlashMusic(commands.Cog):
             settings.queues[interaction.guild.id].append({})
             settings.queues[interaction.guild.id][-1]['url'] = search['result'][0]['link']
             settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+            settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
+            settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
             settings.queues[interaction.guild.id][-1]['items'] = search['result'][0]['videoCount']
             settings.titles[interaction.guild.id].append(search['result'][0]['title'])
             if not settings.downloading[interaction.guild.id][0]:
@@ -487,7 +503,7 @@ class SlashMusic(commands.Cog):
                     embed.add_field(name=f"{counter + 1}: ***{settings.titles[interaction.guild.id][counter]}***",
                                     value=value,
                                     inline=False)
-                embed.set_footer(text=f"Page {pos + 1}/{pages}")
+                embed.set_footer(text=f"Page {pos + 1}/{pages} | Size: {len(settings.titles[interaction.guild.id])}")
                 if pages == 1:
                     await interaction.edit_original_message(embed=embed)
                 elif pages != 0:

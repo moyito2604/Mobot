@@ -71,16 +71,21 @@ async def historycheck(guild, channel_id, hall_id, amount, emoji, hall_emoji):
 
 async def halladd(message, hall_channel, hall_emote):
     string = f"Posted by <@{message.author.id}>:\n{message.content}"
-    for embed in message.embeds:
-        string = string + f"\n{embed.url}"
     files = []
     for attachment in message.attachments:
         await attachment.save(attachment.filename)
         files.append(nextcord.File(attachment.filename))
-    await hall_channel.send(string, files=files)
+    try:
+        await message.add_reaction(hall_emote)
+    except nextcord.errors.Forbidden:
+        pass
+    else:
+        await hall_channel.send(string, files=files)
     for file in files:
-        os.remove(file.filename)
-    await message.add_reaction(hall_emote)
+        try:
+            os.remove(file.filename)
+        except FileNotFoundError:
+            pass
 
 
 # This function retrieves a techquote from the Funnytechquotes.txt repository of quotes
@@ -140,6 +145,8 @@ async def retrieveAudio(url: str, path: str, ctx, index):
             settings.current[ctx.guild.id] = settings.queues[ctx.guild.id][index]
             settings.current[ctx.guild.id]["title"] = settings.titles[ctx.guild.id][index]
             user = settings.queues[ctx.guild.id][index]['user']
+            name = settings.queues[ctx.guild.id][index]['name']
+            avatar = settings.queues[ctx.guild.id][index]['avatar']
             settings.queues[ctx.guild.id].pop(index)
             info = await loop.run_in_executor(None, ydl.extract_info, url)
             settings.titles[ctx.guild.id].pop(index)
@@ -163,7 +170,8 @@ async def retrieveAudio(url: str, path: str, ctx, index):
     source = await FFmpegOpusAudio.from_probe(path + f"/song.{extension}")
     times = time.gmtime(info["duration"])
     duration = time.strftime("%H:%M:%S", times)
-    return source, title, info["thumbnails"][0]["url"], duration, user
+    return {'source': source, 'title': title, 'thumbnail': info["thumbnails"][0]["url"], 'duration': duration,
+            'user': user, 'name': name, 'avatar': avatar}
 
 
 # This function retrieves a playlist from YouTube using scrapetube and pushes the urls to queue
@@ -238,6 +246,8 @@ async def queue(ctx, client):
                                                                         settings.titles[ctx.guild.id][index], ctx)
                     voice.stop()
                     users = settings.queues[ctx.guild.id][index]['user']
+                    names = settings.queues[ctx.guild.id][index]['name']
+                    avatars = settings.queues[ctx.guild.id][index]['avatar']
                     settings.queues[ctx.guild.id].pop(index)
                     counter = 0
                     curqueue = settings.queues[ctx.guild.id]
@@ -247,6 +257,8 @@ async def queue(ctx, client):
                         settings.queues[ctx.guild.id][-1]['url'] = item
                         settings.queues[ctx.guild.id][-1]['user'] = users
                         settings.queues[ctx.guild.id][-1]['duration'] = durations[counter]
+                        settings.queues[ctx.guild.id][-1]['name'] = names
+                        settings.queues[ctx.guild.id][-1]['avatar'] = avatars
                         counter += 1
                     settings.queues[ctx.guild.id] = settings.queues[ctx.guild.id] + curqueue
                     settings.titles[ctx.guild.id].pop(index)
@@ -258,16 +270,16 @@ async def queue(ctx, client):
                     if settings.downloading[ctx.guild.id][1]:
                         settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
                         settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
-                    source, title, thumbnail, duration, user = await retrieveAudio(
-                        settings.queues[ctx.guild.id][index]['url'], (pwd + '/' + str(ctx.guild.id)), ctx, index)
+                    song = await retrieveAudio(settings.queues[ctx.guild.id][index]['url'],
+                                               (pwd + '/' + str(ctx.guild.id)), ctx, index)
                     textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                                      id=settings.channels[ctx.guild.id].channel.id)
-                    embed = nextcord.Embed(title="Now playing:", description=title)
-                    embed.add_field(name="Added By:", value=user, inline=False)
-                    embed.set_footer(text=f"Duration: {duration}")
-                    embed.set_thumbnail(url=thumbnail)
-                    print(f"Song {Color.RED}{Color.BOLD}{title}{Color.END} is playing in {Color.BLUE}{Color.BOLD}"
-                          f"{ctx.guild.name}{Color.END}")
+                    embed = nextcord.Embed(title="Now playing:", description=song['title'])
+                    embed.set_author(name=song['name'], icon_url=song['avatar'])
+                    embed.set_footer(text=f"Duration: {song['duration']}")
+                    embed.set_thumbnail(url=song['thumbnail'])
+                    print(f"Song {Color.RED}{Color.BOLD}{song['title']}{Color.END} is playing in "
+                          f"{Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
                     await textchannel.send(mention_author=True, embed=embed)
                     # Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN retrieveAudio()
                     if settings.downloading[ctx.guild.id][3]:
@@ -281,7 +293,7 @@ async def queue(ctx, client):
                         # normalized.export(f"{pwd}/{ctx.guild.id}/song.opus", format="opus")
                         # await loop.run_in_executor(None, normalized.export, f"{pwd}/{ctx.guild.id}/song.opus", format="opus")
                         # source = FFmpegOpusAudio(f"{pwd}/{ctx.guild.id}/song.opus")
-                    player = voice.play(source)
+                    player = voice.play(song['source'])
             settings.downloading[ctx.guild.id][0] = False
 
         # If there is not an active queue, it cleans up and pauses the timer
