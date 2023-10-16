@@ -155,14 +155,33 @@ class SlashMusic(commands.Cog):
                             else:
                                 await interaction.send("The current Track has failed to play")
                     if not failed:
-                        if "playlist" in url and ("youtube" in url or "youtu.be" in url):
-                            await interaction.send('Playlist ***' + title + '*** has been added to the queue')
-                            settings.queues[interaction.guild.id][-1]['items'] = info['playlist_count']
-                            settings.queues[interaction.guild.id][-1]['url'] = url
-                            settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
-                            settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
-                            settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
-                            settings.titles[interaction.guild.id].append(title)
+                        if not '_type' in info:
+                            info['_type'] = 'song'
+                        if info['_type'] == "playlist":
+                            if info['id'][:2] == 'RD':
+                                with yt_dlp.YoutubeDL({'quiet': True, 'noplaylist': True}) as ydl:
+                                    info = ydl.extract_info(url, download=False, process=False)
+                                    url = info['url']
+                                    info = ydl.extract_info(url, download=False, process=False)
+                                times = time.gmtime(info["duration"])
+                                title = info.get('title', None)
+                                settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S",
+                                                                                                      times)
+                                settings.queues[interaction.guild.id][-1]['url'] = url
+                                settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                                settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
+                                settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
+                                settings.titles[interaction.guild.id].append(title)
+                                await interaction.send(f"Youtube Mixes are not allowed to be added, adding the song "
+                                                       f"***{title}*** instead", ephemeral=True)
+                            else:
+                                await interaction.send('Playlist ***' + title + '*** has been added to the queue')
+                                settings.queues[interaction.guild.id][-1]['items'] = info['playlist_count']
+                                settings.queues[interaction.guild.id][-1]['url'] = url
+                                settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
+                                settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
+                                settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
+                                settings.titles[interaction.guild.id].append(title)
                         elif 'url' in info:
                             og_url = info['url']
                             if "playlist" in og_url and ("youtube" in url or "youtu.be" in url):
