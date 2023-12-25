@@ -3,7 +3,7 @@ import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction
 import settings
-import cogs.Dependencies.SQLFunc as SQLFunc
+import Dependencies.SQLFunc as SQLFunc
 import asyncio
 
 

@@ -3,7 +3,7 @@ import asyncio
 import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction
-import cogs.Dependencies.Functions as Functions
+import Dependencies.Functions as Functions
 
 
 # This class defines what the cogs.General will be able to do

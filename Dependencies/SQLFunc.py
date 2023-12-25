@@ -57,7 +57,5 @@ async def halladd(message, hall_channel, hall_emote):
             pass
 
 
-async def fetchquery(fetch: bool = True, query: str = ''):
+async def checkConn():
     settings.connection.ping(True, attempts=3, delay=2)
-    cursor = settings.connection.cursor(dictionary=True, buffered=True)
-    cursor.execute(query)

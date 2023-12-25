@@ -16,9 +16,6 @@ import os.path
 import settings
 import random
 
-# Sets the working directory
-pwd = os.path.dirname(os.path.realpath(__file__))
-
 
 # This provides colors for output in terminal
 class Color:
@@ -37,7 +34,9 @@ class Color:
 # This function retrieves a techquote from the Funnytechquotes.txt repository of quotes
 # It then returns the quote to be used in Mobot when the command is run
 def techQuotes():
-    files = open(pwd + '/Quotes/' + 'Funnytechquotes.txt', 'r')
+    # Sets the working directory
+    currdir = settings.pwd + '/Dependencies/'
+    files = open(currdir + '/Quotes/' + 'Funnytechquotes.txt', 'r')
     quote = ''
     randomquote = randint(1, 62)
     for counter in range(randomquote):
@@ -70,6 +69,8 @@ class loggerOutputs:
 # RetrieveAudio defines a function which downloads a YouTube video and converts it to an .opus file to be played by
 # Mobot
 async def retrieveAudio(url: str, path: str, ctx, index):
+    # Sets the working directory
+    currdir = settings.pwd + '/Dependencies/'
     # ydl_ops defines a set of options used to run yt_dlp and get the desired output
     ydl_opts = {
         'format': 'bestaudio/best',
@@ -105,7 +106,7 @@ async def retrieveAudio(url: str, path: str, ctx, index):
             channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                          id=settings.channels[ctx.guild.id].channel.id)
             await channel.send("The current Track has failed to download. The next Track will now Download")
-            return await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (pwd + '/' + str(ctx.guild.id)), ctx, 0)
+            return await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + '/' + str(ctx.guild.id)), ctx, 0)
 
     # It then renames the song and gets it ready to be played
     if extension == "webm":
@@ -155,8 +156,9 @@ def checkurl(url_string: str):
 # The queue function is what runs the entire music bot.
 # This function is used to periodically check if a song is ready to be loaded up into the voice chat for playing
 async def queue(ctx, client):
+    # Sets the working directory
+    currdir = settings.pwd + '/Dependencies/'
     # First it sets the working directory and checks if the bot is playing a song
-    pwd = os.path.dirname(os.path.realpath(__file__))
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
     if voice.is_playing() or voice.is_paused():
         pass
@@ -165,7 +167,7 @@ async def queue(ctx, client):
         # It then checks if there is an active queue for an individual server
         if settings.queues[ctx.guild.id]:
             if settings.queues[ctx.guild.id][0]['url'].startswith('song'):
-                source = FFmpegPCMAudio(pwd + '/' + str(ctx.guild.id) + '/' + settings.queues[ctx.guild.id][0])
+                source = FFmpegPCMAudio(currdir + '/' + str(ctx.guild.id) + '/' + settings.queues[ctx.guild.id][0])
 
             # It then sets up everything for the next song to play properly
             # It clears the guild directory and sets downloading to true
@@ -217,7 +219,7 @@ async def queue(ctx, client):
                         settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
                         settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
                     song = await retrieveAudio(settings.queues[ctx.guild.id][index]['url'],
-                                               (pwd + '/' + str(ctx.guild.id)), ctx, index)
+                                               (currdir + '/' + str(ctx.guild.id)), ctx, index)
                     textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                                      id=settings.channels[ctx.guild.id].channel.id)
                     embed = nextcord.Embed(title="Now playing:", description=song['title'])
@@ -231,14 +233,14 @@ async def queue(ctx, client):
                     if settings.downloading[ctx.guild.id][3]:
                         # loop = asyncio.get_event_loop()
                         print("normalized")
-                        # raw = await loop.run_in_executor(None, AudioSegment.from_file, f"{pwd}/{ctx.guild.id}/song.opus", codec = "opus")
-                        # raw = AudioSegment.from_file(f"{pwd}/{ctx.guild.id}/song.opus", codec = "opus")
+                        # raw = await loop.run_in_executor(None, AudioSegment.from_file, f"{currdir}/{ctx.guild.id}/song.opus", codec = "opus")
+                        # raw = AudioSegment.from_file(f"{currdir}/{ctx.guild.id}/song.opus", codec = "opus")
                         # normalized = effects.normalize(raw, headroom=10)
                         # normalized = await loop.run_in_executor(None, effects.normalize, raw, headroom=10)
                         # os.system('rm ' + str(ctx.guild.id) + '/*.opus')
-                        # normalized.export(f"{pwd}/{ctx.guild.id}/song.opus", format="opus")
-                        # await loop.run_in_executor(None, normalized.export, f"{pwd}/{ctx.guild.id}/song.opus", format="opus")
-                        # source = FFmpegOpusAudio(f"{pwd}/{ctx.guild.id}/song.opus")
+                        # normalized.export(f"{currdir}/{ctx.guild.id}/song.opus", format="opus")
+                        # await loop.run_in_executor(None, normalized.export, f"{currdir}/{ctx.guild.id}/song.opus", format="opus")
+                        # source = FFmpegOpusAudio(f"{currdir}/{ctx.guild.id}/song.opus")
                     player = voice.play(song['source'])
             settings.downloading[ctx.guild.id][0] = False
 

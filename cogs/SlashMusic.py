@@ -12,9 +12,9 @@ import os.path
 import yt_dlp
 import shutil
 import settings
-import cogs.Dependencies.Functions as Functions
-import cogs.Dependencies.Threaded_timer as Threaded_timer
-import cogs.Dependencies.Buttons as Buttons
+import Dependencies.Functions as Functions
+import Dependencies.Threaded_timer as Threaded_timer
+import Dependencies.Buttons as Buttons
 
 
 color = Functions.Color
@@ -40,11 +40,11 @@ class SlashMusic(commands.Cog):
         # It sets up the threaded timer to monitor the voice activity of the bot as well.
         if interaction.user.voice:
             if voice == None:
-                pwd = os.path.dirname(os.path.realpath(__file__)) + '/Dependencies'
-                if os.path.isdir(pwd + '/' + str(interaction.guild.id)):
-                    shutil.rmtree(pwd + '/' + str(interaction.guild.id))
+                currdir = settings.pwd + '/Dependencies/'
+                if os.path.isdir(currdir + '/' + str(interaction.guild.id)):
+                    shutil.rmtree(currdir + '/' + str(interaction.guild.id))
                     print('Directory ' + str(interaction.guild.id) + ' has been deleted')
-                os.mkdir(pwd + '/' + str(interaction.guild.id))
+                os.mkdir(currdir + '/' + str(interaction.guild.id))
                 print('Directory ' + str(interaction.guild.id) + ' has been created')
                 settings.queues[interaction.guild.id] = []
                 settings.titles[interaction.guild.id] = []
@@ -74,7 +74,7 @@ class SlashMusic(commands.Cog):
     # server
     @nextcord.slash_command(name="leave", description="Leaves the bot from a voice channel")
     async def leave(self, interaction: Interaction):
-        pwd = os.path.dirname(os.path.realpath(__file__)) + '/Dependencies'
+        currdir = settings.pwd + '/Dependencies/'
 
         # First it grabs the voice channel that the bot is currently in
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
@@ -82,7 +82,7 @@ class SlashMusic(commands.Cog):
         # It then checks if the bot is in a valid voice channel and if it's not, it sends a message saying that it's
         # not in a VC It then cleans up dictionary keys that are used to run the bot and removes directories
         if interaction.guild.voice_client:
-            shutil.rmtree(pwd + '/' + str(interaction.guild.id))
+            shutil.rmtree(currdir + '/' + str(interaction.guild.id))
             print('Directory ' + str(interaction.guild.id) + ' has been deleted')
             await settings.timers[interaction.guild.id].stop()
             settings.timers.pop(interaction.guild.id)
@@ -111,11 +111,11 @@ class SlashMusic(commands.Cog):
             # It then checks if the bot is in a Voice channel and if not, it sets it up similarly to the join command
             if interaction.user.voice:
                 if voice == None:
-                    pwd = os.path.dirname(os.path.realpath(__file__)) + '/Dependencies'
-                    if os.path.isdir(pwd + '/' + str(interaction.guild.id)):
-                        shutil.rmtree(pwd + '/' + str(interaction.guild.id))
+                    currdir = settings.pwd + '/Dependencies/'
+                    if os.path.isdir(currdir + '/' + str(interaction.guild.id)):
+                        shutil.rmtree(currdir + '/' + str(interaction.guild.id))
                         print('Directory ' + str(interaction.guild.id) + ' has been deleted')
-                    os.mkdir(pwd + '/' + str(interaction.guild.id))
+                    os.mkdir(currdir + '/' + str(interaction.guild.id))
                     print('Directory ' + str(interaction.guild.id) + ' has been created')
                     settings.queues[interaction.guild.id] = []
                     settings.titles[interaction.guild.id] = []

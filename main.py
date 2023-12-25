@@ -4,9 +4,9 @@
 # imports necessary to run the program
 import argparse
 from datetime import datetime
-import cogs.Dependencies.Functions as Functions
-import cogs.Dependencies.SQLFunc as SQLFunc
-import cogs.Dependencies.Threaded_timer as Threaded_timer
+import Dependencies.Functions as Functions
+import Dependencies.SQLFunc as SQLFunc
+import Dependencies.Threaded_timer as Threaded_timer
 import os
 import nextcord
 from nextcord.ext import commands
@@ -55,11 +55,11 @@ elif args.token != None:
     configgen.generateConfiguration(False, args.token)
     Token = args.token
 
-# This sets the working directory for this section of the program
-pwd = os.path.dirname(os.path.realpath(__file__))
-
 # This initializes all global variables needed for Mobot
 settings.init()
+
+# This sets the working directory for this section of the program
+settings.pwd = os.path.dirname(os.path.realpath(__file__))
 
 # Grabs Environment Variables for
 SQLHost = os.environ.get('MYSQL_HOST', None)
@@ -126,7 +126,7 @@ async def hallscheck():
         records = cursor.fetchall()
         for record in records:
             await SQLFunc.historycheck(guild, record['Channel'], record['Hall'], record['Amount'],
-                                         record['Emote'], record['Hall_Emote'])
+                                       record['Emote'], record['Hall_Emote'])
     print(f"Halls Check Finished at {color.DARKCYAN}{color.BOLD}{datetime.utcnow()}{color.END}")
 
 

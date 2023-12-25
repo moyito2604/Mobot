@@ -26,8 +26,8 @@ class Listeners(commands.Cog):
                                              id=settings.channels[member.guild.id].channel.id)
             await textchannel.send('All users have left the voice channel, Mobot will now leave the voice chat')
             await voice.disconnect()
-            pwd = os.path.dirname(os.path.realpath(__file__)) + '/Dependencies'
-            shutil.rmtree(pwd + '/' + str(member.guild.id))
+            currdir = settings.pwd + '/Dependencies/'
+            shutil.rmtree(currdir + '/' + str(member.guild.id))
             print('directory ' + str(member.guild.id) + ' has been deleted')
             await settings.timers[member.guild.id].stop()
             settings.timers.pop(member.guild.id)
