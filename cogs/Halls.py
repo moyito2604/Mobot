@@ -3,7 +3,7 @@ import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction
 import settings
-import cogs.Dependencies.Functions as Functions
+import cogs.Dependencies.SQLFunc as SQLFunc
 import asyncio
 
 
@@ -82,7 +82,7 @@ class Halls(commands.Cog):
         cursor = settings.connection.cursor(dictionary=True, buffered=True)
 
         # This ensures that person running the command is allowed to
-        if not await Functions.rolecheck(interaction):
+        if not await SQLFunc.rolecheck(interaction):
             return
 
         # It sets up the database connection and cursor, where it queries to make sure the hall exists or not
@@ -124,7 +124,7 @@ class Halls(commands.Cog):
         cursor.close()
 
         # Checks older messages for a hall
-        await Functions.historycheck(interaction.guild, channel, hall, amount, emote, hall_emote)
+        await SQLFunc.historycheck(interaction.guild, channel, hall, amount, emote, hall_emote)
 
     # The remove hall command removes a single hall from the database
     @nextcord.slash_command(name="removehall",
@@ -146,7 +146,7 @@ class Halls(commands.Cog):
         cursor = settings.connection.cursor(dictionary=True, buffered=True)
 
         # This ensures that person running the command is allowed to
-        if not await Functions.rolecheck(interaction):
+        if not await SQLFunc.rolecheck(interaction):
             return
 
         # checks to make sure that the hall exists
@@ -174,10 +174,12 @@ class Halls(commands.Cog):
         await asyncio.sleep(2)
         
         # First it updates the database and sets up a cursor to make a query for that specific channel
-        settings.connection.commit()
-        cursor = settings.connection.cursor(dictionary=True, buffered=True)
-        cursor.execute(f"SELECT * FROM {message.guild.id}_Halls WHERE Channel = '{message.channel.id}'")
-        record = cursor.fetchone()
+        record = None
+        if message.guild:
+            settings.connection.commit()
+            cursor = settings.connection.cursor(dictionary=True, buffered=True)
+            cursor.execute(f"SELECT * FROM {message.guild.id}_Halls WHERE Channel = '{message.channel.id}'")
+            record = cursor.fetchone()
 
         # If the record for the channel exists and checks for attachments or embeds, then it adds the emote
         if record and (message.attachments or message.embeds):
@@ -209,7 +211,7 @@ class Halls(commands.Cog):
 
                     # if it isn't, then it grabs the channel and sends it to the hall
                     channel = nextcord.utils.get(reaction.message.guild.channels, id=int(record['Hall']))
-                    await Functions.halladd(reaction.message, channel, record['Hall_Emote'])
+                    await SQLFunc.halladd(reaction.message, channel, record['Hall_Emote'])
 
 
 def setup(client):

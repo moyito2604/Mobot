@@ -5,6 +5,7 @@
 import argparse
 from datetime import datetime
 import cogs.Dependencies.Functions as Functions
+import cogs.Dependencies.SQLFunc as SQLFunc
 import cogs.Dependencies.Threaded_timer as Threaded_timer
 import os
 import nextcord
@@ -124,7 +125,7 @@ async def hallscheck():
         cursor.execute(f"""SELECT * FROM {guild.id}_Halls""")
         records = cursor.fetchall()
         for record in records:
-            await Functions.historycheck(guild, record['Channel'], record['Hall'], record['Amount'],
+            await SQLFunc.historycheck(guild, record['Channel'], record['Hall'], record['Amount'],
                                          record['Emote'], record['Hall_Emote'])
     print(f"Halls Check Finished at {color.DARKCYAN}{color.BOLD}{datetime.utcnow()}{color.END}")
 
