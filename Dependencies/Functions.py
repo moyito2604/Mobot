@@ -118,10 +118,7 @@ async def retrieveAudio(url: str, path: str, ctx, index):
     for file in os.listdir(path):
         if file.endswith(f".{extension}"):
             os.rename(path + '/' + file, path + f"/song.{extension}")
-    if extension == "opus":
-        source = await FFmpegOpusAudio.from_probe(path + f"/song.{extension}")
-    else:
-        source = FFmpegPCMAudio(path + f"/song.{extension}")
+    source = FFmpegOpusAudio(path + f"/song.{extension}")
 
     times = "N/A"
     if "duration" in info:

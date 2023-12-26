@@ -4,3 +4,4 @@ config.py
 *.log
 Guilds.txt
 .idea
+docker-compose.yaml
