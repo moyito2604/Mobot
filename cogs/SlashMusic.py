@@ -163,10 +163,14 @@ class SlashMusic(commands.Cog):
                                     info = ydl.extract_info(url, download=False, process=False)
                                     url = info['url']
                                     info = ydl.extract_info(url, download=False, process=False)
-                                times = time.gmtime(info["duration"])
                                 title = info.get('title', None)
-                                settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S",
+                                times = "N/A"
+                                if "duration" in info:
+                                    times = time.gmtime(info["duration"])
+                                    settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S",
                                                                                                       times)
+                                else:
+                                    settings.queues[interaction.guild.id][-1]['duration'] = times
                                 settings.queues[interaction.guild.id][-1]['url'] = url
                                 settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
                                 settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
@@ -209,10 +213,14 @@ class SlashMusic(commands.Cog):
                                     with yt_dlp.YoutubeDL({'noplaylist': True, 'quiet': True}) as ydltemp:
                                         info = ydltemp.extract_info(url, download=False)
                                     title = info.get('title', None)
-                                    times = time.gmtime(info["duration"])
+                                    times = "N/A"
+                                    if "duration" in info:
+                                        times = time.gmtime(info["duration"])
+                                        settings.queues[interaction.guild.id][-1]['duration'] = time.strftime(
+                                            "%H:%M:%S", times)
+                                    else:
+                                        settings.queues[interaction.guild.id][-1]['duration'] = times
                                     await interaction.send('***' + title + '*** has been added to the queue')
-                                    settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S",
-                                                                                                          times)
                                     settings.queues[interaction.guild.id][-1][
                                         'url'] = "https://www.youtube.com/watch?v=" + info['id']
                                     settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
@@ -222,8 +230,12 @@ class SlashMusic(commands.Cog):
                                     settings.titles[interaction.guild.id].append(title)
                         else:
                             await interaction.send('***' + title + '*** has been added to the queue')
-                            times = time.gmtime(info["duration"])
-                            settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
+                            times = "N/A"
+                            if "duration" in info:
+                                times = time.gmtime(info["duration"])
+                                settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
+                            else:
+                                settings.queues[interaction.guild.id][-1]['duration'] = times
                             settings.queues[interaction.guild.id][-1]['url'] = url
                             settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
                             settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
@@ -266,8 +278,12 @@ class SlashMusic(commands.Cog):
                         with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
                             info = ydl.extract_info(search['result'][int(view.value) - 1]['link'], download=False,
                                                     process=False)
-                            times = time.gmtime(info['duration'])
-                            settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
+                            times = "N/A"
+                            if "duration" in info:
+                                times = time.gmtime(info["duration"])
+                                settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
+                            else:
+                                settings.queues[interaction.guild.id][-1]['duration'] = times
                         settings.titles[interaction.guild.id].append(search['result'][int(view.value) - 1]['title'])
                         if not settings.downloading[interaction.guild.id][0]:
                             await settings.timers[interaction.guild.id].start()
@@ -397,8 +413,12 @@ class SlashMusic(commands.Cog):
             settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
             with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
                 info = ydl.extract_info(search['result'][0]['link'], download=False, process=False)
-                times = time.gmtime(info["duration"])
-                settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
+                times = "N/A"
+                if "duration" in info:
+                    times = time.gmtime(info["duration"])
+                    settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
+                else:
+                    settings.queues[interaction.guild.id][-1]['duration'] = times
             settings.titles[interaction.guild.id].append(search['result'][0]['title'])
             if not settings.downloading[interaction.guild.id][0]:
                 await settings.timers[interaction.guild.id].start()

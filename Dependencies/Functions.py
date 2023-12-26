@@ -109,15 +109,32 @@ async def retrieveAudio(url: str, path: str, ctx, index):
             return await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + '/' + str(ctx.guild.id)), ctx, 0)
 
     # It then renames the song and gets it ready to be played
+    # This gives a list of extensions and how they are processed
     if extension == "webm":
         extension = "opus"
+    elif extension == "mp4":
+        extension = "m4a"
+
     for file in os.listdir(path):
         if file.endswith(f".{extension}"):
             os.rename(path + '/' + file, path + f"/song.{extension}")
-    source = await FFmpegOpusAudio.from_probe(path + f"/song.{extension}")
-    times = time.gmtime(info["duration"])
-    duration = time.strftime("%H:%M:%S", times)
-    return {'source': source, 'title': title, 'thumbnail': info["thumbnails"][0]["url"], 'duration': duration,
+    if extension == "opus":
+        source = await FFmpegOpusAudio.from_probe(path + f"/song.{extension}")
+    else:
+        source = FFmpegPCMAudio(path + f"/song.{extension}")
+
+    times = "N/A"
+    if "duration" in info:
+        times = time.gmtime(info["duration"])
+        duration = time.strftime("%H:%M:%S", times)
+    else:
+        duration = times
+
+    thumbnail = ""
+    if "thumbnails" in info:
+        thumbnail = info["thumbnails"][0]["url"]
+
+    return {'source': source, 'title': title, 'thumbnail': thumbnail, 'duration': duration,
             'user': user, 'name': name, 'avatar': avatar}
 
 
