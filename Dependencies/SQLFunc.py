@@ -1,10 +1,20 @@
 import nextcord
 import settings
 import os
+from Dependencies.Error import ReconnectError
+from mysql.connector import InterfaceError
+from Dependencies.Functions import Color
 
 
 # Returns true if the person is allowed to run the command, else false
 async def rolecheck(interaction):
+
+    # Checks if there is an SQL connection still active
+    try:
+        await checkConn()
+    except ReconnectError:
+        return
+
     cursor = settings.connection.cursor(dictionary=True, buffered=True)
 
     # This ensures that person running the command is allowed to
@@ -58,4 +68,8 @@ async def halladd(message, hall_channel, hall_emote):
 
 
 async def checkConn():
-    settings.connection.ping(True, attempts=3, delay=2)
+    try:
+        settings.connection.ping(True, attempts=3, delay=1)
+    except InterfaceError:
+        print(f"{Color.RED}{Color.BOLD}Error: Failed to Connect to the SQL Server{Color.END}")
+        raise ReconnectError("Failed to reconnect to SQL Server")

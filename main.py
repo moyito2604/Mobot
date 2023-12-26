@@ -7,6 +7,7 @@ from datetime import datetime
 import Dependencies.Functions as Functions
 import Dependencies.SQLFunc as SQLFunc
 import Dependencies.Threaded_timer as Threaded_timer
+from Dependencies.Error import ReconnectError
 import os
 import nextcord
 from nextcord.ext import commands
@@ -89,6 +90,13 @@ if SQLconnect:
 # If a database exists, then it places the information in a database
 async def guildSave():
     if SQLconnect:
+
+        # Checks if there is an SQL connection still active
+        try:
+            await SQLFunc.checkConn()
+        except ReconnectError:
+            return
+
         cursor = settings.connection.cursor(dictionary=True, buffered=True)
         cursor.execute(f"SELECT * FROM Guild_Info")
         table = cursor.fetchall()
@@ -120,6 +128,13 @@ async def guildSave():
 
 async def hallscheck():
     for guild in client.guilds:
+
+        # Checks if there is an SQL connection still active
+        try:
+            await SQLFunc.checkConn()
+        except ReconnectError:
+            return
+
         settings.connection.commit()
         cursor = settings.connection.cursor(dictionary=True, buffered=True)
         cursor.execute(f"""SELECT * FROM {guild.id}_Halls""")

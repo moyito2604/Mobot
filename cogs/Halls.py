@@ -4,6 +4,7 @@ from nextcord.ext import commands
 from nextcord import Interaction
 import settings
 import Dependencies.SQLFunc as SQLFunc
+from Dependencies.Error import ReconnectError
 import asyncio
 
 
@@ -17,6 +18,14 @@ class Halls(commands.Cog):
     @nextcord.slash_command(name="halllist",
                             description="Prints the current Guild's Halls")
     async def halllist(self, interaction: Interaction):
+
+        # Checks if there is an SQL connection still active
+        try:
+            await SQLFunc.checkConn()
+        except ReconnectError:
+            embed = nextcord.Embed(title='Failed to Connect to the SQL Server', description='Please Try Again Later.')
+            await interaction.send(embed=embed)
+            return
 
         # First it ensures that its information is updated and sets up a cursor
         settings.connection.commit()
@@ -75,6 +84,14 @@ class Halls(commands.Cog):
             return
         elif emotefound == hallemotef:
             await interaction.send("Hall Emoji and Emoji can't be the same")
+            return
+
+        # Checks if there is an SQL connection still active
+        try:
+            await SQLFunc.checkConn()
+        except ReconnectError:
+            embed = nextcord.Embed(title='Failed to Connect to the SQL Server', description='Please Try Again Later.')
+            await interaction.send(embed=embed)
             return
 
         # Sets up the connection to the database and sets up the cursor
@@ -141,6 +158,14 @@ class Halls(commands.Cog):
             await interaction.send("Invalid Channel or Hall Channel Provided")
             return
 
+        # Checks if there is an SQL connection still active
+        try:
+            await SQLFunc.checkConn()
+        except ReconnectError:
+            embed = nextcord.Embed(title='Failed to Connect to the SQL Server', description='Please Try Again Later.')
+            await interaction.send(embed=embed)
+            return
+
         # It then prepares the database
         settings.connection.commit()
         cursor = settings.connection.cursor(dictionary=True, buffered=True)
@@ -172,10 +197,17 @@ class Halls(commands.Cog):
             return
 
         await asyncio.sleep(2)
-        
+
         # First it updates the database and sets up a cursor to make a query for that specific channel
         record = None
         if message.guild:
+
+            # Checks if there is an SQL connection still active
+            try:
+                await SQLFunc.checkConn()
+            except ReconnectError:
+                return
+
             settings.connection.commit()
             cursor = settings.connection.cursor(dictionary=True, buffered=True)
             cursor.execute(f"SELECT * FROM {message.guild.id}_Halls WHERE Channel = '{message.channel.id}'")
@@ -191,6 +223,12 @@ class Halls(commands.Cog):
 
         # Checks if a message has attachments or embeds
         if reaction.message.attachments or reaction.message.embeds:
+
+            # Checks if there is an SQL connection still active
+            try:
+                await SQLFunc.checkConn()
+            except ReconnectError:
+                return
 
             # Updates the database and sets up a cursor to make a query for that specfic channel
             settings.connection.commit()

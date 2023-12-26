@@ -2,7 +2,6 @@
 import nextcord
 import settings
 import shutil
-import os
 from nextcord.ext import commands
 
 
