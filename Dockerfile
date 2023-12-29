@@ -1,5 +1,10 @@
 FROM python:3.10.11-alpine3.17
 
+# Adding Labels to identify repository for github
+LABEL org.opencontainers.image.source=https://github.com/moyito2604/Mobot
+LABEL org.opencontainers.image.description="Containerized Version of Mobot"
+LABEL org.opencontainers.image.licenses=MIT
+
 # copy requirements, upgrade pip and install requirements.
 COPY /requirements.txt /requirements.txt
 RUN pip3 install --upgrade pip
