@@ -5,7 +5,7 @@ The music portion of the bot requires a couple dependencies to run properly as i
 
 First clone the repository to the location desired using this command:
 ```
-git clone https://github.com/lldmmoisessc/Mobot.git
+git clone https://github.com/moyito2604/Mobot.git
 ```
 
 Then to install these dependencies, it is necessary to run the commands below in a Debian based distro:
@@ -29,5 +29,5 @@ The syntax for linux is:
 
 To make a prebuilt container, you will have to run the following command
 ```
-docker run -e token='TOKEN' -e MYSQL_HOST='hostname' -e MYSQL_DATABASE='database' -e MYSQL_USER='username' -e MYSQL_PASSWORD='password' moyito2604/mobot:latest
+docker run -e token='TOKEN' -e MYSQL_HOST='hostname' -e MYSQL_DATABASE='database' -e MYSQL_USER='username' -e MYSQL_PASSWORD='password' ghcr.io/moyito2604/mobot:latest
 ```
