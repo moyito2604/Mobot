@@ -12,7 +12,7 @@ import os
 import nextcord
 from nextcord.ext import commands
 from nextcord.errors import LoginFailure
-import configgen
+import jsonbuilder
 import os.path
 import settings
 import mysql.connector
@@ -27,10 +27,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--token', type=str, required=False)
 args = parser.parse_args()
 # This block of code generates a configuration file if it doesn't exist and imports it for use throughout the program
-configgen.generateConfiguration(True, 'TOKEN')
-import config
+config = jsonbuilder.importConfiguration()
 
-Token = config.Token
+Token = config.get("Token", None)
 
 # Defines the Intents necessary for the bot to communicate with the discord API
 # Also allows the bot to have the permissions needed to run all of its functions
@@ -53,7 +52,8 @@ if dockerstat:
 # This allows for the token through be inputted through command line arguments with syntax --token TOKEN
 elif args.token != None:
     os.system('clear')
-    configgen.generateConfiguration(False, args.token)
+    config["Token"] = args.token
+    jsonbuilder.exportConfiguration(config)
     Token = args.token
 
 # This initializes all global variables needed for Mobot
@@ -133,7 +133,7 @@ async def hallscheck():
         try:
             await SQLFunc.checkConn()
         except ReconnectError:
-            return
+            print(f"{color.RED}{color.BOLD}SQL Connection Lost. Will attempt to check halls later{color.END}")
 
         settings.connection.commit()
         cursor = settings.connection.cursor(dictionary=True, buffered=True)

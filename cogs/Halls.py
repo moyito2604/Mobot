@@ -45,6 +45,7 @@ class Halls(commands.Cog):
                             inline=False)
         await interaction.send(embed=embed)
         cursor.close()
+        await settings.halltimer.start()
 
     # The hall command adds a hall to the current guild's database
     @nextcord.slash_command(name="hall",
