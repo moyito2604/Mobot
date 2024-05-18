@@ -197,7 +197,7 @@ async def on_ready():
             pass
     await guildSave()
     await client.change_presence(status=nextcord.Status.online, activity=activity)
-    print('We have logged in as {0.user}\n'.format(client))
+    print('We have logged in as {0.user} (Version 2.0.5)\n'.format(client))
     if SQLconnect:
         await hallscheck()
         settings.halltimer = Threaded_timer.RepeatedTimer(5 * 60, hallscheck)

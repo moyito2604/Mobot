@@ -98,7 +98,7 @@ class Admin(commands.Cog):
             await ctx.send("Choose a Guild to Display more Information", view=view)
 
         else:
-            ctx.send("You are not allowed to use this command")
+            await ctx.send("You are not allowed to use this command")
 
     @commands.command()
     async def guildleave(self, ctx, id):
