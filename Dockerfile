@@ -19,6 +19,8 @@ COPY . .
 
 # Set Arguments
 ENV token="TOKEN"
+# Bot Owner ID for administration
+ENV ownerid="ID"
 ENV dockerstatus=Yes
 ENV MYSQL_HOST="None"
 ENV MYSQL_DATABASE="None"

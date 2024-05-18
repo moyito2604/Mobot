@@ -69,7 +69,7 @@ async def halladd(message, hall_channel, hall_emote):
 
 async def checkConn():
     try:
-        print(f"{Color.RED}{Color.BOLD}SQL Connection Lost. Attempting to reconnect.{Color.END}")
+        #print(f"{Color.RED}{Color.BOLD}SQL Connection Lost. Attempting to reconnect.{Color.END}")
         settings.connection.ping(True, attempts=3, delay=1)
     except InterfaceError:
         print(f"{Color.RED}{Color.BOLD}Error: Failed to Connect to the SQL Server{Color.END}")

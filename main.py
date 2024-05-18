@@ -29,7 +29,7 @@ args = parser.parse_args()
 # This block of code generates a configuration file if it doesn't exist and imports it for use throughout the program
 config = jsonbuilder.importConfiguration()
 
-Token = config.get("Token", None)
+Token = config.get("Token", "None")
 
 # Defines the Intents necessary for the bot to communicate with the discord API
 # Also allows the bot to have the permissions needed to run all of its functions
@@ -40,6 +40,15 @@ intents.reactions = True
 
 client = commands.Bot(command_prefix='m!', intents=intents, help_command=None, case_insensitive=True)
 
+# This initializes all global variables needed for Mobot
+settings.init()
+
+# This sets the working directory for this section of the program
+settings.pwd = os.path.dirname(os.path.realpath(__file__))
+
+# Sets the ID of the Owner of the Bot
+settings.owner = config.get("OwnerID", "None")
+
 # This grabs any environment variables from something such as docker
 dockerstat = os.environ.get('dockerstatus', False)
 
@@ -47,20 +56,17 @@ dockerstat = os.environ.get('dockerstatus', False)
 # If not, it then checks if it recieved a token through commandline arguments
 if dockerstat:
     print("Docker Container Detected, Using environment variables instead")
-    newtoken = os.environ.get('token', "TOKEN")
-    Token = newtoken
+    Token = os.environ.get('token', "TOKEN")
+    settings.owner = os.environ.get('ownerid', "ID")
 # This allows for the token through be inputted through command line arguments with syntax --token TOKEN
-elif args.token != None:
+elif args.token is not None:
     os.system('clear')
     config["Token"] = args.token
-    jsonbuilder.exportConfiguration(config)
     Token = args.token
 
-# This initializes all global variables needed for Mobot
-settings.init()
-
-# This sets the working directory for this section of the program
-settings.pwd = os.path.dirname(os.path.realpath(__file__))
+config["Token"] = config.get("Token", "None")
+config["OwnerID"] = config.get("OwnerID", "None")
+jsonbuilder.exportConfiguration(config)
 
 # Grabs Environment Variables for
 SQLHost = os.environ.get('MYSQL_HOST', None)

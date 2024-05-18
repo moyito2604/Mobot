@@ -2,7 +2,7 @@
 # These variables are used by Music.py and SlashMusic.py
 
 def init():
-    global queues, timers, titles, downloading, indexes, channels, current, connection, halltimer, pwd
+    global queues, timers, titles, downloading, indexes, channels, current, connection, halltimer, pwd, owner
     # Holds all the Music Queues
     queues = {}
     # Holds all the Titles for the Music Queues
@@ -23,3 +23,5 @@ def init():
     halltimer = None
     # Holds the Global Directory
     pwd = ""
+    # Holds the ID of the Bot Owner
+    owner = ""
