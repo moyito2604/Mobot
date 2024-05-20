@@ -5,7 +5,6 @@
 import argparse
 import Dependencies.Functions as Functions
 import Dependencies.SQLFunc as SQLFunc
-import Dependencies.Threaded_timer as Threaded_timer
 from Dependencies.Error import ReconnectError
 import os
 import nextcord
@@ -177,7 +176,7 @@ async def on_ready():
             pass
     await guildSave()
     await client.change_presence(status=nextcord.Status.online, activity=activity)
-    print('We have logged in as {0.user} (Version 2.0.5)\n'.format(client))
+    print('We have logged in as {0.user} (Version 2.0.6)\n'.format(client))
 
 
 # The on_guild_join nextcord function is called when someone joins the server
