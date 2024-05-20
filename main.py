@@ -3,7 +3,6 @@
 
 # imports necessary to run the program
 import argparse
-from datetime import datetime
 import Dependencies.Functions as Functions
 import Dependencies.SQLFunc as SQLFunc
 import Dependencies.Threaded_timer as Threaded_timer
@@ -132,25 +131,6 @@ async def guildSave():
         files.close()
 
 
-async def hallscheck():
-    for guild in client.guilds:
-
-        # Checks if there is an SQL connection still active
-        try:
-            await SQLFunc.checkConn()
-        except ReconnectError:
-            print(f"{color.RED}{color.BOLD}SQL Connection Lost. Will attempt to check halls later{color.END}")
-
-        settings.connection.commit()
-        cursor = settings.connection.cursor(dictionary=True, buffered=True)
-        cursor.execute(f"""SELECT * FROM {guild.id}_Halls""")
-        records = cursor.fetchall()
-        for record in records:
-            await SQLFunc.historycheck(guild, record['Channel'], record['Hall'], record['Amount'],
-                                       record['Emote'], record['Hall_Emote'])
-    print(f"Halls Check Finished at {color.DARKCYAN}{color.BOLD}{datetime.utcnow()}{color.END}")
-
-
 # The nextcord on_ready function is used to prepare several things in the discord bot It generates Guild.txt which
 # contains the information of the servers the bot is in It also sets the presence of the bot to playing the help
 # command and notifies the user of when the bot has logged in and is ready to deploy to servers
@@ -198,10 +178,6 @@ async def on_ready():
     await guildSave()
     await client.change_presence(status=nextcord.Status.online, activity=activity)
     print('We have logged in as {0.user} (Version 2.0.5)\n'.format(client))
-    if SQLconnect:
-        await hallscheck()
-        settings.halltimer = Threaded_timer.RepeatedTimer(5 * 60, hallscheck)
-        await settings.halltimer.start()
 
 
 # The on_guild_join nextcord function is called when someone joins the server

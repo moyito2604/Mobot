@@ -83,7 +83,7 @@ class Admin(commands.Cog):
             embed.add_field(name="Member Count", value=server.member_count)
             embed.add_field(name="Guild Owner", value=f"{server.owner} ({server.owner.id})", inline=False)
             embed.add_field(name=f"Guild Members (First {membersamt})", value=memberstr, inline=False)
-            if server.icon.url:
+            if server.icon:
                 embed.set_thumbnail(url=server.icon.url)
             await interaction.send(embed=embed)
             await interaction.message.delete()

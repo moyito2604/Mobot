@@ -1,6 +1,9 @@
 # The Halls.py Cog handles all the commands related to the Halls functionality (starboard?)
+from Dependencies.Functions import Color
+from datetime import datetime
+from datetime import UTC
 import nextcord
-from nextcord.ext import commands
+from nextcord.ext import commands, tasks
 from nextcord import Interaction
 import settings
 import Dependencies.SQLFunc as SQLFunc
@@ -13,6 +16,35 @@ class Halls(commands.Cog):
     def __init__(self, client):
         print("Halls Initialized Successfully")
         self.client = client
+        self.hallscheck.start()
+
+    # Checks for new halls every five minutes when the bot is first started up, after that, it checks every hour
+    @tasks.loop(minutes=5)
+    async def hallscheck(self):
+
+        # Waits if the Bot is ready to start hall check
+        await self.client.wait_until_ready()
+
+        # Sets the interval to 1 hour after 5 checks
+        if self.hallscheck.current_loop == 5:
+            self.hallscheck.change_interval(hours=1)
+        for guild in self.client.guilds:
+
+            # Checks if there is an SQL connection still active
+            try:
+                await SQLFunc.checkConn()
+            except ReconnectError:
+                print(f"{Color.RED}{Color.BOLD}SQL Connection Lost. Will attempt to check halls later{Color.END}")
+                return
+
+            settings.connection.commit()
+            cursor = settings.connection.cursor(dictionary=True, buffered=True)
+            cursor.execute(f"""SELECT * FROM {guild.id}_Halls""")
+            records = cursor.fetchall()
+            for record in records:
+                await SQLFunc.historycheck(guild, record['Channel'], record['Hall'], record['Amount'],
+                                           record['Emote'], record['Hall_Emote'])
+        print(f"Halls Check Finished at {Color.DARKCYAN}{Color.BOLD}{datetime.now(UTC)}{Color.END}")
 
     # The halllist command lists all the halls in the current guild
     @nextcord.slash_command(name="halllist",
@@ -45,7 +77,6 @@ class Halls(commands.Cog):
                             inline=False)
         await interaction.send(embed=embed)
         cursor.close()
-        await settings.halltimer.start()
 
     # The hall command adds a hall to the current guild's database
     @nextcord.slash_command(name="hall",
