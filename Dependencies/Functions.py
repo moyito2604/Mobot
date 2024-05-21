@@ -180,82 +180,64 @@ async def queue(ctx, client):
 
         # It then checks if there is an active queue for an individual server
         if settings.queues[ctx.guild.id]:
-            if settings.queues[ctx.guild.id][0]['url'].startswith('song'):
-                source = FFmpegPCMAudio(currdir + '/' + str(ctx.guild.id) + '/' + settings.queues[ctx.guild.id][0])
 
             # It then sets up everything for the next song to play properly
             # It clears the guild directory and sets downloading to true
-            else:
-                settings.downloading[ctx.guild.id][0] = True
+            settings.downloading[ctx.guild.id][0] = True
 
-                # It then checks if shuffle is turned on and grabs the index for the next shuffle
-                if settings.downloading[ctx.guild.id][2] and (not settings.indexes[ctx.guild.id]):
-                    if len(settings.queues[ctx.guild.id]) > 1:
-                        if settings.downloading[ctx.guild.id][1]:
-                            index = random.randint(1, (len(settings.queues[ctx.guild.id]) - 1)) - 1
-                        else:
-                            index = random.randint(1, len(settings.queues[ctx.guild.id])) - 1
+            # It then checks if shuffle is turned on and grabs the index for the next shuffle
+            if settings.downloading[ctx.guild.id][2] and (not settings.indexes[ctx.guild.id]):
+                if len(settings.queues[ctx.guild.id]) > 1:
+                    if settings.downloading[ctx.guild.id][1]:
+                        index = random.randint(1, (len(settings.queues[ctx.guild.id]) - 1)) - 1
                     else:
-                        index = 0
+                        index = random.randint(1, len(settings.queues[ctx.guild.id])) - 1
                 else:
                     index = 0
-                    settings.indexes[ctx.guild.id] = False
+            else:
+                index = 0
+                settings.indexes[ctx.guild.id] = False
 
-                # It then checks if the next item is a playlist and retrieves every item in the playlist
-                url = settings.queues[ctx.guild.id][index]['url']
-                if "playlist" in url and ("youtube" in url or "youtu.be" in url):
-                    songlist, title, durations = await retrievePlaylist(settings.queues[ctx.guild.id][index]['url'],
-                                                                        settings.titles[ctx.guild.id][index], ctx)
-                    voice.stop()
-                    users = settings.queues[ctx.guild.id][index]['user']
-                    names = settings.queues[ctx.guild.id][index]['name']
-                    avatars = settings.queues[ctx.guild.id][index]['avatar']
-                    settings.queues[ctx.guild.id].pop(index)
-                    counter = 0
-                    curqueue = settings.queues[ctx.guild.id]
-                    settings.queues[ctx.guild.id] = []
-                    for item in songlist:
-                        settings.queues[ctx.guild.id].append({})
-                        settings.queues[ctx.guild.id][-1]['url'] = item
-                        settings.queues[ctx.guild.id][-1]['user'] = users
-                        settings.queues[ctx.guild.id][-1]['duration'] = durations[counter]
-                        settings.queues[ctx.guild.id][-1]['name'] = names
-                        settings.queues[ctx.guild.id][-1]['avatar'] = avatars
-                        counter += 1
-                    settings.queues[ctx.guild.id] = settings.queues[ctx.guild.id] + curqueue
-                    settings.titles[ctx.guild.id].pop(index)
-                    settings.titles[ctx.guild.id] = title + settings.titles[ctx.guild.id]
+            # It then checks if the next item is a playlist and retrieves every item in the playlist
+            url = settings.queues[ctx.guild.id][index]['url']
+            if "playlist" in url and ("youtube" in url or "youtu.be" in url):
+                songlist, title, durations = await retrievePlaylist(settings.queues[ctx.guild.id][index]['url'],
+                                                                    settings.titles[ctx.guild.id][index], ctx)
+                voice.stop()
+                temp = []
+                for counter, item in enumerate(songlist):
+                    temp.append({})
+                    temp[-1]['url'] = item
+                    temp[-1]['user'] = settings.queues[ctx.guild.id][index]['user']
+                    temp[-1]['duration'] = durations[counter]
+                    temp[-1]['name'] = settings.queues[ctx.guild.id][index]['name']
+                    temp[-1]['avatar'] = settings.queues[ctx.guild.id][index]['avatar']
+                settings.queues[ctx.guild.id].pop(index)
+                curqueue = settings.queues[ctx.guild.id]
+                settings.queues[ctx.guild.id] = []
+                settings.queues[ctx.guild.id] = temp + curqueue
+                settings.titles[ctx.guild.id].pop(index)
+                settings.titles[ctx.guild.id] = title + settings.titles[ctx.guild.id]
 
-                # After that it then retrieves the next audio and if it is set to repeating, it places the song back
-                # to the end of the queue It then plays the next song and sets downloading to false
-                else:
-                    if settings.downloading[ctx.guild.id][1]:
-                        settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
-                        settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
-                    song = await retrieveAudio(settings.queues[ctx.guild.id][index]['url'],
-                                               (currdir + '/' + str(ctx.guild.id)), ctx, index)
-                    textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
-                                                     id=settings.channels[ctx.guild.id].channel.id)
-                    embed = nextcord.Embed(title="Now playing:", description=song['title'])
-                    embed.set_author(name=song['name'], icon_url=song['avatar'])
-                    embed.set_footer(text=f"Duration: {song['duration']}")
-                    embed.set_thumbnail(url=song['thumbnail'])
-                    print(f"Song {Color.RED}{Color.BOLD}{song['title']}{Color.END} is playing in "
-                          f"{Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
-                    await textchannel.send(mention_author=True, embed=embed)
-                    # Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN retrieveAudio()
-                    if settings.downloading[ctx.guild.id][3]:
-                        # loop = asyncio.get_event_loop()
-                        print("normalized")
-                        # raw = await loop.run_in_executor(None, AudioSegment.from_file, f"{currdir}/{ctx.guild.id}/song.opus", codec = "opus")
-                        # raw = AudioSegment.from_file(f"{currdir}/{ctx.guild.id}/song.opus", codec = "opus")
-                        # normalized = effects.normalize(raw, headroom=10)
-                        # normalized = await loop.run_in_executor(None, effects.normalize, raw, headroom=10)
-                        # os.system('rm ' + str(ctx.guild.id) + '/*.opus')
-                        # normalized.export(f"{currdir}/{ctx.guild.id}/song.opus", format="opus")
-                        # await loop.run_in_executor(None, normalized.export, f"{currdir}/{ctx.guild.id}/song.opus", format="opus")
-                        # source = FFmpegOpusAudio(f"{currdir}/{ctx.guild.id}/song.opus")
-                    player = voice.play(song['source'])
+            # After that it then retrieves the next audio and if it is set to repeating, it places the song back
+            # to the end of the queue It then plays the next song and sets downloading to false
+            else:
+                if settings.downloading[ctx.guild.id][1]:
+                    settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
+                    settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
+                song = await retrieveAudio(settings.queues[ctx.guild.id][index]['url'],
+                                           (currdir + '/' + str(ctx.guild.id)), ctx, index)
+                textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
+                                                 id=settings.channels[ctx.guild.id].channel.id)
+                embed = nextcord.Embed(title="Now playing:", description=song['title'])
+                embed.set_author(name=song['name'], icon_url=song['avatar'])
+                embed.set_footer(text=f"Duration: {song['duration']}")
+                embed.set_thumbnail(url=song['thumbnail'])
+                print(f"Song {Color.RED}{Color.BOLD}{song['title']}{Color.END} is playing in "
+                      f"{Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
+                await textchannel.send(mention_author=True, embed=embed)
+                # Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN retrieveAudio()
+                player = voice.play(song['source'])
             settings.downloading[ctx.guild.id][0] = False
 
         # If there is not an active queue, it cleans up and pauses the timer
