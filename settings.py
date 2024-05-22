@@ -2,7 +2,7 @@
 # These variables are used by Music.py and SlashMusic.py
 
 def init():
-    global queues, timers, titles, env_vars, indexes, channels, current, connection, pwd, owner
+    global queues, timers, titles, env_vars, channels, current, connection, pwd, owner
     # Holds all the Music Queues
     queues = {}
     # Holds all the Titles for the Music Queues
@@ -13,8 +13,6 @@ def init():
     channels = {}
     # Holds toggleable options such as repeat and shuffle for each Guild
     env_vars = {}
-    # Makes sure it skips to the next one if shuffle is on
-    indexes = {}
     # Holds the current title and url of the current song for each guild
     current = {}
     # Holds the connection to the SQL Database

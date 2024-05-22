@@ -186,7 +186,7 @@ async def queue(ctx, client):
             settings.env_vars[ctx.guild.id]["Downloading"] = True
 
             # It then checks if shuffle is turned on and grabs the index for the next shuffle
-            if settings.env_vars[ctx.guild.id]["Shuffle"] and (not settings.indexes[ctx.guild.id]):
+            if settings.env_vars[ctx.guild.id]["Shuffle"] and (not settings.env_vars[ctx.guild.id]["Indexes"]):
                 if len(settings.queues[ctx.guild.id]) > 1:
                     if settings.env_vars[ctx.guild.id]["Repeat"]:
                         index = random.randint(1, (len(settings.queues[ctx.guild.id]) - 1)) - 1
@@ -196,7 +196,7 @@ async def queue(ctx, client):
                     index = 0
             else:
                 index = 0
-                settings.indexes[ctx.guild.id] = False
+                settings.env_vars[ctx.guild.id]["Indexes"] = False
 
             # It then checks if the next item is a playlist and retrieves every item in the playlist
             url = settings.queues[ctx.guild.id][index]['url']

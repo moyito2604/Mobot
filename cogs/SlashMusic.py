@@ -54,9 +54,9 @@ class SlashMusic(commands.Cog):
                 print('Directory ' + str(interaction.guild.id) + ' has been created')
                 settings.queues[interaction.guild.id] = []
                 settings.titles[interaction.guild.id] = []
-                # settings.env_vars[interaction.guild.id] = [False, False, False]
-                settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False, "Shuffle": False}
-                settings.indexes[interaction.guild.id] = False
+                settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False, "Shuffle": False,
+                                                           "Indexes": False}
+                # settings.indexes[interaction.guild.id] = False
                 settings.current[interaction.guild.id] = {}
                 channel = interaction.user.voice.channel
                 voice = await channel.connect()
@@ -127,9 +127,9 @@ class SlashMusic(commands.Cog):
                     print('Directory ' + str(interaction.guild.id) + ' has been created')
                     settings.queues[interaction.guild.id] = []
                     settings.titles[interaction.guild.id] = []
-                    settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False, "Shuffle": False}
-                    # settings.env_vars[interaction.guild.id] = [False, False, False]
-                    settings.indexes[interaction.guild.id] = False
+                    settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False, "Shuffle": False,
+                                                               "Indexes": False}
+                    # settings.indexes[interaction.guild.id] = False
                     settings.current[interaction.guild.id] = {}
                     channel = interaction.user.voice.channel
                     voice = await channel.connect()
@@ -385,7 +385,7 @@ class SlashMusic(commands.Cog):
                     settings.queues[interaction.guild.id].pop(0)
                     settings.titles[interaction.guild.id].pop(0)
                 if settings.queues[interaction.guild.id]:
-                    settings.indexes[interaction.guild.id] = True
+                    settings.env_vars[interaction.guild.id]["Indexes"] = True
                     if "youtube" in settings.queues[interaction.guild.id][0]['url']:
                         title = settings.titles[interaction.guild.id][0]
                         if "playlist" in settings.queues[interaction.guild.id][0]['url']:
