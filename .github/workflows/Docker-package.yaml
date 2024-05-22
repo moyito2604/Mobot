@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - New-Timer-Nextcord.ext.tasks
+#      - New-Timer-Nextcord.ext.tasks
 
 jobs:
   build_and_publish:
