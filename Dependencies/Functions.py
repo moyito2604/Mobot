@@ -183,12 +183,12 @@ async def queue(ctx, client):
 
             # It then sets up everything for the next song to play properly
             # It clears the guild directory and sets downloading to true
-            settings.downloading[ctx.guild.id][0] = True
+            settings.env_vars[ctx.guild.id]["Downloading"] = True
 
             # It then checks if shuffle is turned on and grabs the index for the next shuffle
-            if settings.downloading[ctx.guild.id][2] and (not settings.indexes[ctx.guild.id]):
+            if settings.env_vars[ctx.guild.id]["Shuffle"] and (not settings.indexes[ctx.guild.id]):
                 if len(settings.queues[ctx.guild.id]) > 1:
-                    if settings.downloading[ctx.guild.id][1]:
+                    if settings.env_vars[ctx.guild.id]["Repeat"]:
                         index = random.randint(1, (len(settings.queues[ctx.guild.id]) - 1)) - 1
                     else:
                         index = random.randint(1, len(settings.queues[ctx.guild.id])) - 1
@@ -222,7 +222,7 @@ async def queue(ctx, client):
             # After that it then retrieves the next audio and if it is set to repeating, it places the song back
             # to the end of the queue It then plays the next song and sets downloading to false
             else:
-                if settings.downloading[ctx.guild.id][1]:
+                if settings.env_vars[ctx.guild.id]["Repeat"]:
                     settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
                     settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
                 song = await retrieveAudio(settings.queues[ctx.guild.id][index]['url'],
@@ -238,7 +238,7 @@ async def queue(ctx, client):
                 await textchannel.send(mention_author=True, embed=embed)
                 # Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN retrieveAudio()
                 player = voice.play(song['source'])
-            settings.downloading[ctx.guild.id][0] = False
+            settings.env_vars[ctx.guild.id]["Downloading"] = False
 
         # If there is not an active queue, it cleans up and pauses the timer
         else:
