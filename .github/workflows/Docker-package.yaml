@@ -1,0 +1,18 @@
+name: Docker Image Action for ghcr.io
+
+on:
+  push:
+    branches:
+      - main
+      - New-Timer-Nextcord.ext.tasks
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and Push new image
+        run: |
+          docker login --username moyito2604 --password ${{ secrets.GH_PASS }} ghcr.io
+          docker build -it ghcr.io/moyito2604/${{ github.repository }}:${{ vars.VERSION }} .
+          docker push ghcr.io/moyito2604/${{ github.repository }}:${{ vars.VERSION }}
