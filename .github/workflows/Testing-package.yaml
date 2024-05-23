@@ -23,22 +23,16 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GH_PASS }}
 
-      - name: Remove old testing container
-        uses: ArchieAtkinson/remove-dockertag-action@v0.0
-        with:
-          tag_name: testing
-          github_token: ${{ secrets.GH_PASS }}
-
       - name: Build and Push new Testing Image
         uses: docker/build-push-action@v5.3.0
         with:
           push: true
           tags: ghcr.io/${{ env.OWNER }}/${{ env.IMAGE }}:testing
 
-#      - name: Delete Old Testing Package
-#        uses: actions/delete-package-versions@v5.0.0
-#        with:
-#          package-name: mobot
-#          package-type: container
-#          min-versions-to-keep: 0
-#          delete-only-untagged-versions: true
+      - name: Cleanup untagged images
+        uses: actions/delete-package-versions@v5.0.0
+        with:
+          package-name: ${{ env.IMAGE }}
+          package-type: container
+          min-versions-to-keep: 0
+          delete-only-untagged-versions: true
