@@ -9,11 +9,11 @@ jobs:
   build_and_publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: ClementTsang/delete-tag-and-release@v0.4.0
+      - uses: rafalkk/remove-dockertag-action@v1
+        name: Remove Old Docker Testing Image
         with:
           tag_name: testing
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PASS }}
+          github_token: ${{ secrets.GH_PASS }}
       - uses: actions/checkout@v3
       - name: Build and Push new Image
         run: |
