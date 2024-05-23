@@ -9,6 +9,11 @@ jobs:
   build_and_publish:
     runs-on: ubuntu-latest
     steps:
+      - uses: ClementTsang/delete-tag-and-release@v0.4.0
+        with:
+          tag_name: testing
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PASS }}
       - uses: actions/checkout@v3
       - name: Build and Push new Testing Image
         run: |
