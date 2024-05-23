@@ -30,7 +30,7 @@ jobs:
           tags: ghcr.io/${{ env.OWNER }}/${{ env.IMAGE }}:testing
 
       - name: Delete Old Testing Package
-        uses: actions/delete-package-versions@v5
+        uses: actions/delete-package-versions@v5.0.0
         with:
           package-name: mobot
           package-type: docker
