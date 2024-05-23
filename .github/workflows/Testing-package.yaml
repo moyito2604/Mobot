@@ -15,7 +15,7 @@ jobs:
           tag_name: testing
           github_token: ${{ secrets.GH_PASS }}
       - uses: actions/checkout@v3
-        name: Build and Push new Testing Image
+      - name: Build and Push new Testing Image
         run: |
           docker login --username moyito2604 --password ${{ secrets.GH_PASS }} ghcr.io
           docker build -t ghcr.io/moyito2604/${{ vars.IMAGE }}:testing .
