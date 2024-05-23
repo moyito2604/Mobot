@@ -1,0 +1,17 @@
+name: Docker Image Testing Action for ghcr.io
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and Push new Testing Image
+        run: |
+          docker login --username moyito2604 --password ${{ secrets.GH_PASS }} ghcr.io
+          docker build -t ghcr.io/moyito2604/${{ vars.IMAGE }}:testing .
+          docker push ghcr.io/moyito2604/${{ vars.IMAGE }}:testing

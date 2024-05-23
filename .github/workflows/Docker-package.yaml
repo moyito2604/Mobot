@@ -4,15 +4,16 @@ on:
   push:
     branches:
       - main
-#      - New-Timer-Nextcord.ext.tasks
 
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Build and Push new image
+      - name: Build and Push new Image
         run: |
           docker login --username moyito2604 --password ${{ secrets.GH_PASS }} ghcr.io
-          docker build -t ghcr.io/moyito2604/mobot:${{ vars.VERSION }} .
-          docker push ghcr.io/moyito2604/mobot:${{ vars.VERSION }}
+          docker build -t ghcr.io/moyito2604/${{ vars.IMAGE }}:${{ vars.VERSION }} .
+          docker build -t ghcr.io/moyito2604/${{ vars.IMAGE }}:latest .
+          docker push ghcr.io/moyito2604/${{ vars.IMAGE }}:${{ vars.VERSION }}
+          docker push ghcr.io/moyito2604/${{ vars.IMAGE }}:latest
