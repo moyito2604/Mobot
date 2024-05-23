@@ -7,6 +7,7 @@ on:
 
 env:
   OWNER: ${{ github.repository_owner }}
+  IMAGE: mobot
 
 jobs:
   build_and_publish:
@@ -26,4 +27,12 @@ jobs:
         uses: docker/build-push-action@v5.3.0
         with:
           push: true
-          tags: ghcr.io/${{ env.OWNER }}/${{ vars.IMAGE }}:testing
+          tags: ghcr.io/${{ env.OWNER }}/${{ env.IMAGE }}:testing
+
+      - name: Delete Old Testing Package
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: mobot
+          package-type: docker
+          min-versions-to-keep: 0
+          delete-only-untagged-versions: true
