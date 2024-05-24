@@ -1,6 +1,7 @@
 # Functions.py defines several different functions necessary for all the different functions Mobot has
 # It includes several functions that retrieve songs, playlists, Quotes, etc.
 import asyncio
+from contextlib import suppress
 import time
 from random import randint
 from nextcord import FFmpegOpusAudio
@@ -9,7 +10,6 @@ from yt_dlp.utils import DownloadError
 import scrapetube
 import os
 import nextcord
-from nextcord import FFmpegPCMAudio
 import validators
 from validators.utils import ValidationError
 import os.path
@@ -167,6 +167,13 @@ def checkurl(url_string: str):
     return result
 
 
+# Stops the timer specifically for the server id provided
+async def stopTimer(guild):
+    settings.env_vars[guild]["Timer"].cancel()
+    with suppress(asyncio.CancelledError):
+        await settings.env_vars[guild]["Timer"]
+
+
 # The queue function is what runs the entire music bot.
 # This function is used to periodically check if a song is ready to be loaded up into the voice chat for playing
 async def queue(ctx, client):
@@ -177,6 +184,9 @@ async def queue(ctx, client):
     if voice.is_playing() or voice.is_paused():
         pass
     else:
+
+        # Temporarily Pauses Timer
+        settings.env_vars[ctx.guild.id]["Active"] = False
 
         # It then checks if there is an active queue for an individual server
         if settings.queues[ctx.guild.id]:
@@ -240,7 +250,11 @@ async def queue(ctx, client):
                 player = voice.play(song['source'])
             settings.env_vars[ctx.guild.id]["Downloading"] = False
 
+            # Reinitialized Timer
+            settings.env_vars[ctx.guild.id]["Active"] = True
+
         # If there is not an active queue, it cleans up and pauses the timer
         else:
-            await settings.timers[ctx.guild.id].pause()
+            settings.env_vars[ctx.guild.id]["Active"] = False
+            # await settings.timers[ctx.guild.id].pause()
             print(f"No queued items for {Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")

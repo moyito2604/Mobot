@@ -1,5 +1,6 @@
 # cogs.Music runs the Music slash commands for Mobot
 # This file contains all the commands associated with the Mobot Music commands
+import asyncio
 import math
 import os
 import time
@@ -30,8 +31,10 @@ class SlashMusic(commands.Cog):
     @tasks.loop(seconds=1)
     async def timer(self):
         await self.client.wait_until_ready()
-        # for voice in self.client.voice_clients:
-        #     print(voice.guild.name)
+        for voice in self.client.voice_clients:
+            if settings.env_vars[voice.guild.id]["Active"]:
+                settings.env_vars[voice.guild.id]["Timer"] = (
+                    asyncio.ensure_future(Functions.queue(settings.env_vars[voice.guild.id]["ctx"], self.client)))
 
     # The join function is a command used to join the bot to a server's voice channel
     @nextcord.slash_command(name="join", description="Joins the Bot to a Voice Channel")
@@ -55,7 +58,7 @@ class SlashMusic(commands.Cog):
                 settings.queues[interaction.guild.id] = []
                 settings.titles[interaction.guild.id] = []
                 settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False, "Shuffle": False,
-                                                           "Indexes": False}
+                                                           "Indexes": False, "ctx": interaction, "Active": False}
                 # settings.indexes[interaction.guild.id] = False
                 settings.current[interaction.guild.id] = {}
                 channel = interaction.user.voice.channel
@@ -64,8 +67,8 @@ class SlashMusic(commands.Cog):
                 print(
                     f"Successfully Joined the {color.PURPLE}{color.BOLD}{str(channel)}{color.END} voice channel in the"
                     f" server {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
-                settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Functions.queue, interaction,
-                                                                                     self.client)
+                # settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Functions.queue, interaction,
+                #                                                                      self.client)
                 settings.channels[interaction.guild.id] = interaction
                 if os.path.exists(f'logs/{interaction.guild.name}_logs.log'):
                     os.remove(f'logs/{interaction.guild.name}_logs.log')
@@ -92,12 +95,14 @@ class SlashMusic(commands.Cog):
         if interaction.guild.voice_client:
             shutil.rmtree(currdir + '/' + str(interaction.guild.id))
             print('Directory ' + str(interaction.guild.id) + ' has been deleted')
-            await settings.timers[interaction.guild.id].stop()
-            settings.timers.pop(interaction.guild.id)
+            await Functions.stopTimer(interaction.guild.id)
+            # await settings.timers[interaction.guild.id].stop()
+            # settings.timers.pop(interaction.guild.id)
             settings.queues.pop(interaction.guild.id)
             settings.titles.pop(interaction.guild.id)
             settings.channels.pop(interaction.guild.id)
             settings.current.pop(interaction.guild.id)
+            settings.env_vars.pop(interaction.guild.id)
             print(f"Successfully left the voice Channel in the server {color.BLUE}{color.BOLD}{interaction.guild.name}"
                   f"{color.END}")
             await voice.disconnect()
@@ -128,7 +133,7 @@ class SlashMusic(commands.Cog):
                     settings.queues[interaction.guild.id] = []
                     settings.titles[interaction.guild.id] = []
                     settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False, "Shuffle": False,
-                                                               "Indexes": False}
+                                                               "Indexes": False, "ctx": interaction, "Active": False}
                     # settings.indexes[interaction.guild.id] = False
                     settings.current[interaction.guild.id] = {}
                     channel = interaction.user.voice.channel
@@ -136,9 +141,9 @@ class SlashMusic(commands.Cog):
                     await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
                     print(f"Successfully Joined the {color.PURPLE}{color.BOLD}{str(channel)}{color.END} voice channel "
                           f"in the server {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
-                    settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Functions.queue,
-                                                                                         interaction,
-                                                                                         self.client)
+                    # settings.timers[interaction.guild.id] = Threaded_timer.RepeatedTimer(1, Functions.queue,
+                    #                                                                      interaction,
+                    #                                                                      self.client)
                     settings.channels[interaction.guild.id] = interaction
                     if os.path.exists(f'logs/{interaction.guild.name}_logs.log'):
                         os.remove(f'logs/{interaction.guild.name}_logs.log')
@@ -255,7 +260,8 @@ class SlashMusic(commands.Cog):
                         print(f"Successfully added {color.RED}{color.BOLD}{title}{color.END} to the queue for "
                               f"{color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
                     if not settings.env_vars[interaction.guild.id]["Downloading"]:
-                        await settings.timers[interaction.guild.id].start()
+                        settings.env_vars[interaction.guild.id]["Active"] = True
+                        # await settings.timers[interaction.guild.id].start()
 
                 # It then checks if a video search is being performed
                 else:
@@ -297,7 +303,8 @@ class SlashMusic(commands.Cog):
                                 settings.queues[interaction.guild.id][-1]['duration'] = times
                         settings.titles[interaction.guild.id].append(search['result'][int(view.value) - 1]['title'])
                         if not settings.env_vars[interaction.guild.id]["Downloading"]:
-                            await settings.timers[interaction.guild.id].start()
+                            settings.env_vars[interaction.guild.id]["Active"] = True
+                            # await settings.timers[interaction.guild.id].start()
                         print(
                             f"Successfully added {color.RED}{color.BOLD}{search['result'][int(view.value) - 1]['title']}"
                             f"{color.END} to the queue for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
@@ -356,7 +363,8 @@ class SlashMusic(commands.Cog):
                 await interaction.send("Music has been stopped and queue has been cleared")
                 print(f"Music has been stopped and queue has been cleared for {color.BLUE}{color.BOLD}"
                       f"{interaction.guild.name}{color.END}")
-                await settings.timers[interaction.guild.id].pause()
+                settings.env_vars[interaction.guild.id]["Active"] = False
+                # await settings.timers[interaction.guild.id].pause()
             else:
                 await interaction.send("There is no audio to stop.")
 
@@ -433,7 +441,8 @@ class SlashMusic(commands.Cog):
                     settings.queues[interaction.guild.id][-1]['duration'] = times
             settings.titles[interaction.guild.id].append(search['result'][0]['title'])
             if not settings.env_vars[interaction.guild.id]["Downloading"]:
-                await settings.timers[interaction.guild.id].start()
+                settings.env_vars[interaction.guild.id]["Active"] = True
+                # await settings.timers[interaction.guild.id].start()
             print(f"Successfully added {color.RED}{color.BOLD}{search['result'][0]['title']}{color.END} to the queue "
                   f"for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
         else:
@@ -481,7 +490,8 @@ class SlashMusic(commands.Cog):
                 settings.queues[interaction.guild.id][-1]['items'] = search['result'][int(view.value) - 1]['videoCount']
                 settings.titles[interaction.guild.id].append(search['result'][int(view.value) - 1]['title'])
                 if not settings.env_vars[interaction.guild.id]["Downloading"]:
-                    await settings.timers[interaction.guild.id].start()
+                    settings.env_vars[interaction.guild.id]["Active"] = True
+                    # await settings.timers[interaction.guild.id].start()
                 print(
                     f"Successfully added playlist {color.RED}{color.BOLD}{search['result'][int(view.value) - 1]['title']}"
                     f"{color.END} to the queue for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
@@ -511,7 +521,8 @@ class SlashMusic(commands.Cog):
             settings.queues[interaction.guild.id][-1]['items'] = search['result'][0]['videoCount']
             settings.titles[interaction.guild.id].append(search['result'][0]['title'])
             if not settings.env_vars[interaction.guild.id]["Downloading"]:
-                await settings.timers[interaction.guild.id].start()
+                settings.env_vars[interaction.guild.id]["Active"] = True
+                # await settings.timers[interaction.guild.id].start()
             print(f"Successfully added playlist {color.RED}{color.BOLD}{search['result'][0]['title']}{color.END} to the"
                   f" queue for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
         else:

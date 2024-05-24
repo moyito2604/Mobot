@@ -1,5 +1,6 @@
 # cogs.Listeners holds all the listeners needed for Mobot
 import nextcord
+import Dependencies.Functions as Functions
 import settings
 import shutil
 from nextcord.ext import commands
@@ -28,12 +29,15 @@ class Listeners(commands.Cog):
             currdir = settings.pwd + '/Dependencies/'
             shutil.rmtree(currdir + '/' + str(member.guild.id))
             print('directory ' + str(member.guild.id) + ' has been deleted')
-            await settings.timers[member.guild.id].stop()
-            settings.timers.pop(member.guild.id)
+            # await settings.timers[member.guild.id].stop()
+            await Functions.stopTimer(member.guild.id)
+            # settings.timers.pop(member.guild.id)
+            settings.env_vars[member.guild.id]["Active"] = "Stopped"
             settings.queues.pop(member.guild.id)
             settings.titles.pop(member.guild.id)
             settings.channels.pop(member.guild.id)
             settings.current.pop(member.guild.id)
+            settings.env_vars.pop(member.guild.id)
             print('Successfully left the voice Channel')
 
 
