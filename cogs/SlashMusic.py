@@ -1,12 +1,14 @@
 # cogs.Music runs the Music slash commands for Mobot
 # This file contains all the commands associated with the Mobot Music commands
 import asyncio
+from asyncio import TimeoutError
 import math
 import os
 import time
 import nextcord
 from nextcord.ext import commands, tasks
 from nextcord import Interaction
+from nextcord.errors import Forbidden
 from youtubesearchpython import VideosSearch
 from youtubesearchpython import PlaylistsSearch
 import os.path
@@ -32,9 +34,10 @@ class SlashMusic(commands.Cog):
     async def timer(self):
         await self.client.wait_until_ready()
         for voice in self.client.voice_clients:
-            if settings.env_vars[voice.guild.id]["Active"]:
-                settings.env_vars[voice.guild.id]["Timer"] = (
-                    asyncio.ensure_future(Functions.queue(settings.env_vars[voice.guild.id]["ctx"], self.client)))
+            if settings.env_vars.get(voice.guild.id, None):
+                if settings.env_vars[voice.guild.id]["Active"]:
+                    settings.env_vars[voice.guild.id]["Timer"] = (
+                        asyncio.ensure_future(Functions.queue(settings.env_vars[voice.guild.id]["ctx"], self.client)))
 
     # The join function is a command used to join the bot to a server's voice channel
     @nextcord.slash_command(name="join", description="Joins the Bot to a Voice Channel")
@@ -59,10 +62,20 @@ class SlashMusic(commands.Cog):
                 settings.titles[interaction.guild.id] = []
                 settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False, "Shuffle": False,
                                                            "Indexes": False, "ctx": interaction, "Active": False}
-                # settings.indexes[interaction.guild.id] = False
                 settings.current[interaction.guild.id] = {}
                 channel = interaction.user.voice.channel
-                voice = await channel.connect()
+
+                # Tests to ensure there is permission to join voice channel and to send a message in the current channel
+                try:
+                    voice = await channel.connect(timeout=5)
+                except TimeoutError:
+                    try:
+                        await interaction.channel.send("Failed to connect to the voice channel")
+                    except Forbidden:
+                        print(f"Failed to connect to voice channel and send a message in {color.BLUE}{color.BOLD}"
+                              f"{interaction.guild.name}{color.END}")
+                    return
+
                 await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
                 print(
                     f"Successfully Joined the {color.PURPLE}{color.BOLD}{str(channel)}{color.END} voice channel in the"
@@ -98,11 +111,11 @@ class SlashMusic(commands.Cog):
             await Functions.stopTimer(interaction.guild.id)
             # await settings.timers[interaction.guild.id].stop()
             # settings.timers.pop(interaction.guild.id)
-            settings.queues.pop(interaction.guild.id)
-            settings.titles.pop(interaction.guild.id)
-            settings.channels.pop(interaction.guild.id)
-            settings.current.pop(interaction.guild.id)
-            settings.env_vars.pop(interaction.guild.id)
+            settings.queues.pop(interaction.guild.id, None)
+            settings.titles.pop(interaction.guild.id, None)
+            settings.channels.pop(interaction.guild.id, None)
+            settings.current.pop(interaction.guild.id, None)
+            settings.env_vars.pop(interaction.guild.id, None)
             print(f"Successfully left the voice Channel in the server {color.BLUE}{color.BOLD}{interaction.guild.name}"
                   f"{color.END}")
             await voice.disconnect()
@@ -134,10 +147,20 @@ class SlashMusic(commands.Cog):
                     settings.titles[interaction.guild.id] = []
                     settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False, "Shuffle": False,
                                                                "Indexes": False, "ctx": interaction, "Active": False}
-                    # settings.indexes[interaction.guild.id] = False
                     settings.current[interaction.guild.id] = {}
                     channel = interaction.user.voice.channel
-                    voice = await channel.connect()
+
+                    # Tests to ensure there is permission to join the voice channel and send a message in the channel
+                    try:
+                        voice = await channel.connect(timeout=5)
+                    except TimeoutError:
+                        try:
+                            await interaction.channel.send("Failed to connect to the voice channel")
+                        except Forbidden:
+                            print(f"Failed to connect to voice channel and send a message in {color.BLUE}{color.BOLD}"
+                                  f"{interaction.guild.name}{color.END}")
+                        return
+
                     await interaction.send('Successfully Joined the ' + str(channel) + ' voice channel')
                     print(f"Successfully Joined the {color.PURPLE}{color.BOLD}{str(channel)}{color.END} voice channel "
                           f"in the server {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")

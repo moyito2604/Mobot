@@ -169,9 +169,13 @@ def checkurl(url_string: str):
 
 # Stops the timer specifically for the server id provided
 async def stopTimer(guild):
-    settings.env_vars[guild]["Timer"].cancel()
-    with suppress(asyncio.CancelledError):
-        await settings.env_vars[guild]["Timer"]
+
+    # First it ensures that the timer exists and cancels it, where then it suppresses the cancelled error and awaits the
+    # Task to its completion
+    if settings.env_vars[guild].get("Timer", None):
+        settings.env_vars[guild]["Timer"].cancel()
+        with suppress(asyncio.CancelledError):
+            await settings.env_vars[guild]["Timer"]
 
 
 # The queue function is what runs the entire music bot.
