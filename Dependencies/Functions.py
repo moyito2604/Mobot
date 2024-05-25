@@ -260,5 +260,4 @@ async def queue(ctx, client):
         # If there is not an active queue, it cleans up and pauses the timer
         else:
             settings.env_vars[ctx.guild.id]["Active"] = False
-            # await settings.timers[ctx.guild.id].pause()
             print(f"No queued items for {Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")

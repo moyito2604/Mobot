@@ -43,9 +43,7 @@ class Listeners(commands.Cog):
             if os.path.isdir(currdir + '/' + str(member.guild.id)):
                 shutil.rmtree(currdir + '/' + str(member.guild.id))
             print('directory ' + str(member.guild.id) + ' has been deleted')
-            # await settings.timers[member.guild.id].stop()
             await Functions.stopTimer(member.guild.id)
-            # settings.timers.pop(member.guild.id)
             settings.queues.pop(member.guild.id, None)
             settings.titles.pop(member.guild.id, None)
             settings.channels.pop(member.guild.id, None)
