@@ -12,6 +12,7 @@ RUN pip3 install -r /requirements.txt
 RUN apk update
 RUN apk upgrade --available && sync
 RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache build-base
 
 # Set work directory, copy source code to there
 WORKDIR /app
