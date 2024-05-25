@@ -7,7 +7,7 @@ on:
 
 env:
   REPO: mobot
-  IMAGE: ${{ github.repository_owner }}/${{ env.REPO }}
+  IMAGE: ${{ github.repository_owner }}/mobot
 
 jobs:
   build_and_publish:
