@@ -67,10 +67,11 @@ class SlashMusic(commands.Cog):
 
                 # Tests to ensure there is permission to join voice channel and to send a message in the current channel
                 try:
+                    await interaction.response.defer()
                     voice = await channel.connect(timeout=5)
                 except TimeoutError:
                     try:
-                        await interaction.channel.send("Failed to connect to the voice channel")
+                        await interaction.send("Failed to connect to the voice channel")
                     except Forbidden:
                         print(f"Failed to connect to voice channel and send a message in {color.BLUE}{color.BOLD}"
                               f"{interaction.guild.name}{color.END}")
@@ -152,10 +153,11 @@ class SlashMusic(commands.Cog):
 
                     # Tests to ensure there is permission to join the voice channel and send a message in the channel
                     try:
+                        await interaction.response.defer()
                         voice = await channel.connect(timeout=5)
                     except TimeoutError:
                         try:
-                            await interaction.channel.send("Failed to connect to the voice channel")
+                            await interaction.send("Failed to connect to the voice channel")
                         except Forbidden:
                             print(f"Failed to connect to voice channel and send a message in {color.BLUE}{color.BOLD}"
                                   f"{interaction.guild.name}{color.END}")
