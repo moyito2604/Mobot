@@ -6,7 +6,8 @@ on:
       - main
 
 env:
-  IMAGE: ${{ github.repository_owner }}/mobot
+  REPO: mobot
+  IMAGE: ${{ github.repository_owner }}/${{ env.REPO }}
 
 jobs:
   build_and_publish:
@@ -45,7 +46,7 @@ jobs:
       - name: Cleanup untagged images
         uses: actions/delete-package-versions@v5.0.0
         with:
-          package-name: ${{ env.IMAGE }}
+          package-name: ${{ env.REPO }}
           package-type: container
           min-versions-to-keep: 0
           delete-only-untagged-versions: true
