@@ -7,12 +7,12 @@ LABEL org.opencontainers.image.licenses=MIT
 
 # copy requirements, upgrade pip and install requirements.
 COPY /requirements.txt /requirements.txt
-RUN pip3 install --upgrade pip
-RUN pip3 install -r /requirements.txt
 RUN apk update
 RUN apk upgrade --available && sync
 RUN apk add --no-cache ffmpeg
 RUN apk add --no-cache build-base
+RUN pip3 install --upgrade pip
+RUN pip3 install -r /requirements.txt
 
 # Set work directory, copy source code to there
 WORKDIR /app
