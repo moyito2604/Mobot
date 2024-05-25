@@ -12,11 +12,6 @@ env:
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,11 +32,11 @@ jobs:
       - name: Build and Push new Testing Image
         uses: docker/build-push-action@v5.3.0
         with:
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/${{ env.IMAGE }}:testing
-#          cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:latest
-#          cache-to: type=inline
+          cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:latest
+          cache-to: type=inline
 
       - name: Cleanup untagged images
         uses: actions/delete-package-versions@v5.0.0
