@@ -9,8 +9,7 @@ LABEL org.opencontainers.image.licenses=MIT
 COPY /requirements.txt /requirements.txt
 RUN apk update
 RUN apk upgrade --available && sync
-RUN apk add --no-cache ffmpeg
-RUN apk add --no-cache build-base
+RUN apk add --no-cache ffmpeg build-base libffi-dev
 RUN pip3 install --upgrade pip
 RUN pip3 install -r /requirements.txt
 
