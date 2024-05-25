@@ -6,8 +6,7 @@ on:
       - main
 
 env:
-  OWNER: ${{ github.repository_owner }}
-  IMAGE: mobot
+  IMAGE: ${{ github.repository_owner }}/mobot
   VERSION: 2.0.7
 
 jobs:
@@ -46,7 +45,9 @@ jobs:
         with:
           platforms: ${{ matrix.platform }}
           push: true
-          tags: ghcr.io/${{ env.OWNER }}/${{ env.IMAGE }}:${{ env.VERSION }},ghcr.io/${{ env.OWNER }}/${{ env.IMAGE }}:latest
+          tags: ghcr.io/${{ env.IMAGE }}:${{ env.VERSION }},ghcr.io/${{ env.IMAGE }}:latest
+          cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:latest
+          cache-to: type=inline
 
       - name: Cleanup Untagged Images
         uses: actions/delete-package-versions@v5.0.0
