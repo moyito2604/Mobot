@@ -32,6 +32,12 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GH_PASS }}
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@3.1.0
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
       - name: Remove old Testing Container
         uses: ArchieAtkinson/remove-dockertag-action@v0.0
         with:
@@ -43,7 +49,11 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/${{ env.IMAGE }}:${{ env.VERSION }},ghcr.io/${{ env.IMAGE }}:latest
+          tags: |
+            ghcr.io/${{ env.IMAGE }}:${{ env.VERSION }}
+            ghcr.io/${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ env.VERSION }}
+            ${{ env.IMAGE }}:latest
           cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:latest
           cache-to: type=inline
           provenance: false

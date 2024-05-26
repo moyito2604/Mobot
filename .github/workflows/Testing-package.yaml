@@ -31,12 +31,20 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GH_PASS }}
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@3.1.0
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
       - name: Build and Push new Testing Image
         uses: docker/build-push-action@v5.3.0
         with:
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/${{ env.IMAGE }}:testing
+          tags: |
+            ghcr.io/${{ env.IMAGE }}:testing
+            ${{ env.IMAGE }}:testing
           cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:latest
           cache-to: type=inline
           provenance: false
