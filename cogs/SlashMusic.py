@@ -6,6 +6,7 @@ import math
 import os
 import time
 import nextcord
+import scrapetube
 from nextcord.ext import commands, tasks
 from nextcord import Interaction
 from nextcord.errors import Forbidden
@@ -281,18 +282,27 @@ class SlashMusic(commands.Cog):
 
                 # It then checks if a video search is being performed
                 else:
-                    vidsearch = VideosSearch(url, limit=5)
+                    # vidsearch = VideosSearch(url, limit=5)
+                    vidsearch = scrapetube.get_search(query=url, limit=5)
+
+                    search = []
+                    for video in vidsearch:
+                        search.append(video)
 
                     # It generates the buttons necessary for the search select
                     view = Buttons.searchButton()
-                    search = vidsearch.result()
+                    # search = vidsearch.result()
                     embed = nextcord.Embed(title="Search Results")
-                    counter = 1
-                    for result in search['result']:
-                        embed.add_field(name=f"{counter}: ***{result['title']}***",
-                                        value=f"Duration: {result['duration']}",
+                    # counter = 1
+                    # for result in search['result']:
+                    for counter, result in enumerate(search):
+                        # embed.add_field(name=f"{counter}: ***{result['title']}***",
+                        #                 value=f"Duration: {result['duration']}",
+                        #                 inline=False)
+                        embed.add_field(name=f"{counter+1}: ***{result['title']["runs"][0]["text"]}***",
+                                        value=f"Duration: {result["lengthText"]["simpleText"]}",
                                         inline=False)
-                        counter += 1
+                        # counter += 1
                     await interaction.send(embed=embed, ephemeral=True, view=view, delete_after=20)
                     await view.wait()
                     if view.value is None:
@@ -300,29 +310,41 @@ class SlashMusic(commands.Cog):
 
                     # Once the user inputs the value, it is then saved to the queue
                     else:
+                        # await interaction.send('Song number ' + str(view.value) + ' selected:\n***' +
+                        #                        search['result'][int(view.value) - 1]['title'] +
+                        #                        '*** has been added to the queue', ephemeral=True)
                         await interaction.send('Song number ' + str(view.value) + ' selected:\n***' +
-                                               search['result'][int(view.value) - 1]['title'] +
+                                               search[int(view.value) - 1]["title"]["runs"][0]["text"] +
                                                '*** has been added to the queue', ephemeral=True)
                         settings.queues[interaction.guild.id].append({})
-                        settings.queues[interaction.guild.id][-1]['url'] = search['result'][int(view.value) - 1]['link']
+                        # settings.queues[interaction.guild.id][-1]['url'] = search['result'][int(view.value) - 1]['link']
+                        settings.queues[interaction.guild.id][-1]['url'] = ('https://www.youtube.com/watch?v=' +
+                                                                            search[int(view.value) - 1]['videoId'])
                         settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
                         settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
                         settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
-                        with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
-                            info = ydl.extract_info(search['result'][int(view.value) - 1]['link'], download=False,
-                                                    process=False)
-                            times = "N/A"
-                            if "duration" in info:
-                                times = time.gmtime(info["duration"])
-                                settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
-                            else:
-                                settings.queues[interaction.guild.id][-1]['duration'] = times
-                        settings.titles[interaction.guild.id].append(search['result'][int(view.value) - 1]['title'])
+                        settings.queues[interaction.guild.id][-1]['duration'] = Functions.timetostr(
+                            search[int(view.value) - 1]["lengthText"]["simpleText"])
+                        # with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+                        #     info = ydl.extract_info(search['result'][int(view.value) - 1]['link'], download=False,
+                        #                             process=False)
+                        #     times = "N/A"
+                        #     if "duration" in info:
+                        #         times = time.gmtime(info["duration"])
+                        #         settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
+                        #     else:
+                        #         settings.queues[interaction.guild.id][-1]['duration'] = times
+                        # settings.titles[interaction.guild.id].append(search['result'][int(view.value) - 1]['title'])
+                        settings.titles[interaction.guild.id].append(search[int(view.value) - 1]["title"]["runs"][0]["text"])
                         if not settings.env_vars[interaction.guild.id]["Downloading"]:
                             settings.env_vars[interaction.guild.id]["Active"] = True
+                        # print(
+                        #     f"Successfully added {color.RED}{color.BOLD}{search['result'][int(view.value) - 1]['title']}"
+                        #     f"{color.END} to the queue for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
                         print(
-                            f"Successfully added {color.RED}{color.BOLD}{search['result'][int(view.value) - 1]['title']}"
-                            f"{color.END} to the queue for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
+                            f"Successfully added {color.RED}{color.BOLD}"
+                            f"{search[int(view.value) - 1]["title"]["runs"][0]["text"]}{color.END} "
+                            f"to the queue for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
 
             # This then checks if the bot is not in a voice channel and if it's not, it sends a message reminding a
             # user to join the voice channel to bring the bot in

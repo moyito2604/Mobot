@@ -106,7 +106,8 @@ async def retrieveAudio(url: str, path: str, ctx, index):
             channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                          id=settings.channels[ctx.guild.id].channel.id)
             await channel.send("The current Track has failed to download. The next Track will now Download")
-            return await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + '/' + str(ctx.guild.id)), ctx, 0)
+            return await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + '/' + str(ctx.guild.id)),
+                                       ctx, 0)
 
     # It then renames the song and gets it ready to be played
     # This gives a list of extensions and how they are processed
@@ -169,13 +170,29 @@ def checkurl(url_string: str):
 
 # Stops the timer specifically for the server id provided
 async def stopTimer(guild):
-
     # First it ensures that the timer exists and cancels it, where then it suppresses the cancelled error and awaits the
     # Task to its completion
     if settings.env_vars[guild].get("Timer", None):
         settings.env_vars[guild]["Timer"].cancel()
         with suppress(asyncio.CancelledError):
             await settings.env_vars[guild]["Timer"]
+
+
+# This function takes in a time in colon format to format it to 00:00:00 format
+def timetostr(timestring: str):
+    timelist = timestring.rsplit(":")
+    seconds = None
+    minutes = None
+    hours = None
+    try:
+        seconds = timelist.pop()
+        minutes = timelist.pop()
+        hours = timelist.pop()
+    except IndexError:
+        if seconds is None: seconds = "0"
+        if minutes is None: minutes = "0"
+        if hours is None: hours = "0"
+    return "%02d:%02d:%02d" % (int(hours), int(minutes), int(seconds))
 
 
 # The queue function is what runs the entire music bot.

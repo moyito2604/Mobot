@@ -58,11 +58,3 @@ jobs:
           untagged_only: true
           owner_type: user
           except_untagged_multiplatform: true
-
-#      - name: Cleanup untagged images
-#        uses: actions/delete-package-versions@v5.0.0
-#        with:
-#          package-name: ${{ env.REPO }}
-#          package-type: container
-#          min-versions-to-keep: 0
-#          delete-only-untagged-versions: true
