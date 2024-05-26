@@ -9,6 +9,7 @@ env:
   REPO: mobot
   IMAGE: ${{ github.repository_owner }}/mobot
   VERSION: 2.0.7
+  PREVER: 2.0.6
 
 jobs:
   build_and_publish:
@@ -42,7 +43,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/${{ env.IMAGE }}:${{ env.VERSION }},ghcr.io/${{ env.IMAGE }}:latest
-          cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:latest
+          cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:${{ env.PREVER }}
           cache-to: type=inline
 
       - name: Cleanup Untagged Images
