@@ -42,6 +42,9 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/${{ env.IMAGE }}:${{ env.VERSION }},ghcr.io/${{ env.IMAGE }}:latest
+          cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:latest
+          cache-to: type=inline
+          provenance: false
 
       - name: Cleanup Untagged Images
         uses: actions/delete-package-versions@v5.0.0
