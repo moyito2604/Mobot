@@ -5,13 +5,20 @@ LABEL org.opencontainers.image.source=https://github.com/moyito2604/Mobot
 LABEL org.opencontainers.image.description="Containerized Version of Mobot"
 LABEL org.opencontainers.image.licenses=MIT
 
+# Sets the platform the image is running on
+ARG TARGETPLATFORM
+ENV ARCH=$TARGETPLATFORM
+
 # copy requirements, upgrade pip and install requirements.
 COPY /requirements.txt /requirements.txt
 RUN apk update
 RUN apk upgrade --available && sync
-RUN apk add --no-cache ffmpeg build-base libffi-dev
+RUN apk add --no-cache ffmpeg
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then apk add --no-cache build-base libffi-dev; fi
 RUN pip3 install --upgrade pip
 RUN pip3 install -r /requirements.txt
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then apk del --no-cache build-base libffi-dev; fi
+RUN apk cache clean
 
 # Set work directory, copy source code to there
 WORKDIR /app
@@ -22,9 +29,6 @@ ENV token="TOKEN"
 # Bot Owner ID for administration
 ENV ownerid="ID"
 ENV dockerstatus=Yes
-# Sets the platform the image is running on
-ARG TARGETPLATFORM
-ENV ARCH=$TARGETPLATFORM
 ENV MYSQL_HOST="None"
 ENV MYSQL_DATABASE="None"
 ENV MYSQL_USER="None"
