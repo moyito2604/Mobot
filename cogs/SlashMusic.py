@@ -10,7 +10,6 @@ import scrapetube
 from nextcord.ext import commands, tasks
 from nextcord import Interaction
 from nextcord.errors import Forbidden
-from youtubesearchpython import PlaylistsSearch
 import os.path
 import yt_dlp
 import shutil
@@ -516,22 +515,26 @@ class SlashMusic(commands.Cog):
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
 
         if voice is not None:
-            vidsearch = PlaylistsSearch(playlist, limit=1)
-            search = vidsearch.result()
-            await interaction.send('***' + search['result'][0]['title'] + '*** has been added to the queue\nSize: ' +
-                                   search['result'][0]['videoCount'],
-                                   ephemeral=True)
+            vidsearch = scrapetube.get_search(query=playlist, limit=1, results_type="playlist")
+
+            search = []
+            for video in vidsearch:
+                search.append(video)
+
+            await interaction.send('***' + search[0]["title"]["simpleText"] + '*** has been added to the queue\n'
+                                   'Size: ' + search[0]['videoCount'], ephemeral=True)
             settings.queues[interaction.guild.id].append({})
-            settings.queues[interaction.guild.id][-1]['url'] = search['result'][0]['link']
+            settings.queues[interaction.guild.id][-1]['url'] = ("https://www.youtube.com/playlist?list=" +
+                                                                search[0]["playlistId"])
             settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
             settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
             settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
-            settings.queues[interaction.guild.id][-1]['items'] = search['result'][0]['videoCount']
-            settings.titles[interaction.guild.id].append(search['result'][0]['title'])
+            settings.queues[interaction.guild.id][-1]['items'] = search[0]['videoCount']
+            settings.titles[interaction.guild.id].append(search[0]['title']['simpleText'])
             if not settings.env_vars[interaction.guild.id]["Downloading"]:
                 settings.env_vars[interaction.guild.id]["Active"] = True
-            print(f"Successfully added playlist {color.RED}{color.BOLD}{search['result'][0]['title']}{color.END} to the"
-                  f" queue for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
+            print(f"Successfully added playlist {color.RED}{color.BOLD}{search[0]['title']['simpleText']}{color.END} "
+                  f"to the queue for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
         else:
             await interaction.response.send_message('I am not in a voice channel')
 

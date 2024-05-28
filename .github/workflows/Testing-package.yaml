@@ -45,7 +45,7 @@ jobs:
           tags: |
             ghcr.io/${{ env.IMAGE }}:testing
             ${{ env.IMAGE }}:testing
-          cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:latest
+          cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:testing
           cache-to: type=inline
           provenance: false
 
