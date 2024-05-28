@@ -5,6 +5,7 @@ from contextlib import suppress
 import time
 from random import randint
 from nextcord import FFmpegOpusAudio
+from nextcord.errors import Forbidden
 import yt_dlp
 from yt_dlp.utils import DownloadError
 import scrapetube
@@ -266,7 +267,11 @@ async def queue(ctx, client):
                 embed.set_thumbnail(url=song['thumbnail'])
                 print(f"Song {Color.RED}{Color.BOLD}{song['title']}{Color.END} is playing in "
                       f"{Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
-                await textchannel.send(mention_author=True, embed=embed)
+                try:
+                    await textchannel.send(mention_author=True, embed=embed)
+                except Forbidden:
+                    print(f"Unable to print message in {Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}, playing "
+                          f"song {Color.RED}{Color.BOLD}{song['title']}{Color.END}")
                 # Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN retrieveAudio()
                 player = voice.play(song['source'])
             settings.env_vars[ctx.guild.id]["Downloading"] = False
