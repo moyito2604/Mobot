@@ -22,6 +22,9 @@ ENV token="TOKEN"
 # Bot Owner ID for administration
 ENV ownerid="ID"
 ENV dockerstatus=Yes
+# Sets the platform the image is running on
+ARG TARGETPLATFORM
+ENV ARCH=$TARGETPLATFORM
 ENV MYSQL_HOST="None"
 ENV MYSQL_DATABASE="None"
 ENV MYSQL_USER="None"

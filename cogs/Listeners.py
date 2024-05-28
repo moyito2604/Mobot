@@ -22,7 +22,7 @@ class Listeners(commands.Cog):
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         voice = member.guild.voice_client
-        if voice == None:
+        if voice is None:
             return
         if len(voice.channel.members) == 1:
             textchannel = nextcord.utils.get(settings.channels[member.guild.id].guild.channels,

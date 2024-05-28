@@ -50,6 +50,9 @@ settings.owner = config.get("OwnerID", "None")
 # This grabs any environment variables from something such as docker
 dockerstat = os.environ.get('dockerstatus', False)
 
+# Grabs the architecture the container is being run on
+arch = os.environ.get("ARCH", None)
+
 # This conditional first checks if it is in a docker container
 # If not, it then checks if it recieved a token through commandline arguments
 if dockerstat:
@@ -176,7 +179,10 @@ async def on_ready():
             pass
     await guildSave()
     await client.change_presence(status=nextcord.Status.online, activity=activity)
-    print('We have logged in as {0.user} (Version 2.0.7)\n'.format(client))
+    if arch:
+        print(f"We have logged in as {client.user} on {arch} (Version 2.1.0)\n")
+    else:
+        print(f"We have logged in as {client.user} (Version 2.1.0)\n")
 
 
 # The on_guild_join nextcord function is called when someone joins the server
