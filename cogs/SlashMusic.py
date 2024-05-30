@@ -11,6 +11,8 @@ from nextcord.ext import commands, tasks
 from nextcord import Interaction
 from nextcord.errors import Forbidden
 import os.path
+import pytube
+from pytube.exceptions import RegexMatchError, VideoUnavailable, VideoPrivate, VideoRegionBlocked, MembersOnly
 import yt_dlp
 import shutil
 import settings
@@ -170,116 +172,126 @@ class SlashMusic(commands.Cog):
                 # It then checks if a YouTube link was inputted or a search prompt. It then also checks if a YouTube
                 # link is a playlist or not it then starts the threaded timer
                 if Functions.checkurl(url):
-                    settings.queues[interaction.guild.id].append({})
-                    failed = False
-                    with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+
+                    if not interaction.response.is_done():
+                        await interaction.response.defer()
+
+                    # Variables that Define if the given URL is a video or playlist
+                    isVideo = True
+                    isPlaylist = True
+
+                    if "youtube" in url or "youtu.be" in url:
+
+                        # Tests to see if it's a YouTube Video
                         try:
-                            info = ydl.extract_info(url, download=False, process=False)
-                            title = info.get('title', None)
+                            video = pytube.YouTube(url)
+                            video.check_availability()
+                            videodict = {"duration": time.strftime("%H:%M:%S", time.gmtime(video.length)),
+                                         "url": "https://www.youtube.com/watch?v=" + video.video_id,
+                                         "user": interaction.user.mention, "name": interaction.user.display_name,
+                                         "avatar": interaction.user.display_avatar.url, "title": video.title}
+
+                        # If it's not a YouTube video, it will fail with regex
+                        except RegexMatchError:
+                            isVideo = False
+                        except VideoUnavailable or VideoPrivate or VideoRegionBlocked or MembersOnly:
+                            await interaction.send("Track requested is Private or Unavailable")
+                            return
+
+                        # Tests to see if it's a YouTube Playlist:
+                        try:
+                            playlist = pytube.Playlist(url)
+                            playlistdict = {"items": playlist.length, "url": playlist.playlist_url,
+                                            "user": interaction.user.mention, "name": interaction.user.display_name,
+                                            "avatar": interaction.user.display_avatar.url, "title": playlist.title}
                         except:
-                            failed = True
-                            settings.queues[interaction.guild.id].pop(0)
-                            if voice.is_playing() or voice.is_paused() or settings.env_vars[interaction.guild.id][
-                                "Downloading"] == True:
-                                await interaction.send("The current Track has failed to be added to the queue")
-                            else:
-                                await interaction.send("The current Track has failed to play")
-                    if not failed:
-                        if not '_type' in info:
-                            info['_type'] = 'song'
-                        if info['_type'] == "playlist":
-                            if info['id'][:2] == 'RD':
-                                with yt_dlp.YoutubeDL({'quiet': True, 'noplaylist': True}) as ydl:
-                                    info = ydl.extract_info(url, download=False, process=False)
-                                    url = info['url']
-                                    info = ydl.extract_info(url, download=False, process=False)
+                            isPlaylist = False
+
+                        # If neither condition applies, the video or playlist is not playable
+                        if not isVideo and not isPlaylist:
+                            await interaction.send("The current Track has failed to be added to the queue")
+                            return
+
+                    else:
+
+                        # If the selected video isn't from YouTube, a general extractor will be used instead
+                        with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+                            try:
+                                info = ydl.extract_info(url, download=False, process=False)
                                 title = info.get('title', None)
                                 times = "N/A"
                                 if "duration" in info:
-                                    times = time.gmtime(info["duration"])
-                                    settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S",
-                                                                                                          times)
+                                    times = time.strftime("%H:%M:%S", time.gmtime(info["duration"]))
+                                videodict = {"duration": times, "url": url, "user": interaction.user.mention,
+                                             "name": interaction.user.display_name,
+                                             "avatar": interaction.user.display_avatar.url}
+                                settings.queues[interaction.guild.id].append(videodict)
+                                settings.titles[interaction.guild.id].append(title)
+                                await interaction.send('***' + title + '*** has been added to the queue')
+                                print(f"Successfully added {color.RED}{color.BOLD}{title}{color.END} to the queue for "
+                                      f"{color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
+                                if not settings.env_vars[interaction.guild.id]["Downloading"]:
+                                    settings.env_vars[interaction.guild.id]["Active"] = True
+                                return
+                            except:
+                                if voice.is_playing() or voice.is_paused() or settings.env_vars[interaction.guild.id][
+                                "Downloading"]:
+                                    await interaction.send("The current Track has failed to be added to the queue")
                                 else:
-                                    settings.queues[interaction.guild.id][-1]['duration'] = times
-                                settings.queues[interaction.guild.id][-1]['url'] = url
-                                settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
-                                settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
-                                settings.queues[interaction.guild.id][-1][
-                                    'avatar'] = interaction.user.display_avatar.url
-                                settings.titles[interaction.guild.id].append(title)
-                                await interaction.send(f"Youtube Mixes are not allowed to be added, adding the song "
-                                                       f"***{title}*** instead", ephemeral=True)
-                            else:
-                                await interaction.send('Playlist ***' + title + '*** has been added to the queue')
-                                settings.queues[interaction.guild.id][-1]['items'] = info['playlist_count']
-                                settings.queues[interaction.guild.id][-1]['url'] = url
-                                settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
-                                settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
-                                settings.queues[interaction.guild.id][-1][
-                                    'avatar'] = interaction.user.display_avatar.url
-                                settings.titles[interaction.guild.id].append(title)
-                        elif 'url' in info:
-                            og_url = info['url']
-                            if "playlist" in og_url and ("youtube" in url or "youtu.be" in url):
-                                embed = nextcord.Embed(title="**Playlist Detected**")
-                                embed.add_field(name="",
-                                                value="The link previously placed has a reference to a playlist and a "
-                                                      "song. Please specify if the song or playlist is needed")
-                                view = Buttons.playlistSelectButton()
-                                await interaction.send(embed=embed, ephemeral=True, view=view, delete_after=20)
-                                await view.wait()
-                                if view.value is None:
-                                    return
-                                elif view.value == 1:
-                                    info = ydl.extract_info(og_url, download=False, process=False)
-                                    title = info.get('title', None)
-                                    await interaction.send('Playlist ***' + title + '*** has been added to the queue')
-                                    settings.queues[interaction.guild.id][-1]['items'] = info['playlist_count']
-                                    settings.queues[interaction.guild.id][-1]['url'] = og_url
-                                    settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
-                                    settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
-                                    settings.queues[interaction.guild.id][-1][
-                                        'avatar'] = interaction.user.display_avatar.url
-                                    settings.titles[interaction.guild.id].append(title)
-                                elif view.value == 2:
-                                    with yt_dlp.YoutubeDL({'noplaylist': True, 'quiet': True}) as ydltemp:
-                                        info = ydltemp.extract_info(url, download=False)
-                                    title = info.get('title', None)
-                                    times = "N/A"
-                                    if "duration" in info:
-                                        times = time.gmtime(info["duration"])
-                                        settings.queues[interaction.guild.id][-1]['duration'] = time.strftime(
-                                            "%H:%M:%S", times)
-                                    else:
-                                        settings.queues[interaction.guild.id][-1]['duration'] = times
-                                    await interaction.send('***' + title + '*** has been added to the queue')
-                                    settings.queues[interaction.guild.id][-1][
-                                        'url'] = "https://www.youtube.com/watch?v=" + info['id']
-                                    settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
-                                    settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
-                                    settings.queues[interaction.guild.id][-1][
-                                        'avatar'] = interaction.user.display_avatar.url
-                                    settings.titles[interaction.guild.id].append(title)
-                        else:
-                            await interaction.send('***' + title + '*** has been added to the queue')
-                            times = "N/A"
-                            if "duration" in info:
-                                times = time.gmtime(info["duration"])
-                                settings.queues[interaction.guild.id][-1]['duration'] = time.strftime("%H:%M:%S", times)
-                            else:
-                                settings.queues[interaction.guild.id][-1]['duration'] = times
-                            settings.queues[interaction.guild.id][-1]['url'] = url
-                            settings.queues[interaction.guild.id][-1]['user'] = interaction.user.mention
-                            settings.queues[interaction.guild.id][-1]['name'] = interaction.user.display_name
-                            settings.queues[interaction.guild.id][-1]['avatar'] = interaction.user.display_avatar.url
-                            settings.titles[interaction.guild.id].append(title)
-                        print(f"Successfully added {color.RED}{color.BOLD}{title}{color.END} to the queue for "
-                              f"{color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
+                                    await interaction.send("The current Track has failed to play")
+                                return
+
+                    # If the bot detects a playlist and a video, then it will ask the user which one it wants
+                    if isVideo and isPlaylist:
+                        embed = nextcord.Embed(title="**Playlist Detected**")
+                        embed.add_field(name="",
+                                        value="The link previously placed has a reference to a playlist and a "
+                                              "song. Please specify if the song or playlist is needed")
+                        view = Buttons.playlistSelectButton()
+                        await interaction.send(embed=embed, ephemeral=True, view=view, delete_after=20)
+                        await view.wait()
+                        if view.value is None:
+                            return
+                        elif view.value == 1:
+                            settings.queues[interaction.guild.id].append(playlistdict)
+                            settings.titles[interaction.guild.id].append(playlistdict["title"])
+                            await interaction.send('Playlist ***' + playlistdict["title"] +
+                                                   '*** has been added to the queue')
+                            title = playlistdict["title"]
+                        elif view.value == 2:
+                            settings.queues[interaction.guild.id].append(videodict)
+                            settings.titles[interaction.guild.id].append(videodict["title"])
+                            await interaction.send('***' + videodict["title"] + '*** has been added to the queue')
+                            title = videodict["title"]
+
+                    # If it's a video, it will be added to the queue
+                    elif not isVideo and isPlaylist:
+                        settings.queues[interaction.guild.id].append(playlistdict)
+                        settings.titles[interaction.guild.id].append(playlistdict["title"])
+                        await interaction.send('Playlist ***' + playlistdict["title"] +
+                                               '*** has been added to the queue')
+                        title = playlistdict["title"]
+
+                    # If it's a playlist, it will be added to the queue
+                    elif isVideo and not isPlaylist:
+                        settings.queues[interaction.guild.id].append(videodict)
+                        settings.titles[interaction.guild.id].append(videodict["title"])
+                        await interaction.send('***' + videodict["title"] + '*** has been added to the queue')
+                        title = videodict["title"]
+
+                    print(f"Successfully added {color.RED}{color.BOLD}{title}{color.END} to the queue for "
+                          f"{color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
+
                     if not settings.env_vars[interaction.guild.id]["Downloading"]:
                         settings.env_vars[interaction.guild.id]["Active"] = True
 
                 # It then checks if a video search is being performed
                 else:
+
+                    if not interaction.response.is_done():
+                        await interaction.response.defer()
+
+                    # Generates a search object
                     vidsearch = scrapetube.get_search(query=url, limit=5)
 
                     search = []
