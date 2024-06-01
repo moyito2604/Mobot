@@ -6,8 +6,8 @@ on:
       - main
 
 env:
-  REPO: mobot
   IMAGE: ${{ github.repository_owner }}/mobot
+  VERSION: testing
 
 jobs:
   build_and_publish:
@@ -43,10 +43,12 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ env.IMAGE }}:testing
-            ${{ env.IMAGE }}:testing
-          cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:testing
+            ghcr.io/${{ env.IMAGE }}:${{ env.VERSION }}
+            ${{ env.IMAGE }}:${{ env.VERSION }}
+          cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:${{ env.VERSION }}
           cache-to: type=inline
+          build-args: |
+            TAG=${{ env.VERSION }}
           provenance: false
 
       - name: Remove untagged images excepted multiplatform packages

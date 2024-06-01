@@ -9,6 +9,10 @@ LABEL org.opencontainers.image.licenses=MIT
 ARG TARGETPLATFORM
 ENV ARCH=$TARGETPLATFORM
 
+# Sets the version the bot is
+ARG TAG
+ENV VERSION=$TAG
+
 # copy requirements, upgrade pip and install requirements.
 COPY /requirements.txt /requirements.txt
 RUN apk update

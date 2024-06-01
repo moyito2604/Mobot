@@ -6,7 +6,6 @@ on:
       - main
 
 env:
-  REPO: mobot
   IMAGE: ${{ github.repository_owner }}/mobot
   VERSION: 2.1.0
 
@@ -56,6 +55,8 @@ jobs:
             ${{ env.IMAGE }}:latest
           cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:latest
           cache-to: type=inline
+          build-args: |
+            TAG=${{ env.VERSION }}
           provenance: false
 
       - name: Remove untagged images excepted multiplatform packages

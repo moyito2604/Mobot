@@ -176,6 +176,9 @@ class SlashMusic(commands.Cog):
                     if not interaction.response.is_done():
                         await interaction.response.defer()
 
+                    # Retrieves current event loop to run synchronous functions
+                    loop = asyncio.get_event_loop()
+
                     # Variables that Define if the given URL is a video or playlist
                     isVideo = True
                     isPlaylist = True
@@ -184,7 +187,7 @@ class SlashMusic(commands.Cog):
 
                         # Tests to see if it's a YouTube Video
                         try:
-                            video = pytube.YouTube(url)
+                            video = await loop.run_in_executor(None, pytube.YouTube, url)
                             video.check_availability()
                             videodict = {"duration": time.strftime("%H:%M:%S", time.gmtime(video.length)),
                                          "url": "https://www.youtube.com/watch?v=" + video.video_id,
@@ -200,7 +203,7 @@ class SlashMusic(commands.Cog):
 
                         # Tests to see if it's a YouTube Playlist:
                         try:
-                            playlist = pytube.Playlist(url)
+                            playlist = await loop.run_in_executor(None, pytube.Playlist, url)
                             playlistdict = {"items": playlist.length, "url": playlist.playlist_url,
                                             "user": interaction.user.mention, "name": interaction.user.display_name,
                                             "avatar": interaction.user.display_avatar.url, "title": playlist.title}
@@ -217,7 +220,9 @@ class SlashMusic(commands.Cog):
                         # If the selected video isn't from YouTube, a general extractor will be used instead
                         with yt_dlp.YoutubeDL({'quiet': True, 'noplaylist': True}) as ydl:
                             try:
-                                info = ydl.extract_info(url, download=False, process=False)
+                                info = await loop.run_in_executor(None, lambda: ydl.extract_info(url,
+                                                                                                 download=False,
+                                                                                                 process=False))
                                 title = info.get('title', None)
                                 times = "N/A"
                                 if "duration" in info:
