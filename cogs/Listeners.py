@@ -45,7 +45,7 @@ class Listeners(commands.Cog):
             print('directory ' + str(member.guild.id) + ' has been deleted')
             await Functions.stopTimer(member.guild.id)
             settings.queues.pop(member.guild.id, None)
-            settings.titles.pop(member.guild.id, None)
+            # settings.titles.pop(member.guild.id, None)
             settings.channels.pop(member.guild.id, None)
             settings.current.pop(member.guild.id, None)
             settings.env_vars.pop(member.guild.id, None)
