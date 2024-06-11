@@ -122,6 +122,9 @@ async def guildSave():
                 cursor.execute(f"""INSERT INTO Guild_Info
                                 (Guild_id, Guild_name, Members, Owner, Owner_id) VALUES
                                 ('{guild.id}', "{guild.name}", {guild.member_count}, '{guild.owner}', '{guild.owner.id}')""")
+                cursor.execute(f"""CREATE TABLE Admin_Roles (
+                        Guild_id varchar(50) NOT NULL,
+                        Role varchar(50) NOT NULL)""")
         settings.connection.commit()
         cursor.close()
     else:
