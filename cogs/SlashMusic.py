@@ -59,7 +59,6 @@ class SlashMusic(commands.Cog):
                 os.mkdir(currdir + '/' + str(interaction.guild.id))
                 print('Directory ' + str(interaction.guild.id) + ' has been created')
                 settings.queues[interaction.guild.id] = []
-                # settings.titles[interaction.guild.id] = []
                 settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False, "Shuffle": False,
                                                            "Indexes": False, "ctx": interaction, "Active": False}
                 settings.current[interaction.guild.id] = {}
@@ -109,7 +108,6 @@ class SlashMusic(commands.Cog):
             print('Directory ' + str(interaction.guild.id) + ' has been deleted')
             await Functions.stopTimer(interaction.guild.id)
             settings.queues.pop(interaction.guild.id, None)
-            # settings.titles.pop(interaction.guild.id, None)
             settings.channels.pop(interaction.guild.id, None)
             settings.current.pop(interaction.guild.id, None)
             settings.env_vars.pop(interaction.guild.id, None)
@@ -141,7 +139,6 @@ class SlashMusic(commands.Cog):
                     os.mkdir(currdir + '/' + str(interaction.guild.id))
                     print('Directory ' + str(interaction.guild.id) + ' has been created')
                     settings.queues[interaction.guild.id] = []
-                    # settings.titles[interaction.guild.id] = []
                     settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False, "Shuffle": False,
                                                                "Indexes": False, "ctx": interaction, "Active": False}
                     settings.current[interaction.guild.id] = {}
@@ -231,7 +228,6 @@ class SlashMusic(commands.Cog):
                                              "name": interaction.user.display_name,
                                              "avatar": interaction.user.display_avatar.url, "title": title}
                                 settings.queues[interaction.guild.id].append(videodict)
-                                # settings.titles[interaction.guild.id].append(title)
                                 await interaction.send('***' + title + '*** has been added to the queue')
                                 print(f"Successfully added {color.RED}{color.BOLD}{title}{color.END} to the queue for "
                                       f"{color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
@@ -259,20 +255,17 @@ class SlashMusic(commands.Cog):
                             return
                         elif view.value == 1:
                             settings.queues[interaction.guild.id].append(playlistdict)
-                            # settings.titles[interaction.guild.id].append(playlistdict["title"])
                             await interaction.send('Playlist ***' + playlistdict["title"] +
                                                    '*** has been added to the queue')
                             title = playlistdict["title"]
                         elif view.value == 2:
                             settings.queues[interaction.guild.id].append(videodict)
-                            # settings.titles[interaction.guild.id].append(videodict["title"])
                             await interaction.send('***' + videodict["title"] + '*** has been added to the queue')
                             title = videodict["title"]
 
                     # If it's a video, it will be added to the queue
                     elif not isVideo and isPlaylist:
                         settings.queues[interaction.guild.id].append(playlistdict)
-                        # settings.titles[interaction.guild.id].append(playlistdict["title"])
                         await interaction.send('Playlist ***' + playlistdict["title"] +
                                                '*** has been added to the queue')
                         title = playlistdict["title"]
@@ -280,7 +273,6 @@ class SlashMusic(commands.Cog):
                     # If it's a playlist, it will be added to the queue
                     elif isVideo and not isPlaylist:
                         settings.queues[interaction.guild.id].append(videodict)
-                        # settings.titles[interaction.guild.id].append(videodict["title"])
                         await interaction.send('***' + videodict["title"] + '*** has been added to the queue')
                         title = videodict["title"]
 
@@ -326,7 +318,6 @@ class SlashMusic(commands.Cog):
                                 'duration': Functions.timetostr(search[int(view.value) - 1]["lengthText"]["simpleText"]),
                                 'title': search[int(view.value) - 1]["title"]["runs"][0]["text"]}
                         settings.queues[interaction.guild.id].append(temp)
-                        # settings.titles[interaction.guild.id].append(search[int(view.value) - 1]["title"]["runs"][0]["text"])
                         if not settings.env_vars[interaction.guild.id]["Downloading"]:
                             settings.env_vars[interaction.guild.id]["Active"] = True
                         print(
@@ -383,7 +374,6 @@ class SlashMusic(commands.Cog):
         else:
             if voice.is_playing() or voice.is_paused():
                 settings.queues[interaction.guild.id] = []
-                # settings.titles[interaction.guild.id] = []
                 voice.stop()
                 await interaction.send("Music has been stopped and queue has been cleared")
                 print(f"Music has been stopped and queue has been cleared for {color.BLUE}{color.BOLD}"
@@ -413,9 +403,7 @@ class SlashMusic(commands.Cog):
                 for counter in range(1, amount):
                     if settings.env_vars[interaction.guild.id]["Repeat"]:
                         settings.queues[interaction.guild.id].append(settings.queues[interaction.guild.id][0])
-                        # settings.titles[interaction.guild.id].append(settings.titles[interaction.guild.id][0])
                     settings.queues[interaction.guild.id].pop(0)
-                    # settings.titles[interaction.guild.id].pop(0)
                 if settings.queues[interaction.guild.id]:
                     settings.env_vars[interaction.guild.id]["Indexes"] = True
                     if "youtube" in settings.queues[interaction.guild.id][0]['url']:
@@ -616,15 +604,12 @@ class SlashMusic(commands.Cog):
             if settings.env_vars[interaction.guild.id]["Repeat"]:
                 settings.env_vars[interaction.guild.id]["Repeat"] = False
                 if settings.queues[interaction.guild.id]:
-                    # settings.titles[interaction.guild.id].pop()
                     settings.queues[interaction.guild.id].pop()
                 await interaction.send('Repeating has been turned off')
             else:
                 settings.env_vars[interaction.guild.id]["Repeat"] = True
                 if settings.current[interaction.guild.id]:
-                    # settings.titles[interaction.guild.id].append({})
                     settings.queues[interaction.guild.id].append({})
-                    # settings.titles[interaction.guild.id][-1] = settings.current[interaction.guild.id]["title"]
                     settings.queues[interaction.guild.id][-1] = settings.current[interaction.guild.id]
                 await interaction.send('Repeating has been turned on')
         else:
@@ -669,7 +654,6 @@ class SlashMusic(commands.Cog):
                 await interaction.send(
                     f"***{settings.queues[interaction.guild.id][song - 1]['title']}***\nhas been removed from the queue")
                 settings.queues[interaction.guild.id].pop(song - 1)
-                # settings.titles[interaction.guild.id].pop(song - 1)
             else:
                 await interaction.send("Invalid choice of song removal")
         else:

@@ -91,13 +91,11 @@ async def retrieveAudio(url: str, path: str, ctx, index):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
             settings.current[ctx.guild.id] = settings.queues[ctx.guild.id][index]
-            # settings.current[ctx.guild.id]["title"] = settings.titles[ctx.guild.id][index]
             user = settings.queues[ctx.guild.id][index]['user']
             name = settings.queues[ctx.guild.id][index]['name']
             avatar = settings.queues[ctx.guild.id][index]['avatar']
             settings.queues[ctx.guild.id].pop(index)
             info = await loop.run_in_executor(None, ydl.extract_info, url)
-            # settings.titles[ctx.guild.id].pop(index)
             title = info.get('title', None)
             extension = info.get('ext')
 
@@ -249,14 +247,11 @@ async def queue(ctx, client):
                 curqueue = settings.queues[ctx.guild.id]
                 settings.queues[ctx.guild.id] = []
                 settings.queues[ctx.guild.id] = temp + curqueue
-                # settings.titles[ctx.guild.id].pop(index)
-                # settings.titles[ctx.guild.id] = title + settings.titles[ctx.guild.id]
 
             # After that it then retrieves the next audio and if it is set to repeating, it places the song back
             # to the end of the queue It then plays the next song and sets downloading to false
             else:
                 if settings.env_vars[ctx.guild.id]["Repeat"]:
-                    # settings.titles[ctx.guild.id].append(settings.titles[ctx.guild.id][index])
                     settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
                 song = await retrieveAudio(settings.queues[ctx.guild.id][index]['url'],
                                            (currdir + '/' + str(ctx.guild.id)), ctx, index)
