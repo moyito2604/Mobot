@@ -2,7 +2,7 @@
 # These variables are used by Music.py and SlashMusic.py
 
 def init():
-    global queues, env_vars, channels, current, connection, pwd, owner
+    global queues, env_vars, channels, current, connection, pwd, owner, client
     # Holds all the Music Queues
     queues = {}
     # Holds all the channels used for messaging
@@ -17,3 +17,5 @@ def init():
     pwd = ""
     # Holds the ID of the Bot Owner
     owner = ""
+    # Global Client Variable
+    client = ""

@@ -237,6 +237,7 @@ if __name__ == '__main__':
         client.load_extension(extension)
 
 try:
+    settings.client = client
     client.run(Token)
 except LoginFailure as error:
     if dockerstat:
