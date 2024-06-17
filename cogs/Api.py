@@ -5,13 +5,25 @@ from nextcord.ext import commands
 from nextcord.ext import tasks
 import nextcord
 import signal
+import os
 
 app = Quart(__name__)
 
 
 @app.get("/info")
-async def test():
-    return {"test": "Successful"}
+async def info():
+    version = os.environ.get("VERSION", "N/A")
+    return f"""<html>
+                <head>
+                    <title>
+                        Bot Information
+                    </title>
+                </head>
+                <body>
+                    <h1>{settings.client.user.name}</h1>
+                    <p>Bot Version {version}</p>
+                </body>
+            </html>"""
 
 
 # This API routine returns the queue for a single server

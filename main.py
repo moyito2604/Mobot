@@ -106,28 +106,16 @@ async def guildSave():
             return
 
         cursor = settings.connection.cursor(dictionary=True, buffered=True)
-        cursor.execute(f"SELECT * FROM Guild_Info")
-        table = cursor.fetchall()
         for guild in client.guilds:
-            cursor.execute(f"SELECT * FROM Guild_Info WHERE Guild_id = {guild.id}")
-            record = cursor.fetchall()
-            if record:
-                cursor.execute(f"""UPDATE Guild_Info SET
-                               Guild_name = "{guild.name}",
-                               Members = {guild.member_count},
-                               Owner = '{guild.owner}',
-                               Owner_id = '{guild.owner.id}' WHERE
-                               Guild_id = '{guild.id}'""")
-            else:
-                cursor.execute(f"""INSERT INTO Guild_Info
-                                (Guild_id, Guild_name, Members, Owner, Owner_id) VALUES
-                                ('{guild.id}', "{guild.name}", {guild.member_count}, '{guild.owner}', '{guild.owner.id}')""")
+            try:
                 cursor.execute(f"""CREATE TABLE {guild.id}_Halls (
                         Channel varchar(50) NOT NULL,
                         Emote varchar(100) NOT NULL,
                         Amount int NOT NULL,
                         Hall varchar(50) NOT NULL,
                         Hall_Emote varchar(100) NOT NULL)""")
+            except Error:
+                pass
         settings.connection.commit()
         cursor.close()
     else:
@@ -150,36 +138,19 @@ async def on_ready():
     if not os.path.isdir('logs'):
         os.mkdir('logs')
     if SQLconnect:
-        for guild in client.guilds:
-            try:
-                cursor = settings.connection.cursor(dictionary=True, buffered=True)
-                cursor.execute(f"""CREATE TABLE {guild.id}_Halls (
-                        Channel varchar(50) NOT NULL,
-                        Emote varchar(100) NOT NULL,
-                        Amount int NOT NULL,
-                        Hall varchar(50) NOT NULL,
-                        Hall_Emote varchar(100) NOT NULL)""")
-                settings.connection.commit()
-                cursor.close()
-            except Error:
-                pass
-        try:
-            cursor = settings.connection.cursor(dictionary=True, buffered=True)
-            cursor.execute(f"""CREATE TABLE Guild_Info (
-                    Guild_id varchar(50) NOT NULL,
-                    Guild_name varchar(100) NOT NULL,
-                    Members int NOT NULL,
-                    Owner varchar(50) NOT NULL,
-                    Owner_id varchar(50) NOT NULL)""")
-        except Error:
-            pass
-        settings.connection.commit()
-        cursor.close()
         try:
             cursor = settings.connection.cursor(dictionary=True, buffered=True)
             cursor.execute(f"""CREATE TABLE Admin_Roles (
                     Guild_id varchar(50) NOT NULL,
                     Role varchar(50) NOT NULL)""")
+            settings.connection.commit()
+            cursor.close()
+        except Error:
+            pass
+        try:
+            cursor = settings.connection.cursor(dictionary=True, buffered=True)
+            cursor.execute(f"""CREATE TABLE Blocklist (
+                    Guild_id varchar(50) NOT NULL)""")
             settings.connection.commit()
             cursor.close()
         except Error:
