@@ -4,6 +4,7 @@ from nextcord import Interaction
 import settings
 from Dependencies.Error import ReconnectError
 import Dependencies.SQLFunc as SQLFunc
+from Dependencies.Functions import Color
 
 
 # The Admin Cog is for general purpose commands related to administration
@@ -29,7 +30,7 @@ class Admin(commands.Cog):
         except ReconnectError:
             return
 
-        # Updates the database and sets up the cursor to check if a admin role has been set
+        # Updates the database and sets up the cursor to check if an admin role has been set
         settings.connection.commit()
         cursor = settings.connection.cursor(dictionary=True, buffered=True)
         cursor.execute(f"SELECT * FROM Admin_Roles WHERE Guild_id = {interaction.guild.id}")
@@ -65,6 +66,45 @@ class Admin(commands.Cog):
                             (Guild_id, Role) VALUES
                             ('{interaction.guild.id}', '{role}')""")
         settings.connection.commit()
+
+    @commands.command(name="block", description="Blocks or unblocks the bot from a particular guild")
+    async def block(self, ctx, guild_id):
+
+        if guild_id.isnumeric() and str(ctx.author.id) == settings.owner:
+
+            # Checks if there is an SQL connection still active
+            try:
+                await SQLFunc.checkConn()
+            except ReconnectError:
+                return
+
+            settings.connection.commit()
+            cursor = settings.connection.cursor(dictionary=True, buffered=True)
+            cursor.execute(f"SELECT * FROM Blocklist WHERE Guild_id = {guild_id}")
+            record = cursor.fetchone()
+            if not record:
+                cursor.execute(f"INSERT INTO Blocklist (Guild_id) VALUES ('{guild_id}')")
+            elif record:
+                cursor.execute(f"DELETE FROM Blocklist WHERE Guild_id = {guild_id}")
+                settings.connection.commit()
+                await ctx.send(f"Removed server {guild_id} from the Blocklist")
+                print(f"Removed Guild {Color.BLUE}{Color.BOLD}{guild_id}{Color.END} from the Blocklist")
+                return
+            settings.connection.commit()
+
+            server = nextcord.utils.get(self.client.guilds, id=int(guild_id))
+            if server:
+                await ctx.send(f"Blocked Server {server.name}")
+                print(f"Blocked Guild {Color.BLUE}{Color.BOLD}{server.name}{Color.END}")
+                await server.leave()
+            else:
+                await ctx.send(f"Blocked Server {guild_id}")
+                print(f"Blocked Guild {Color.BLUE}{Color.BOLD}{guild_id}{Color.END}")
+
+        elif str(ctx.author.id) != settings.owner:
+            await ctx.send("You are not allowed to run this command")
+        else:
+            await ctx.send("Invalid Guild ID")
 
 
 def setup(client):

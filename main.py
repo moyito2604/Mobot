@@ -172,6 +172,7 @@ async def on_ready():
 @client.event
 async def on_guild_join(guild):
     print(f"The bot has joined the Guild \"{guild.name}\"")
+    await SQLFunc.blocklistcheck(guild)
     await guildSave()
 
 

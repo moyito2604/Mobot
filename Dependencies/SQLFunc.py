@@ -8,7 +8,6 @@ from Dependencies.Functions import Color
 
 # Returns true if the person is allowed to run the command, else false
 async def rolecheck(interaction):
-
     # Checks if there is an SQL connection still active
     try:
         await checkConn()
@@ -29,6 +28,23 @@ async def rolecheck(interaction):
         await interaction.send(f"You must have the <@&{record['Role']}> role to use this command")
         return False
     return True
+
+
+async def blocklistcheck(guild):
+
+    # Checks if there is an SQL connection still active
+    try:
+        await checkConn()
+    except ReconnectError:
+        return
+
+    settings.connection.commit()
+    cursor = settings.connection.cursor(dictionary=True, buffered=True)
+    cursor.execute(f"SELECT * FROM Blocklist WHERE Guild_id = {guild.id}")
+    record = cursor.fetchone()
+    if record:
+        print(f"Bot is blocked from joining Guild {Color.BLUE}{Color.BOLD}{guild.id}{Color.END}")
+        await guild.leave()
 
 
 async def historycheck(guild, channel_id, hall_id, amount, emoji, hall_emoji):

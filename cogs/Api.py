@@ -1,5 +1,4 @@
 from quart import Quart
-from quart import request
 import settings
 from nextcord.ext import commands
 from nextcord.ext import tasks
@@ -10,7 +9,7 @@ import os
 app = Quart(__name__)
 
 
-@app.get("/info")
+@app.route("/info")
 async def info():
     version = os.environ.get("VERSION", "N/A")
     return f"""<html>
@@ -27,7 +26,7 @@ async def info():
 
 
 # This API routine returns the queue for a single server
-@app.get("/queues/<guild_id>")
+@app.route("/queues/<guild_id>")
 async def queue(guild_id):
     guild = nextcord.utils.get(settings.client.guilds, id=int(guild_id))
     voice = nextcord.utils.get(settings.client.voice_clients, guild=guild)
@@ -40,12 +39,12 @@ async def queue(guild_id):
 
 
 # This API routine returns the global list of queues
-@app.get("/queues")
+@app.route("/queues")
 async def queues():
     return {"queues": settings.queues}
 
 
-@app.get("/guilds")
+@app.route("/guilds")
 async def guilds():
     guilddict = {}
     for guild in settings.client.guilds:
@@ -58,7 +57,7 @@ async def guilds():
     return guilddict
 
 
-@app.get("/guilds/<guild_id>")
+@app.route("/guilds/<guild_id>")
 async def guildinfo(guild_id):
     guilddict = {}
     guild = nextcord.utils.get(settings.client.guilds, id=int(guild_id))
