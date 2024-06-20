@@ -4,6 +4,31 @@ import os
 from Dependencies.Error import ReconnectError
 from mysql.connector import InterfaceError
 from Dependencies.Functions import Color
+from mysql.connector import Error
+
+
+# This function simplifies the creation of Guild.txt for the multiple instances that it may be created
+# If a database exists, then it places the information in a database
+async def guildSave():
+    # Checks if there is an SQL connection still active
+    try:
+        await checkConn()
+    except ReconnectError:
+        return
+
+    cursor = settings.connection.cursor(dictionary=True, buffered=True)
+    for guild in settings.client.guilds:
+        try:
+            cursor.execute(f"""CREATE TABLE {guild.id}_Halls (
+                    Channel varchar(50) NOT NULL,
+                    Emote varchar(100) NOT NULL,
+                    Amount int NOT NULL,
+                    Hall varchar(50) NOT NULL,
+                    Hall_Emote varchar(100) NOT NULL)""")
+        except Error:
+            pass
+    settings.connection.commit()
+    cursor.close()
 
 
 # Returns true if the person is allowed to run the command, else false
@@ -89,3 +114,6 @@ async def checkConn():
     except InterfaceError:
         print(f"{Color.RED}{Color.BOLD}Error: Failed to Connect to the SQL Server{Color.END}")
         raise ReconnectError("Failed to reconnect to SQL Server")
+    except AttributeError:
+        print(f"{Color.RED}{Color.BOLD}Error: No Existing SQL Connection{Color.END}")
+        raise ReconnectError("No Existing SQL Connection")

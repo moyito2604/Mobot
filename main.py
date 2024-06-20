@@ -5,8 +5,6 @@
 import argparse
 import Dependencies.Functions as Functions
 import Dependencies.SQLFunc as SQLFunc
-from Dependencies.Error import ReconnectError
-import os
 import nextcord
 from nextcord.ext import commands
 from nextcord.errors import LoginFailure
@@ -50,10 +48,6 @@ settings.owner = config.get("OwnerID", "None")
 # This grabs any environment variables from something such as docker
 dockerstat = os.environ.get('dockerstatus', False)
 
-# Grabs the architecture the container is being run on
-arch = os.environ.get("ARCH", None)
-version = os.environ.get("VERSION", None)
-
 # This conditional first checks if it is in a docker container
 # If not, it then checks if it recieved a token through commandline arguments
 if dockerstat:
@@ -92,105 +86,6 @@ except Error as e:
 
 if SQLconnect:
     print("Connected to MySQL Server Version", settings.connection.get_server_info())
-
-
-# This function simplifies the creation of Guild.txt for the multiple instances that it may be created
-# If a database exists, then it places the information in a database
-async def guildSave():
-    if SQLconnect:
-
-        # Checks if there is an SQL connection still active
-        try:
-            await SQLFunc.checkConn()
-        except ReconnectError:
-            return
-
-        cursor = settings.connection.cursor(dictionary=True, buffered=True)
-        for guild in client.guilds:
-            try:
-                cursor.execute(f"""CREATE TABLE {guild.id}_Halls (
-                        Channel varchar(50) NOT NULL,
-                        Emote varchar(100) NOT NULL,
-                        Amount int NOT NULL,
-                        Hall varchar(50) NOT NULL,
-                        Hall_Emote varchar(100) NOT NULL)""")
-            except Error:
-                pass
-        settings.connection.commit()
-        cursor.close()
-    else:
-        if os.path.exists("Guilds.txt"):
-            os.remove("Guilds.txt")
-        files = open("Guilds.txt", "w")
-        for info in client.guilds:
-            files.write(
-                f"{info.id}\t\tMembers:{info.member_count}\t\t{info.name}\t\t\t{info.owner}\t\tid:{info.owner.id}\n")
-        files.close()
-
-
-# The nextcord on_ready function is used to prepare several things in the discord bot It generates Guild.txt which
-# contains the information of the servers the bot is in It also sets the presence of the bot to playing the help
-# command and notifies the user of when the bot has logged in and is ready to deploy to servers
-@client.event
-async def on_ready():
-    game = '/help'
-    activity = nextcord.Game(name=game, type=3)
-    if not os.path.isdir('logs'):
-        os.mkdir('logs')
-    if SQLconnect:
-        try:
-            cursor = settings.connection.cursor(dictionary=True, buffered=True)
-            cursor.execute(f"""CREATE TABLE Admin_Roles (
-                    Guild_id varchar(50) NOT NULL,
-                    Role varchar(50) NOT NULL)""")
-            settings.connection.commit()
-            cursor.close()
-        except Error:
-            pass
-        try:
-            cursor = settings.connection.cursor(dictionary=True, buffered=True)
-            cursor.execute(f"""CREATE TABLE Blocklist (
-                    Guild_id varchar(50) NOT NULL)""")
-            settings.connection.commit()
-            cursor.close()
-        except Error:
-            pass
-    await guildSave()
-    await client.change_presence(status=nextcord.Status.online, activity=activity)
-    if arch and version:
-        print(f"We have logged in as {client.user} on {arch} (Version {version})\n")
-    elif arch and not version:
-        print(f"We have logged in as {client.user} on {arch}\n")
-    elif not arch and version:
-        print(f"We have logged in as {client.user} (Version {version})\n")
-    else:
-        print(f"We have logged in as {client.user}\n")
-
-
-# The on_guild_join nextcord function is called when someone joins the server
-# This then regenerates the Guild.txt file with refreshed information on the servers stats
-@client.event
-async def on_guild_join(guild):
-    print(f"The bot has joined the Guild \"{guild.name}\"")
-    await SQLFunc.blocklistcheck(guild)
-    await guildSave()
-
-
-# The on_guild_remove nextcord function is called when someone leaves the server
-# This then regenerates the Guild.txt file with refreshed info on the servers stats
-@client.event
-async def on_guild_remove(guild):
-    print(f"The bot has left the Guild \"{guild.name}\"")
-    await guildSave()
-
-
-# The on_guild_update function runs when something regarding the server as a whole is changed.
-# Guild.txt is once again regenerated after this.
-@client.event
-async def on_guild_update(before, after):
-    print(f"Guild \"{before.name}\" has changed the name to \"{after.name}\"")
-    await guildSave()
-
 
 extensions = []
 
