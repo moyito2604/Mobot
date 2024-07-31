@@ -82,6 +82,7 @@ async def retrieveAudio(url: str, path: str, ctx, index):
             'preferredquality': '0',
         }],
         'noplaylist': True
+        #'proxy': 'http://127.0.0.1:3128'
     }
 
     # This then extracts the video and grabs the necessary information
