@@ -2,6 +2,7 @@
 # It includes several functions that retrieve songs, playlists, Quotes, etc.
 import asyncio
 from contextlib import suppress
+from Dependencies.Error import AudioDownloadError
 import time
 from random import randint
 from nextcord import FFmpegOpusAudio
@@ -110,11 +111,10 @@ async def retrieveAudio(url: str, path: str, ctx, index):
             print("The Song has failed to Download")
             channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                          id=settings.channels[ctx.guild.id].channel.id)
-            embed = nextcord.Embed(title="Internal Exception")
+            embed = nextcord.Embed(title="Internal Exception", description="Failed to Download Track", color=0xFF0000)
             embed.add_field(name="Exception Details:", value=f"```{settings.env_vars[ctx.guild.id]['log']}```")
             await channel.send(embed=embed)
-            return await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + '/' + str(ctx.guild.id)),
-                                       ctx, 0)
+            raise AudioDownloadError(f"Failed to Download Track in Guild \"{ctx.guild.name}\"")
 
     # It then renames the song and gets it ready to be played
     # This gives a list of extensions and how they are processed
@@ -261,23 +261,30 @@ async def queue(ctx, client):
             else:
                 if settings.env_vars[ctx.guild.id]["Repeat"]:
                     settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
-                song = await retrieveAudio(settings.queues[ctx.guild.id][index]['url'],
-                                           (currdir + '/' + str(ctx.guild.id)), ctx, index)
-                textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
-                                                 id=settings.channels[ctx.guild.id].channel.id)
-                embed = nextcord.Embed(title="Now playing:", description=song['title'])
-                embed.set_author(name=song['name'], icon_url=song['avatar'])
-                embed.set_footer(text=f"Duration: {song['duration']}")
-                embed.set_thumbnail(url=song['thumbnail'])
-                print(f"Song {Color.RED}{Color.BOLD}{song['title']}{Color.END} is playing in "
-                      f"{Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
+
+                # Ensures that track can be downloaded, if not, it fails and prints a message
                 try:
-                    await textchannel.send(mention_author=True, embed=embed)
-                except Forbidden:
-                    print(f"Unable to print message in {Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}, playing "
-                          f"song {Color.RED}{Color.BOLD}{song['title']}{Color.END}")
-                # Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN retrieveAudio()
-                player = voice.play(song['source'])
+                    song = await retrieveAudio(settings.queues[ctx.guild.id][index]['url'],
+                                               (currdir + '/' + str(ctx.guild.id)), ctx, index)
+                    textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
+                                                     id=settings.channels[ctx.guild.id].channel.id)
+                    embed = nextcord.Embed(title="Now playing:", description=song['title'])
+                    embed.set_author(name=song['name'], icon_url=song['avatar'])
+                    embed.set_footer(text=f"Duration: {song['duration']}")
+                    embed.set_thumbnail(url=song['thumbnail'])
+                    print(f"Song {Color.RED}{Color.BOLD}{song['title']}{Color.END} is playing in "
+                          f"{Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
+                    try:
+                        await textchannel.send(mention_author=True, embed=embed)
+                    except Forbidden:
+                        print(f"Unable to print message in {Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}, "
+                              f"playing song {Color.RED}{Color.BOLD}{song['title']}{Color.END}")
+                    # Reminder, ARRAY POPPING FOR TITLES AND QUEUES IS IN retrieveAudio()
+                    player = voice.play(song['source'])
+                except AudioDownloadError:
+                    print(f"{Color.RED}{Color.BOLD}Error: Failed to Download Track in Guild \""
+                          f"{ctx.guild.name}\"{Color.END}")
+
             settings.env_vars[ctx.guild.id]["Downloading"] = False
 
             # Reinitialized Timer
