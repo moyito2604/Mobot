@@ -7,7 +7,7 @@ def init():
     queues = {}
     # Holds all the channels used for messaging
     channels = {}
-    # Holds toggleable options such as repeat and shuffle for each Guild
+    # Holds toggleable options such as repeat and shuffle for each Guild and other variables
     env_vars = {}
     # Holds the current title and url of the current song for each guild
     current = {}

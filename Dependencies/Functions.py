@@ -55,12 +55,16 @@ class loggerOutputs:
         self.ctx = ctx
 
     def error(self, msg):
-        with open(f'logs/{self.ctx.guild.name}_logs.log', 'a+') as file:
+        with (open(f'logs/{self.ctx.guild.name}_logs.log', 'a+') as file):
             file.write("Error: " + msg + "\n")
+            settings.env_vars[self.ctx.guild.id]['log'] = settings.env_vars[self.ctx.guild.id][
+                                                              'log'] + f"Error: {msg}\n"
 
     def warning(self, msg):
         with open(f'logs/{self.ctx.guild.name}_logs.log', 'a+') as file:
             file.write("Warning: " + msg + "\n")
+            settings.env_vars[self.ctx.guild.id]['log'] = settings.env_vars[self.ctx.guild.id][
+                                                              'log'] + f"Warning: {msg}\n"
 
     def debug(self, msg):
         with open(f'logs/{self.ctx.guild.name}_logs.log', 'a+') as file:
@@ -72,6 +76,7 @@ class loggerOutputs:
 async def retrieveAudio(url: str, path: str, ctx, index):
     # Sets the working directory
     currdir = settings.pwd + '/Dependencies/'
+    settings.env_vars[ctx.guild.id]['log'] = ''
     # ydl_ops defines a set of options used to run yt_dlp and get the desired output
     ydl_opts = {
         'format': 'bestaudio/best',
@@ -105,7 +110,9 @@ async def retrieveAudio(url: str, path: str, ctx, index):
             print("The Song has failed to Download")
             channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                          id=settings.channels[ctx.guild.id].channel.id)
-            await channel.send("The current Track has failed to download. The next Track will now Download")
+            embed = nextcord.Embed(title="Internal Exception")
+            embed.add_field(name="Exception Details:", value=f"```{settings.env_vars[ctx.guild.id]['log']}```")
+            await channel.send(embed=embed)
             return await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + '/' + str(ctx.guild.id)),
                                        ctx, 0)
 
