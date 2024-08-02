@@ -20,14 +20,18 @@ Once the bot is downloaded to the desired location, navigate the directory and r
 ```
 python3 main.py --token='TOKEN'
 ```
-On the first run of the program, the bot will generate a config.py with a couple fields in it and you won't have to use the ```--token``` argument for any later runs <br />
+On the first run of the program, the bot will generate a config.json with a couple fields in it, and you won't have to use the ```--token``` argument for any later runs <br />
 
 To activate the database, you will need to add environment variables for ```MYSQL_HOST``` ```MYSQL_DATABASE``` ```MYSQL_USER``` and ```MYSQL_PASSWORD``` which all represent the hostname, database, database user, and database password respectively. <br /> <br />
 
 The syntax for linux is:
 ```export MYSQL_HOST=hostname```
 
+Optional Variables are also available to add to the JSON configuration file such as the OwnerID (The Discord Integer ID of the User) and a proxy of choice for the Bot
+
 To make a prebuilt container, you will have to run the following command
 ```
 docker run -e token='TOKEN' -e MYSQL_HOST='hostname' -e MYSQL_DATABASE='database' -e MYSQL_USER='username' -e MYSQL_PASSWORD='password' ghcr.io/moyito2604/mobot:latest
 ```
+
+You may also use the provided Docker Compose file to create a container for the Bot

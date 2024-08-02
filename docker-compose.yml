@@ -1,0 +1,15 @@
+services:
+  mobot:
+    image: moyito2604/mobot:latest
+    container_name: mobot
+    restart: unless-stopped
+    environment:
+      - token=token
+      - MYSQL_HOST=host
+      - MYSQL_DATABASE=database
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_PORT=3306
+      - ownerid=None
+      - proxy=None
+    network_mode: bridge

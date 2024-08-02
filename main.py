@@ -4,7 +4,6 @@
 # imports necessary to run the program
 import argparse
 import Dependencies.Functions as Functions
-import Dependencies.SQLFunc as SQLFunc
 import nextcord
 from nextcord.ext import commands
 from nextcord.errors import LoginFailure
@@ -42,8 +41,9 @@ settings.init()
 # This sets the working directory for this section of the program
 settings.pwd = os.path.dirname(os.path.realpath(__file__))
 
-# Sets the ID of the Owner of the Bot
+# Sets the ID of the Owner and proxy of the bot
 settings.owner = config.get("OwnerID", "None")
+settings.proxy = config.get("Proxy", "None")
 
 # This grabs any environment variables from something such as docker
 dockerstat = os.environ.get('dockerstatus', False)
@@ -54,6 +54,7 @@ if dockerstat:
     print("Docker Container Detected, Using environment variables instead")
     Token = os.environ.get('token', "TOKEN")
     settings.owner = os.environ.get('ownerid', "ID")
+    settings.proxy = os.environ.get('proxy', "None")
 # This allows for the token through be inputted through command line arguments with syntax --token TOKEN
 elif args.token is not None:
     os.system('clear')
@@ -62,6 +63,7 @@ elif args.token is not None:
 
 config["Token"] = config.get("Token", "None")
 config["OwnerID"] = config.get("OwnerID", "None")
+config["Proxy"] = config.get("Proxy", "None")
 jsonbuilder.exportConfiguration(config)
 
 # Grabs Environment Variables for

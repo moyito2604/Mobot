@@ -3,6 +3,7 @@
 import asyncio
 from contextlib import suppress
 from Dependencies.Error import AudioDownloadError
+from Dependencies.Error import internalErrorEmbed
 import time
 from random import randint
 from nextcord import FFmpegOpusAudio
@@ -88,8 +89,10 @@ async def retrieveAudio(url: str, path: str, ctx, index):
             'preferredquality': '0',
         }],
         'noplaylist': True
-        #'proxy': 'http://127.0.0.1:3128'
     }
+
+    if settings.proxy != "None":
+        ydl_opts['proxy'] = settings.proxy
 
     # This then extracts the video and grabs the necessary information
     # It's all done from the folder for each specific server
@@ -108,11 +111,9 @@ async def retrieveAudio(url: str, path: str, ctx, index):
 
         # If there is an error with downloading, it then tries to download the next song
         except DownloadError:
-            print("The Song has failed to Download")
             channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                          id=settings.channels[ctx.guild.id].channel.id)
-            embed = nextcord.Embed(title="Internal Exception", description="Failed to Download Track", color=0xFF0000)
-            embed.add_field(name="Exception Details:", value=f"```{settings.env_vars[ctx.guild.id]['log']}```")
+            embed = internalErrorEmbed("Failed to Download Track", settings.env_vars[ctx.guild.id]['log'])
             await channel.send(embed=embed)
             raise AudioDownloadError(f"Failed to Download Track in Guild \"{ctx.guild.name}\"")
 

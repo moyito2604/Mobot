@@ -2,7 +2,7 @@
 # These variables are used by Music.py and SlashMusic.py
 
 def init():
-    global queues, env_vars, channels, current, connection, pwd, owner, client
+    global queues, env_vars, channels, current, connection, pwd, owner, client, proxy
     # Holds all the Music Queues
     queues = {}
     # Holds all the channels used for messaging
@@ -19,3 +19,5 @@ def init():
     owner = ""
     # Global Client Variable
     client = ""
+    # yt-dlp proxy
+    proxy = ""
