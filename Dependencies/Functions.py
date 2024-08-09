@@ -109,7 +109,7 @@ async def retrieveAudio(url: str, path: str, ctx, index):
             title = info.get('title', None)
             extension = info.get('ext')
 
-        # If there is an error with downloading, it then tries to download the next song
+        # If there is an error with downloading, it then sends an error message
         except DownloadError:
             channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                          id=settings.channels[ctx.guild.id].channel.id)
@@ -224,18 +224,20 @@ async def queue(ctx, client):
             # It clears the guild directory and sets downloading to true
             settings.env_vars[ctx.guild.id]["Downloading"] = True
 
-            # It then checks if shuffle is turned on and grabs the index for the next shuffle
-            if settings.env_vars[ctx.guild.id]["Shuffle"] and (not settings.env_vars[ctx.guild.id]["Indexes"]):
-                if len(settings.queues[ctx.guild.id]) > 1:
-                    if settings.env_vars[ctx.guild.id]["Repeat"]:
-                        index = random.randint(1, (len(settings.queues[ctx.guild.id]) - 1)) - 1
-                    else:
-                        index = random.randint(1, len(settings.queues[ctx.guild.id])) - 1
-                else:
-                    index = 0
-            else:
-                index = 0
-                settings.env_vars[ctx.guild.id]["Indexes"] = False
+            index = 0
+
+            # # It then checks if shuffle is turned on and grabs the index for the next shuffle
+            # if settings.env_vars[ctx.guild.id]["Shuffle"] and (not settings.env_vars[ctx.guild.id]["Indexes"]):
+            #     if len(settings.queues[ctx.guild.id]) > 1:
+            #         if settings.env_vars[ctx.guild.id]["Repeat"]:
+            #             index = random.randint(1, (len(settings.queues[ctx.guild.id]) - 1)) - 1
+            #         else:
+            #             index = random.randint(1, len(settings.queues[ctx.guild.id])) - 1
+            #     else:
+            #         index = 0
+            # else:
+            #     index = 0
+            #     settings.env_vars[ctx.guild.id]["Indexes"] = False
 
             # It then checks if the next item is a playlist and retrieves every item in the playlist
             url = settings.queues[ctx.guild.id][index]['url']

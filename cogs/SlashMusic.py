@@ -14,6 +14,7 @@ import os.path
 import pytube
 from pytube.exceptions import RegexMatchError, VideoUnavailable, VideoPrivate, VideoRegionBlocked, MembersOnly
 import yt_dlp
+import random
 import shutil
 import settings
 import Dependencies.Functions as Functions
@@ -59,8 +60,8 @@ class SlashMusic(commands.Cog):
                 os.mkdir(currdir + '/' + str(interaction.guild.id))
                 print('Directory ' + str(interaction.guild.id) + ' has been created')
                 settings.queues[interaction.guild.id] = []
-                settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False, "Shuffle": False,
-                                                           "Indexes": False, "ctx": interaction, "Active": False}
+                settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False,
+                                                           "ctx": interaction, "Active": False}
                 settings.current[interaction.guild.id] = {}
                 channel = interaction.user.voice.channel
 
@@ -139,8 +140,8 @@ class SlashMusic(commands.Cog):
                     os.mkdir(currdir + '/' + str(interaction.guild.id))
                     print('Directory ' + str(interaction.guild.id) + ' has been created')
                     settings.queues[interaction.guild.id] = []
-                    settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False, "Shuffle": False,
-                                                               "Indexes": False, "ctx": interaction, "Active": False}
+                    settings.env_vars[interaction.guild.id] = {"Downloading": False, "Repeat": False,
+                                                               "ctx": interaction, "Active": False}
                     settings.current[interaction.guild.id] = {}
                     channel = interaction.user.voice.channel
 
@@ -621,12 +622,12 @@ class SlashMusic(commands.Cog):
     @nextcord.slash_command(name="shuffle", description="Toggles shuffle on or off")
     async def shuffle(self, interaction: Interaction):
         if interaction.guild.id in settings.env_vars:
-            if settings.env_vars[interaction.guild.id]["Shuffle"]:
-                settings.env_vars[interaction.guild.id]["Shuffle"] = False
-                await interaction.send('Shuffling has been turned off')
-            else:
-                settings.env_vars[interaction.guild.id]["Shuffle"] = True
-                await interaction.send('Shuffling has been turned on')
+            temp = []
+            while settings.queues[interaction.guild.id]:
+                index = random.randint(1, len(settings.queues[interaction.guild.id])) - 1
+                temp.append(settings.queues[interaction.guild.id].pop(index))
+            settings.queues[interaction.guild.id] = temp
+            await interaction.send('Queue has been shuffled')
         else:
             await interaction.send('I am not in a voice channel')
 
