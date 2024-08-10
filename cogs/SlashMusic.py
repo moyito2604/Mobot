@@ -395,8 +395,7 @@ class SlashMusic(commands.Cog):
         # And then it checks if there is music playing and if the amount of songs being skipped is less than the
         # length of the queue
         else:
-            if voice.is_playing() or voice.is_paused() and (
-                    len(settings.queues[interaction.guild.id]) >= amount > 0):
+            if (voice.is_playing() or voice.is_paused()) and (len(settings.queues[interaction.guild.id]) >= amount > 0):
                 await interaction.send(f"{amount} songs have been skipped")
 
                 # It also checks if the repeat function is on and adds those songs to the end of the queue
@@ -406,7 +405,6 @@ class SlashMusic(commands.Cog):
                         settings.queues[interaction.guild.id].append(settings.queues[interaction.guild.id][0])
                     settings.queues[interaction.guild.id].pop(0)
                 if settings.queues[interaction.guild.id]:
-                    settings.env_vars[interaction.guild.id]["Indexes"] = True
                     if "youtube" in settings.queues[interaction.guild.id][0]['url']:
                         title = settings.queues[interaction.guild.id][0]['title']
                         if "playlist" in settings.queues[interaction.guild.id][0]['url']:
@@ -417,8 +415,9 @@ class SlashMusic(commands.Cog):
                     await interaction.send("Your queue is empty")
                 # it then stops the music to load the next song
                 voice.stop()
-            elif len(settings.queues[interaction.guild.id]) < amount <= 0:
-                await interaction.send("Please input a valid amount of songs to skip")
+            elif not (len(settings.queues[interaction.guild.id]) >= amount > 0):
+                items = len(settings.queues[interaction.guild.id])
+                await interaction.send(f"Please input a valid amount of songs to skip. There are {items} items in queue")
             else:
                 await interaction.send("There is no music to skip.")
 

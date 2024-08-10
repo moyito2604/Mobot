@@ -75,7 +75,7 @@ class loggerOutputs:
 
 # RetrieveAudio defines a function which downloads a YouTube video and converts it to an .opus file to be played by
 # Mobot
-async def retrieveAudio(url: str, path: str, ctx, index):
+async def retrieveAudio(url: str, path: str, ctx):
     # Sets the working directory
     currdir = settings.pwd + '/Dependencies/'
     settings.env_vars[ctx.guild.id]['log'] = ''
@@ -100,11 +100,11 @@ async def retrieveAudio(url: str, path: str, ctx, index):
     loop = asyncio.get_event_loop()
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            settings.current[ctx.guild.id] = settings.queues[ctx.guild.id][index]
-            user = settings.queues[ctx.guild.id][index]['user']
-            name = settings.queues[ctx.guild.id][index]['name']
-            avatar = settings.queues[ctx.guild.id][index]['avatar']
-            settings.queues[ctx.guild.id].pop(index)
+            settings.current[ctx.guild.id] = settings.queues[ctx.guild.id][0]
+            user = settings.queues[ctx.guild.id][0]['user']
+            name = settings.queues[ctx.guild.id][0]['name']
+            avatar = settings.queues[ctx.guild.id][0]['avatar']
+            settings.queues[ctx.guild.id].pop(0)
             info = await loop.run_in_executor(None, ydl.extract_info, url)
             title = info.get('title', None)
             extension = info.get('ext')
@@ -224,37 +224,22 @@ async def queue(ctx, client):
             # It clears the guild directory and sets downloading to true
             settings.env_vars[ctx.guild.id]["Downloading"] = True
 
-            index = 0
-
-            # # It then checks if shuffle is turned on and grabs the index for the next shuffle
-            # if settings.env_vars[ctx.guild.id]["Shuffle"] and (not settings.env_vars[ctx.guild.id]["Indexes"]):
-            #     if len(settings.queues[ctx.guild.id]) > 1:
-            #         if settings.env_vars[ctx.guild.id]["Repeat"]:
-            #             index = random.randint(1, (len(settings.queues[ctx.guild.id]) - 1)) - 1
-            #         else:
-            #             index = random.randint(1, len(settings.queues[ctx.guild.id])) - 1
-            #     else:
-            #         index = 0
-            # else:
-            #     index = 0
-            #     settings.env_vars[ctx.guild.id]["Indexes"] = False
-
             # It then checks if the next item is a playlist and retrieves every item in the playlist
-            url = settings.queues[ctx.guild.id][index]['url']
+            url = settings.queues[ctx.guild.id][0]['url']
             if "playlist" in url and ("youtube" in url or "youtu.be" in url):
-                songlist, title, durations = await retrievePlaylist(settings.queues[ctx.guild.id][index]['url'],
-                                                                    settings.queues[ctx.guild.id][index]['title'], ctx)
+                songlist, title, durations = await retrievePlaylist(settings.queues[ctx.guild.id][0]['url'],
+                                                                    settings.queues[ctx.guild.id][0]['title'], ctx)
                 voice.stop()
                 temp = []
                 for counter, item in enumerate(songlist):
                     temp.append({})
                     temp[-1]['url'] = item
-                    temp[-1]['user'] = settings.queues[ctx.guild.id][index]['user']
+                    temp[-1]['user'] = settings.queues[ctx.guild.id][0]['user']
                     temp[-1]['duration'] = durations[counter]
-                    temp[-1]['name'] = settings.queues[ctx.guild.id][index]['name']
-                    temp[-1]['avatar'] = settings.queues[ctx.guild.id][index]['avatar']
+                    temp[-1]['name'] = settings.queues[ctx.guild.id][0]['name']
+                    temp[-1]['avatar'] = settings.queues[ctx.guild.id][0]['avatar']
                     temp[-1]['title'] = title[counter]
-                settings.queues[ctx.guild.id].pop(index)
+                settings.queues[ctx.guild.id].pop(0)
                 curqueue = settings.queues[ctx.guild.id]
                 settings.queues[ctx.guild.id] = []
                 settings.queues[ctx.guild.id] = temp + curqueue
@@ -263,12 +248,12 @@ async def queue(ctx, client):
             # to the end of the queue It then plays the next song and sets downloading to false
             else:
                 if settings.env_vars[ctx.guild.id]["Repeat"]:
-                    settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][index])
+                    settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][0])
 
                 # Ensures that track can be downloaded, if not, it fails and prints a message
                 try:
-                    song = await retrieveAudio(settings.queues[ctx.guild.id][index]['url'],
-                                               (currdir + '/' + str(ctx.guild.id)), ctx, index)
+                    song = await retrieveAudio(settings.queues[ctx.guild.id][0]['url'],
+                                               (currdir + '/' + str(ctx.guild.id)), ctx)
                     textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                                      id=settings.channels[ctx.guild.id].channel.id)
                     embed = nextcord.Embed(title="Now playing:", description=song['title'])
