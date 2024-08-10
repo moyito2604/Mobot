@@ -604,7 +604,10 @@ class SlashMusic(commands.Cog):
             if settings.env_vars[interaction.guild.id]["Repeat"]:
                 settings.env_vars[interaction.guild.id]["Repeat"] = False
                 if settings.queues[interaction.guild.id]:
-                    settings.queues[interaction.guild.id].pop()
+                    for index in range(0, len(settings.queues[interaction.guild.id])):
+                        if settings.current[interaction.guild.id]["url"] == settings.queues[interaction.guild.id][index]["url"]:
+                            settings.queues[interaction.guild.id].pop(index)
+                            break
                 await interaction.send('Repeating has been turned off')
             else:
                 settings.env_vars[interaction.guild.id]["Repeat"] = True
