@@ -17,7 +17,6 @@ import validators
 from validators.utils import ValidationError
 import os.path
 import settings
-import random
 
 
 # This provides colors for output in terminal
@@ -206,8 +205,9 @@ def timetostr(timestring: str):
 # The queue function is what runs the entire music bot.
 # This function is used to periodically check if a song is ready to be loaded up into the voice chat for playing
 async def queue(ctx, client):
-    # Sets the working directory
+
     currdir = settings.pwd + '/Dependencies/'
+
     # First it sets the working directory and checks if the bot is playing a song
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
     if voice.is_playing() or voice.is_paused():

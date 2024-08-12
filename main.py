@@ -61,6 +61,7 @@ elif args.token is not None:
     config["Token"] = args.token
     Token = args.token
 
+# It then regenerates the config.json file with updated information
 config["Token"] = config.get("Token", "None")
 config["OwnerID"] = config.get("OwnerID", "None")
 config["Proxy"] = config.get("Proxy", "None")

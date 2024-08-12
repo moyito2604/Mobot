@@ -31,9 +31,16 @@ class SlashMusic(commands.Cog):
         self.client = client
         self.timer.start()
 
+    # This nextcord task holds the timer for every single server. It ensures one instance of queue is run in every
+    # server once every second
     @tasks.loop(seconds=1)
     async def timer(self):
+
+        # First, it waits for the bot to be ready
         await self.client.wait_until_ready()
+
+        # Then it loops through all servers with active bots in the voice client. It then checks if the Timer variable
+        # is active, and it creates an instance of the queue to execute
         for voice in self.client.voice_clients:
             if settings.env_vars.get(voice.guild.id, None):
                 if settings.env_vars[voice.guild.id]["Active"]:
@@ -280,6 +287,7 @@ class SlashMusic(commands.Cog):
                     print(f"Successfully added {color.RED}{color.BOLD}{title}{color.END} to the queue for "
                           f"{color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
 
+                    # It then activates the timer if there isn't a song currently downloading
                     if not settings.env_vars[interaction.guild.id]["Downloading"]:
                         settings.env_vars[interaction.guild.id]["Active"] = True
 
@@ -521,12 +529,14 @@ class SlashMusic(commands.Cog):
             # Defers response until done
             await interaction.response.defer()
 
+            # A search object is generated with one result required
             vidsearch = scrapetube.get_search(query=playlist, limit=1, results_type="playlist")
 
             search = []
             for video in vidsearch:
                 search.append(video)
 
+            # The playlist item is added into the queue
             await interaction.send('***' + search[0]["title"]["simpleText"] + '*** has been added to the queue\n'
                                    'Size: ' + search[0]['videoCount'], ephemeral=True)
             temp = {'url': "https://www.youtube.com/playlist?list=" + search[0]["playlistId"],
@@ -556,6 +566,7 @@ class SlashMusic(commands.Cog):
             embed = nextcord.Embed(title=f"{interaction.guild.name}'s Queue")
             await interaction.send(embed=embed)
 
+            # Then the number of items per page and the number of pages are determined
             while True:
                 pages = math.ceil(len(settings.queues[interaction.guild.id]) / items)
                 if pos == 0:
@@ -564,6 +575,8 @@ class SlashMusic(commands.Cog):
                     view = Buttons.queueButtonFrontDisabled()
                 else:
                     view = Buttons.queueButton()
+
+                # It then continues generating the embed and sets the page it is in
                 embed = nextcord.Embed(title=f"{interaction.guild.name}'s Queue")
                 minimum = pos * items
                 if minimum + items > len(settings.queues[interaction.guild.id]):
@@ -619,11 +632,14 @@ class SlashMusic(commands.Cog):
             await interaction.send('I am not in a voice channel')
 
     # The shuffle function allows a user to shuffle the queue
-    # If the bot is in a voice channel, this function allows the user to toggle the shuffle key off and on
-    # This is off by default
+    # If the bot is in a voice channel, this function allows the user to shuffle the entire queue
     @nextcord.slash_command(name="shuffle", description="Toggles shuffle on or off")
     async def shuffle(self, interaction: Interaction):
+
+        # First, it checks if there is a valid queue
         if interaction.guild.id in settings.env_vars:
+
+            # A temporary queue is generated with the shuffled items, then it is placed in the guild queue
             temp = []
             while settings.queues[interaction.guild.id]:
                 index = random.randint(1, len(settings.queues[interaction.guild.id])) - 1
@@ -641,15 +657,11 @@ class SlashMusic(commands.Cog):
                 await interaction.send('Repeating is turned on')
             else:
                 await interaction.send('Repeating is turned off')
-            if settings.env_vars[interaction.guild.id]["Shuffle"]:
-                await interaction.send('Shuffling is turned on')
-            else:
-                await interaction.send('Shuffling is turned off')
         else:
             await interaction.send('I am not in a voice channel')
 
     # The remove command allows a user to remove a single song from the queue
-    # This is used with the index number retrieved from the showqueue command
+    # This is used with the index number retrieved from the queue command
     @nextcord.slash_command(name="remove", description="Allows a user to remove one item from queue")
     async def remove(self, interaction: Interaction, song: int):
         if interaction.guild.id in settings.queues:

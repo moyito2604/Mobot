@@ -37,6 +37,7 @@ class Halls(commands.Cog):
                 print(f"{Color.RED}{Color.BOLD}SQL Connection Lost. Will attempt to check halls later{Color.END}")
                 return
 
+            # Sets up SQL cursor and checks the message history for halls
             settings.connection.commit()
             cursor = settings.connection.cursor(dictionary=True, buffered=True)
             cursor.execute(f"""SELECT * FROM {guild.id}_Halls""")
@@ -100,7 +101,7 @@ class Halls(commands.Cog):
             await interaction.send("Channel cannot be its own Hall")
             return
 
-        # It also makes sure that the emote and the Hall_Emote is valid
+        # It also makes sure that the emote and the Hall_Emote is valid in the current server
         emojis = await interaction.guild.fetch_emojis()
         emotefound = False
         hallemotef = False
@@ -216,7 +217,7 @@ class Halls(commands.Cog):
             return
 
         # If it does exist, it deletes it from the database, lets the user know, updates the database
-        # Finally, it closes the cursor to cleanup
+        # Finally, it closes the cursor to clean up
         cursor.execute(f"DELETE FROM {interaction.guild.id}_Halls WHERE Channel = {channel}")
         await interaction.send(f"Deleted Hall associated with channel <#{channel}>")
         settings.connection.commit()
@@ -225,12 +226,15 @@ class Halls(commands.Cog):
     # on_message listens for messages coming in to make sure if they have attachments or embeds
     @commands.Cog.listener()
     async def on_message(self, message):
+
+        # First it ensures that the message isn't a message from itself
         if message.author == self.client.user:
             return
 
+        # It then waits to ensure that the message being checked has an embed that hasn't populated yet
         await asyncio.sleep(2)
 
-        # First it updates the database and sets up a cursor to make a query for that specific channel
+        # Then it updates the database and sets up a cursor to make a query for that specific channel
         record = None
         if message.guild:
 
@@ -240,6 +244,7 @@ class Halls(commands.Cog):
             except ReconnectError:
                 return
 
+            # Then it sets up an SQL server which checks if the message is in a hall channel
             settings.connection.commit()
             cursor = settings.connection.cursor(dictionary=True, buffered=True)
             cursor.execute(f"SELECT * FROM {message.guild.id}_Halls WHERE Channel = '{message.channel.id}'")
