@@ -6,6 +6,7 @@ from Dependencies.Error import AudioDownloadError
 from Dependencies.Error import internalErrorEmbed
 import time
 from random import randint
+import jsonbuilder
 from nextcord import FFmpegOpusAudio
 from nextcord.errors import Forbidden
 import yt_dlp
@@ -74,15 +75,14 @@ class loggerOutputs:
 
 # RetrieveAudio defines a function which downloads a YouTube video and converts it to an .opus file to be played by
 # Mobot
-async def retrieveAudio(url: str, path: str, ctx):
+async def retrieveAudio(url: str, path: str, ctx, filename: str = "song"):
     # Sets the working directory
-    currdir = settings.pwd + '/Dependencies/'
     settings.env_vars[ctx.guild.id]['log'] = ''
     # ydl_ops defines a set of options used to run yt_dlp and get the desired output
     ydl_opts = {
         'format': 'bestaudio/best',
         'logger': loggerOutputs(ctx=ctx),
-        'outtmpl': path + '/%(title)s.%(ext)s',
+        'outtmpl': path + f"/{filename}.%(ext)s",
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredquality': '0',
@@ -106,7 +106,7 @@ async def retrieveAudio(url: str, path: str, ctx):
             settings.queues[ctx.guild.id].pop(0)
             info = await loop.run_in_executor(None, ydl.extract_info, url)
             title = info.get('title', None)
-            extension = info.get('ext')
+            # extension = info.get('ext')
 
         # If there is an error with downloading, it then sends an error message
         except DownloadError:
@@ -116,17 +116,20 @@ async def retrieveAudio(url: str, path: str, ctx):
             await channel.send(embed=embed)
             raise AudioDownloadError(f"Failed to Download Track in Guild \"{ctx.guild.name}\"")
 
-    # It then renames the song and gets it ready to be played
-    # This gives a list of extensions and how they are processed
-    if extension == "webm":
-        extension = "opus"
-    elif extension == "mp4":
-        extension = "m4a"
+    # # It then renames the song and gets it ready to be played
+    # # This gives a list of extensions and how they are processed
+    # if extension == "webm":
+    #     extension = "opus"
+    # elif extension == "mp4":
+    #     extension = "m4a"
+    #
 
+    song = "song.opus"
     for file in os.listdir(path):
-        if file.endswith(f".{extension}"):
-            os.rename(path + '/' + file, path + f"/song.{extension}")
-    source = FFmpegOpusAudio(path + f"/song.{extension}")
+        if "song" in file:
+            song = file
+
+    source = FFmpegOpusAudio(f"{path}/{song}")
 
     times = "N/A"
     if "duration" in info:
@@ -205,13 +208,30 @@ def timetostr(timestring: str):
 # The queue function is what runs the entire music bot.
 # This function is used to periodically check if a song is ready to be loaded up into the voice chat for playing
 async def queue(ctx, client):
-
     currdir = settings.pwd + '/Dependencies/'
 
     # First it sets the working directory and checks if the bot is playing a song
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
     if voice.is_playing() or voice.is_paused():
-        pass
+
+        # Temporarily Pauses Timer
+        settings.env_vars[ctx.guild.id]["Active"] = False
+
+        item = jsonbuilder.importJson(f"{currdir}{str(ctx.guild.id)}/preload.json")
+        if len(settings.queues[ctx.guild.id]) > 0:
+            if item and (item.get("title", None) == settings.queues[ctx.guild.id][0]["title"]):
+                pass
+            else:
+                settings.env_vars[ctx.guild.id]["Downloading"] = True
+                jsonbuilder.exportJson(settings.queues[ctx.guild.id][0], f"{currdir}{str(ctx.guild.id)}/preload.json")
+                await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + str(ctx.guild.id)), ctx,
+                                    "preload")
+
+        settings.env_vars[ctx.guild.id]["Downloading"] = False
+
+        # Reinitialized Timer
+        settings.env_vars[ctx.guild.id]["Active"] = True
+
     else:
 
         # Temporarily Pauses Timer
@@ -252,8 +272,8 @@ async def queue(ctx, client):
 
                 # Ensures that track can be downloaded, if not, it fails and prints a message
                 try:
-                    song = await retrieveAudio(settings.queues[ctx.guild.id][0]['url'],
-                                               (currdir + '/' + str(ctx.guild.id)), ctx)
+                    song = await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + str(ctx.guild.id)),
+                                               ctx)
                     textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                                      id=settings.channels[ctx.guild.id].channel.id)
                     embed = nextcord.Embed(title="Now playing:", description=song['title'])
