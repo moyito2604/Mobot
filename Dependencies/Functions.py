@@ -75,7 +75,7 @@ class loggerOutputs:
 
 # RetrieveAudio defines a function which downloads a YouTube video and converts it to an .opus file to be played by
 # Mobot
-async def retrieveAudio(url: str, path: str, ctx, filename: str = "song"):
+async def retrieveAudio(url: str, path: str, ctx, filename: str = "song", pop: bool = True):
     # Sets the working directory
     settings.env_vars[ctx.guild.id]['log'] = ''
     # ydl_ops defines a set of options used to run yt_dlp and get the desired output
@@ -103,7 +103,10 @@ async def retrieveAudio(url: str, path: str, ctx, filename: str = "song"):
             user = settings.queues[ctx.guild.id][0]['user']
             name = settings.queues[ctx.guild.id][0]['name']
             avatar = settings.queues[ctx.guild.id][0]['avatar']
-            settings.queues[ctx.guild.id].pop(0)
+
+            # Ensures that the item is popped only when it needs to be
+            if pop:
+                settings.queues[ctx.guild.id].pop(0)
             info = await loop.run_in_executor(None, ydl.extract_info, url)
             title = info.get('title', None)
             # extension = info.get('ext')
@@ -212,20 +215,30 @@ async def queue(ctx, client):
 
     # First it sets the working directory and checks if the bot is playing a song
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)
+
+    # If there is a song currently playing or is paused, it attempts to preload the next song
     if voice.is_playing() or voice.is_paused():
 
         # Temporarily Pauses Timer
         settings.env_vars[ctx.guild.id]["Active"] = False
 
+        # Imports the preloaded song's information
         item = jsonbuilder.importJson(f"{currdir}{str(ctx.guild.id)}/preload.json")
+
+        # Then it makes sure there is a next queue item
         if len(settings.queues[ctx.guild.id]) > 0:
             if item and (item.get("title", None) == settings.queues[ctx.guild.id][0]["title"]):
                 pass
             else:
+
+                # Once it ensures there is a next queue item, it preloads it and exports the information to a Json
                 settings.env_vars[ctx.guild.id]["Downloading"] = True
-                jsonbuilder.exportJson(settings.queues[ctx.guild.id][0], f"{currdir}{str(ctx.guild.id)}/preload.json")
-                await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + str(ctx.guild.id)), ctx,
-                                    "preload")
+                song = await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + str(ctx.guild.id)), ctx,
+                                           "preload", False)
+                del song["source"]
+                jsonbuilder.exportJson(song, f"{currdir}{str(ctx.guild.id)}/preload.json")
+                print(f"Song {Color.RED}{Color.BOLD}{song["title"]}{Color.END} has been preloaded for "
+                      f"{Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
 
         settings.env_vars[ctx.guild.id]["Downloading"] = False
 
@@ -272,8 +285,29 @@ async def queue(ctx, client):
 
                 # Ensures that track can be downloaded, if not, it fails and prints a message
                 try:
-                    song = await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + str(ctx.guild.id)),
-                                               ctx)
+                    song = {}
+
+                    # Checks if there is a preloaded song and if it is the same as the next item in queue, it sets it up
+                    # for discord to play it
+                    if "preload.json" in os.listdir(currdir + str(ctx.guild.id)):
+                        song = jsonbuilder.importJson(currdir + str(ctx.guild.id) + "/preload.json")
+                    if song.get("title", None) == settings.queues[ctx.guild.id][0]["title"]:
+
+                        # It then removes the preloaded song's information, and it renames the file to song.extension
+                        os.remove(currdir + str(ctx.guild.id) + "/preload.json")
+                        extension = ".opus"
+                        for file in os.listdir(currdir + str(ctx.guild.id)):
+                            if "preload" in file:
+                                extension = os.path.splitext(f"{currdir + str(ctx.guild.id)}/{file}")[1]
+                                os.rename(f"{currdir + str(ctx.guild.id)}/{file}", f"{currdir + str(ctx.guild.id)}"
+                                                                                   f"/song{extension}")
+                        song["source"] = FFmpegOpusAudio(f"{currdir + str(ctx.guild.id)}/song{extension}")
+
+                        # Finally, it pops the item from the queue
+                        settings.queues[ctx.guild.id].pop(0)
+                    else:
+                        song = await retrieveAudio(settings.queues[ctx.guild.id][0]['url'],
+                                                   (currdir + str(ctx.guild.id)), ctx)
                     textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                                      id=settings.channels[ctx.guild.id].channel.id)
                     embed = nextcord.Embed(title="Now playing:", description=song['title'])
