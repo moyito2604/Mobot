@@ -120,14 +120,6 @@ async def retrieveAudio(url: str, path: str, ctx, filename: str = "song", pop: b
             await channel.send(embed=embed)
             raise AudioDownloadError(f"Failed to Download Track in Guild \"{ctx.guild.name}\"")
 
-    # # It then renames the song and gets it ready to be played
-    # # This gives a list of extensions and how they are processed
-    # if extension == "webm":
-    #     extension = "opus"
-    # elif extension == "mp4":
-    #     extension = "m4a"
-    #
-
     song = "song.opus"
     for file in os.listdir(path):
         if "song" in file:
@@ -294,7 +286,7 @@ async def queue(ctx, client):
                 # Ensures that track can be downloaded, if not, it fails and prints a message
                 try:
                     song = {}
-
+                    message = None
                     # Checks if there is a preloaded song and if it is the same as the next item in queue, it sets it up
                     # for discord to play it
                     if "preload.json" in os.listdir(currdir + str(ctx.guild.id)):
@@ -314,6 +306,7 @@ async def queue(ctx, client):
                         # Finally, it pops the item from the queue
                         settings.queues[ctx.guild.id].pop(0)
                     else:
+                        message = await ctx.send(f"Downloading song ***{settings.queues[ctx.guild.id][0]["title"]}***")
                         song = await retrieveAudio(settings.queues[ctx.guild.id][0]['url'],
                                                    (currdir + str(ctx.guild.id)), ctx)
                     textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
@@ -325,7 +318,10 @@ async def queue(ctx, client):
                     print(f"Song {Color.RED}{Color.BOLD}{song['title']}{Color.END} is playing in "
                           f"{Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
                     try:
-                        await textchannel.send(mention_author=True, embed=embed)
+                        if message:
+                            await message.edit("", embed=embed)
+                        else:
+                            await textchannel.send(mention_author=True, embed=embed)
                     except Forbidden:
                         print(f"Unable to print message in {Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}, "
                               f"playing song {Color.RED}{Color.BOLD}{song['title']}{Color.END}")
