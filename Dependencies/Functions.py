@@ -163,12 +163,25 @@ async def retrievePlaylist(url, titles, ctx):
         title.append(video['title']['runs'][0]['text'])
         times = time.gmtime(int(video['lengthSeconds']))
         lengths.append(time.strftime("%H:%M:%S", times))
-    channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
-                                 id=settings.channels[ctx.guild.id].channel.id)
     print(f"Playlist {Color.RED}{Color.BOLD}{titles}{Color.END} Extracted Successfully for {Color.BLUE}{Color.BOLD}"
           f"{ctx.guild.name}{Color.END}")
-    await channel.send(f"Playlist ***{titles}*** Retrieved Successfully")
     return songlist, title, lengths
+
+
+def loadPlaylist(songlist, title, lengths, ctx):
+    temp = []
+    for counter, item in enumerate(songlist):
+        temp.append({})
+        temp[-1]['url'] = item
+        temp[-1]['user'] = settings.queues[ctx.guild.id][0]['user']
+        temp[-1]['duration'] = lengths[counter]
+        temp[-1]['name'] = settings.queues[ctx.guild.id][0]['name']
+        temp[-1]['avatar'] = settings.queues[ctx.guild.id][0]['avatar']
+        temp[-1]['title'] = title[counter]
+    settings.queues[ctx.guild.id].pop(0)
+    curqueue = settings.queues[ctx.guild.id]
+    settings.queues[ctx.guild.id] = []
+    settings.queues[ctx.guild.id] = temp + curqueue
 
 
 # Checkurl is a function that ensures that the given URL is a valid url
@@ -227,7 +240,14 @@ async def queue(ctx, client):
 
         # Then it makes sure there is a next queue item
         if len(settings.queues[ctx.guild.id]) > 0:
-            if item and (item.get("title", None) == settings.queues[ctx.guild.id][0]["title"]):
+
+            # It then checks if the next item is a playlist and attempts to preload it
+            url = settings.queues[ctx.guild.id][0]['url']
+            if "playlist" in url and ("youtube" in url or "youtu.be" in url):
+                songlist, title, durations = await retrievePlaylist(settings.queues[ctx.guild.id][0]['url'],
+                                       settings.queues[ctx.guild.id][0]['title'], ctx)
+                loadPlaylist(songlist, title, durations, ctx)
+            elif item and (item.get("title", None) == settings.queues[ctx.guild.id][0]["title"]):
                 pass
             else:
 
@@ -262,20 +282,7 @@ async def queue(ctx, client):
             if "playlist" in url and ("youtube" in url or "youtu.be" in url):
                 songlist, title, durations = await retrievePlaylist(settings.queues[ctx.guild.id][0]['url'],
                                                                     settings.queues[ctx.guild.id][0]['title'], ctx)
-                voice.stop()
-                temp = []
-                for counter, item in enumerate(songlist):
-                    temp.append({})
-                    temp[-1]['url'] = item
-                    temp[-1]['user'] = settings.queues[ctx.guild.id][0]['user']
-                    temp[-1]['duration'] = durations[counter]
-                    temp[-1]['name'] = settings.queues[ctx.guild.id][0]['name']
-                    temp[-1]['avatar'] = settings.queues[ctx.guild.id][0]['avatar']
-                    temp[-1]['title'] = title[counter]
-                settings.queues[ctx.guild.id].pop(0)
-                curqueue = settings.queues[ctx.guild.id]
-                settings.queues[ctx.guild.id] = []
-                settings.queues[ctx.guild.id] = temp + curqueue
+                loadPlaylist(songlist, title, durations, ctx)
 
             # After that it then retrieves the next audio and if it is set to repeating, it places the song back
             # to the end of the queue It then plays the next song and sets downloading to false
