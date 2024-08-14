@@ -7,7 +7,7 @@ on:
 
 env:
   IMAGE: ${{ github.repository_owner }}/mobot
-  VERSION: 2.2.0
+  VERSION: 2.3.0
 
 jobs:
   build_and_publish:

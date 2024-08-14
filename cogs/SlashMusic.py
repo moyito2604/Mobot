@@ -5,6 +5,7 @@ from asyncio import TimeoutError
 import math
 import os
 import time
+import jsonbuilder
 import nextcord
 import scrapetube
 from nextcord.ext import commands, tasks
@@ -308,9 +309,14 @@ class SlashMusic(commands.Cog):
                     view = Buttons.searchButton()
                     embed = nextcord.Embed(title="Search Results")
                     for counter, result in enumerate(search):
-                        embed.add_field(name=f"{counter + 1}: ***{result['title']["runs"][0]["text"]}***",
-                                        value=f"Duration: {result["lengthText"]["simpleText"]}",
-                                        inline=False)
+                        if result.get("lengthText", None):
+                            embed.add_field(name=f"{counter + 1}: ***{result['title']["runs"][0]["text"]}***",
+                                            value=f"Duration: {result["lengthText"]["simpleText"]}",
+                                            inline=False)
+                        else:
+                            embed.add_field(name=f"{counter + 1}: ***{result['title']["runs"][0]["text"]}***",
+                                            value=f"Duration: N/A",
+                                            inline=False)
                     await interaction.send(embed=embed, ephemeral=True, view=view, delete_after=20)
                     await view.wait()
                     if view.value is None:
@@ -650,13 +656,22 @@ class SlashMusic(commands.Cog):
             await interaction.send('I am not in a voice channel')
 
     # The status command allows a user to see if repeating and shuffling both are turned on or off
-    @nextcord.slash_command(name="status", description="Shows the user if repeat and shuffle are turned on or off")
+    @nextcord.slash_command(name="status", description="Shows the user the status of the server")
     async def status(self, interaction: Interaction):
         if interaction.guild.id in settings.env_vars:
+            embed = nextcord.Embed(title=f"{interaction.guild.name} status")
+            embed.set_thumbnail(url=interaction.guild.icon.url)
             if settings.env_vars[interaction.guild.id]["Repeat"]:
-                await interaction.send('Repeating is turned on')
+                embed.add_field(name="Repeat", value="On")
             else:
-                await interaction.send('Repeating is turned off')
+                embed.add_field(name="Repeat", value="Off")
+            embed.add_field(name="Items in Queue", value=len(settings.queues[interaction.guild.id]))
+            item = jsonbuilder.importJson(f"{settings.pwd}/Dependencies/{str(interaction.guild.id)}/preload.json")
+            if item:
+                embed.add_field(name="Preloaded Song", value=item["title"], inline=False)
+            else:
+                embed.add_field(name="Preloaded Song", value="None", inline=False)
+            await interaction.send(embed=embed)
         else:
             await interaction.send('I am not in a voice channel')
 

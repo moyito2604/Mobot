@@ -17,10 +17,15 @@ class AudioDownloadError(Exception):
 
 
 # This function generates an error message for the user when an item has failed to download
-def internalErrorEmbed(desc, details):
+async def internalErrorEmbed(desc, details, ctx, notify: bool = False):
     embed = nextcord.Embed(title="Internal Exception", color=0xFF0000)
     embed.add_field(name="Exception Details:", value=f"```{details}"[0:1020] + "```")
     embed.set_footer(text=desc)
     if settings.owner != "None":
-        embed.description = f"Please contact the bot owner <@!{settings.owner}> to report"
+        if notify:
+            user = settings.client.get_user(int(settings.owner))
+            channel = await user.create_dm()
+            embed.description = f"Issue Reported in server \"{ctx.guild.name}\""
+            await channel.send(embed=embed)
+        embed.description = f"Bot Owner <@!{settings.owner}> has been contacted to report the issue"
     return embed

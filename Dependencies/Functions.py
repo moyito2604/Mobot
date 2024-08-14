@@ -115,7 +115,8 @@ async def retrieveAudio(url: str, path: str, ctx, filename: str = "song", pop: b
         except DownloadError:
             channel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
                                          id=settings.channels[ctx.guild.id].channel.id)
-            embed = internalErrorEmbed("Failed to Download Track", settings.env_vars[ctx.guild.id]['log'])
+            embed = await internalErrorEmbed("Failed to Download Track", settings.env_vars[ctx.guild.id]['log'],
+                                             ctx, notify=True)
             await channel.send(embed=embed)
             raise AudioDownloadError(f"Failed to Download Track in Guild \"{ctx.guild.name}\"")
 
