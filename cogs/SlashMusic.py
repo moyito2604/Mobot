@@ -13,7 +13,7 @@ from nextcord import Interaction
 from nextcord.errors import Forbidden
 import os.path
 import pytube
-from pytube import helpers
+# from pytube import helpers
 from pytube.exceptions import RegexMatchError, VideoUnavailable, VideoPrivate, VideoRegionBlocked, MembersOnly, PytubeError
 import yt_dlp
 import random
@@ -21,6 +21,7 @@ import shutil
 import settings
 import Dependencies.Functions as Functions
 import Dependencies.Buttons as Buttons
+from Dependencies.Scrape import get_video
 
 color = Functions.Color
 
@@ -32,9 +33,9 @@ class SlashMusic(commands.Cog):
         print("SlashMusic Initialized Successfully")
         self.client = client
         self.timer.start()
-        if settings.proxy != "None":
-            proxy_handler = {"http": settings.proxy, "https": settings.proxy}
-            helpers.install_proxy(proxy_handler)
+        # if settings.proxy != "None":
+        #     proxy_handler = {"http": settings.proxy, "https": settings.proxy}
+        #     helpers.install_proxy(proxy_handler)
 
     # This nextcord task holds the timer for every single server. It ensures one instance of queue is run in every
     # server once every second
@@ -192,6 +193,7 @@ class SlashMusic(commands.Cog):
                     # Variables that Define if the given URL is a video or playlist
                     isVideo = True
                     isPlaylist = True
+                    videoid = ""
 
                     if "youtube" in url or "youtu.be" in url:
 
@@ -199,6 +201,7 @@ class SlashMusic(commands.Cog):
                         try:
                             video = await loop.run_in_executor(None, pytube.YouTube, url)
                             video.check_availability()
+                            videoid = video.video_id
                             videodict = {"avatar": interaction.user.display_avatar.url, "title": video.title,
                                          "duration": time.strftime("%H:%M:%S", time.gmtime(video.length)),
                                          "url": "https://www.youtube.com/watch?v=" + video.video_id,
@@ -210,6 +213,14 @@ class SlashMusic(commands.Cog):
                         except VideoUnavailable or VideoPrivate or VideoRegionBlocked or MembersOnly:
                             await interaction.send("Track requested is Private or Unavailable")
                             return
+                        except PytubeError:
+                            print(f"Error Extracting with Pytube in {color.BLUE}{color.BOLD}{interaction.guild.name}"
+                                  f"{color.END}, attempting to extract information using scrapetube")
+                            video = get_video(videoid)
+                            videodict = {"avatar": interaction.user.display_avatar.url,
+                                         "title": video["title"]["runs"][0]["text"], "duration": "N/A",
+                                         "url": "https://www.youtube.com/watch?v=" + videoid,
+                                         "user": interaction.user.mention, "name": interaction.user.display_name}
 
                         # Tests to see if it's a YouTube Playlist:
                         try:
