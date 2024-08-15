@@ -249,6 +249,7 @@ async def queue(ctx, client):
                 song = await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + str(ctx.guild.id)), ctx,
                                            "preload", False)
                 del song["source"]
+                settings.queues[ctx.guild.id][0]["duration"] = song["duration"]
                 jsonbuilder.exportJson(song, f"{currdir}{str(ctx.guild.id)}/preload.json")
                 print(f"Song {Color.RED}{Color.BOLD}{song["title"]}{Color.END} has been preloaded for "
                       f"{Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
