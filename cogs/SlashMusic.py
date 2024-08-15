@@ -13,7 +13,8 @@ from nextcord import Interaction
 from nextcord.errors import Forbidden
 import os.path
 import pytube
-from pytube.exceptions import RegexMatchError, VideoUnavailable, VideoPrivate, VideoRegionBlocked, MembersOnly
+# from pytube import helpers
+from pytube.exceptions import RegexMatchError, VideoUnavailable, VideoPrivate, VideoRegionBlocked, MembersOnly, PytubeError
 import yt_dlp
 import random
 import shutil
@@ -31,6 +32,9 @@ class SlashMusic(commands.Cog):
         print("SlashMusic Initialized Successfully")
         self.client = client
         self.timer.start()
+        # if settings.proxy != "None":
+        #     proxy_handler = {"http": settings.proxy, "https": settings.proxy}
+        #     helpers.install_proxy(proxy_handler)
 
     # This nextcord task holds the timer for every single server. It ensures one instance of queue is run in every
     # server once every second
@@ -195,13 +199,10 @@ class SlashMusic(commands.Cog):
                         try:
                             video = await loop.run_in_executor(None, pytube.YouTube, url)
                             video.check_availability()
-                            videodict = {"url": "https://www.youtube.com/watch?v=" + video.video_id,
-                                         "user": interaction.user.mention, "name": interaction.user.display_name,
-                                         "avatar": interaction.user.display_avatar.url, "title": video.title}
-                            if video.length:
-                                videodict["duration"] = time.strftime("%H:%M:%S", time.gmtime(video.length))
-                            else:
-                                videodict["duration"] = "N/A"
+                            videodict = {"avatar": interaction.user.display_avatar.url, "title": video.title,
+                                         "duration": time.strftime("%H:%M:%S", time.gmtime(video.length)),
+                                         "url": "https://www.youtube.com/watch?v=" + video.video_id,
+                                         "user": interaction.user.mention, "name": interaction.user.display_name}
 
                         # If it's not a YouTube video, it will fail with regex
                         except RegexMatchError:
@@ -209,6 +210,21 @@ class SlashMusic(commands.Cog):
                         except VideoUnavailable or VideoPrivate or VideoRegionBlocked or MembersOnly:
                             await interaction.send("Track requested is Private or Unavailable")
                             return
+                        except PytubeError:
+                            print(f"Failed to extract video with Pytube for {color.BLUE}{color.BOLD}"
+                                  f"{interaction.guild.name}{color.END}, attempting with yt-dlp")
+                            isVideo = True
+                            with yt_dlp.YoutubeDL({'quiet': True, 'noplaylist': True}) as ydl:
+                                info = await loop.run_in_executor(None, lambda: ydl.extract_info(url,
+                                                                                                 download=False,
+                                                                                                 process=False))
+                                title = info.get('title', None)
+                                times = "N/A"
+                                if "duration" in info:
+                                    times = time.strftime("%H:%M:%S", time.gmtime(info["duration"]))
+                                videodict = {"duration": times, "url": url, "user": interaction.user.mention,
+                                             "name": interaction.user.display_name,
+                                             "avatar": interaction.user.display_avatar.url, "title": title}
 
                         # Tests to see if it's a YouTube Playlist:
                         try:
