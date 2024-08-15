@@ -195,10 +195,13 @@ class SlashMusic(commands.Cog):
                         try:
                             video = await loop.run_in_executor(None, pytube.YouTube, url)
                             video.check_availability()
-                            videodict = {"duration": time.strftime("%H:%M:%S", time.gmtime(video.length)),
-                                         "url": "https://www.youtube.com/watch?v=" + video.video_id,
+                            videodict = {"url": "https://www.youtube.com/watch?v=" + video.video_id,
                                          "user": interaction.user.mention, "name": interaction.user.display_name,
                                          "avatar": interaction.user.display_avatar.url, "title": video.title}
+                            if video.length:
+                                videodict["duration"] = time.strftime("%H:%M:%S", time.gmtime(video.length))
+                            else:
+                                videodict["duration"] = "N/A"
 
                         # If it's not a YouTube video, it will fail with regex
                         except RegexMatchError:
