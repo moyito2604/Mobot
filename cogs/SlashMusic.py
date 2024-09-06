@@ -213,6 +213,9 @@ class SlashMusic(commands.Cog):
                         except VideoUnavailable or VideoPrivate or VideoRegionBlocked or MembersOnly:
                             await interaction.send("Track requested is Private or Unavailable")
                             return
+
+                        # If it fails to extract info using pytube, then it attempts to grab the most information using
+                        # Scrapetube
                         except PytubeError:
                             print(f"Error Extracting with Pytube in {color.BLUE}{color.BOLD}{interaction.guild.name}"
                                   f"{color.END}, attempting to extract information using scrapetube")

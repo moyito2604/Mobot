@@ -290,6 +290,9 @@ async def queue(ctx, client):
                     message = None
                     # Checks if there is a preloaded song and if it is the same as the next item in queue, it sets it up
                     # for discord to play it
+                    textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
+                                                     id=settings.channels[ctx.guild.id].channel.id)
+
                     if "preload.json" in os.listdir(currdir + str(ctx.guild.id)):
                         song = jsonbuilder.importJson(currdir + str(ctx.guild.id) + "/preload.json")
                     if song.get("title", None) == settings.queues[ctx.guild.id][0]["title"]:
@@ -307,11 +310,14 @@ async def queue(ctx, client):
                         # Finally, it pops the item from the queue
                         settings.queues[ctx.guild.id].pop(0)
                     else:
-                        message = await ctx.send(f"Downloading song ***{settings.queues[ctx.guild.id][0]["title"]}***")
+                        try:
+                            message = await textchannel.send(f"Downloading song ***"
+                                                             f"{settings.queues[ctx.guild.id][0]["title"]}***")
+                        except Forbidden:
+                            print(f"Unable to print message in {Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}, "
+                                  f"playing song {Color.RED}{Color.BOLD}{song['title']}{Color.END}")
                         song = await retrieveAudio(settings.queues[ctx.guild.id][0]['url'],
                                                    (currdir + str(ctx.guild.id)), ctx)
-                    textchannel = nextcord.utils.get(settings.channels[ctx.guild.id].guild.channels,
-                                                     id=settings.channels[ctx.guild.id].channel.id)
                     embed = nextcord.Embed(title="Now playing:", description=song['title'])
                     embed.set_author(name=song['name'], icon_url=song['avatar'])
                     embed.set_footer(text=f"Duration: {song['duration']}")
