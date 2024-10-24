@@ -49,11 +49,11 @@ async def guilds():
     guilddict = {}
     for guild in settings.client.guilds:
         guilddict[guild.id] = {}
-        guilddict[guild.id]["GuildName"] = guild.name
-        guilddict[guild.id]["Members"] = guild.member_count
-        guilddict[guild.id]["OwnerName"] = guild.owner.name
-        guilddict[guild.id]["OwnerDisplayName"] = guild.owner.display_name
-        guilddict[guild.id]["OwnerID"] = guild.owner.id
+        guilddict[guild.id]['GuildName'] = guild.name
+        guilddict[guild.id]['Members'] = guild.member_count
+        guilddict[guild.id]['OwnerName'] = guild.owner.name
+        guilddict[guild.id]['OwnerDisplayName'] = guild.owner.display_name
+        guilddict[guild.id]['OwnerID'] = guild.owner.id
     return guilddict
 
 
@@ -61,16 +61,16 @@ async def guilds():
 async def guildinfo(guild_id):
     guilddict = {}
     guild = nextcord.utils.get(settings.client.guilds, id=int(guild_id))
-    guilddict["GuildName"] = guild.name
-    guilddict["MemberCount"] = guild.member_count
-    guilddict["Thumbnail"] = guild.icon.url
-    guilddict["OwnerName"] = guild.owner.name
-    guilddict["OwnerDisplayName"] = guild.owner.display_name
-    guilddict["OwnerID"] = guild.owner.id
-    guilddict["Members"] = []
+    guilddict['GuildName'] = guild.name
+    guilddict['MemberCount'] = guild.member_count
+    guilddict['Thumbnail'] = guild.icon.url
+    guilddict['OwnerName'] = guild.owner.name
+    guilddict['OwnerDisplayName'] = guild.owner.display_name
+    guilddict['OwnerID'] = guild.owner.id
+    guilddict['Members'] = []
     for member in guild.members:
         if guild.owner.id is not member.id:
-            guilddict["Members"].append({"Name": member.name, "DisplayName": member.display_name, "ID": member.id})
+            guilddict['Members'].append({"Name": member.name, "DisplayName": member.display_name, "ID": member.id})
     return guilddict
 
 

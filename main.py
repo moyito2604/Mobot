@@ -58,13 +58,13 @@ if dockerstat:
 # This allows for the token through be inputted through command line arguments with syntax --token TOKEN
 elif args.token is not None:
     os.system('clear')
-    config["Token"] = args.token
+    config['Token'] = args.token
     Token = args.token
 
 # It then regenerates the config.json file with updated information
-config["Token"] = config.get("Token", "None")
-config["OwnerID"] = config.get("OwnerID", "None")
-config["Proxy"] = config.get("Proxy", "None")
+config['Token'] = config.get("Token", "None")
+config['OwnerID'] = config.get("OwnerID", "None")
+config['Proxy'] = config.get("Proxy", "None")
 jsonbuilder.exportConfiguration(config)
 
 # Grabs Environment Variables for

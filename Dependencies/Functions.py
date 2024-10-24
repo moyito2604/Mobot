@@ -129,14 +129,14 @@ async def retrieveAudio(url: str, path: str, ctx, filename: str = "song", pop: b
 
     times = "N/A"
     if "duration" in info:
-        times = time.gmtime(info["duration"])
+        times = time.gmtime(info['duration'])
         duration = time.strftime("%H:%M:%S", times)
     else:
         duration = times
 
     thumbnail = ""
     if "thumbnails" in info:
-        thumbnail = info["thumbnails"][0]["url"]
+        thumbnail = info['thumbnails'][0]['url']
 
     return {'source': source, 'title': title, 'thumbnail': thumbnail, 'duration': duration,
             'user': user, 'name': name, 'avatar': avatar}
@@ -192,9 +192,9 @@ async def stopTimer(guild):
     # First it ensures that the timer exists and cancels it, where then it suppresses the cancelled error and awaits the
     # Task to its completion
     if settings.env_vars[guild].get("Timer", None):
-        settings.env_vars[guild]["Timer"].cancel()
+        settings.env_vars[guild]['Timer'].cancel()
         with suppress(asyncio.CancelledError):
-            await settings.env_vars[guild]["Timer"]
+            await settings.env_vars[guild]['Timer']
 
 
 # This function takes in a time in colon format to format it to 00:00:00 format
@@ -226,7 +226,7 @@ async def queue(ctx, client):
     if voice.is_playing() or voice.is_paused():
 
         # Temporarily Pauses Timer
-        settings.env_vars[ctx.guild.id]["Active"] = False
+        settings.env_vars[ctx.guild.id]['Active'] = False
 
         # Imports the preloaded song's information
         item = jsonbuilder.importJson(f"{currdir}{str(ctx.guild.id)}/preload.json")
@@ -240,36 +240,36 @@ async def queue(ctx, client):
                 songlist, title, durations = await retrievePlaylist(settings.queues[ctx.guild.id][0]['url'],
                                        settings.queues[ctx.guild.id][0]['title'], ctx)
                 loadPlaylist(songlist, title, durations, ctx)
-            elif item and (item.get("title", None) == settings.queues[ctx.guild.id][0]["title"]):
+            elif item and (item.get("title", None) == settings.queues[ctx.guild.id][0]['title']):
                 pass
             else:
 
                 # Once it ensures there is a next queue item, it preloads it and exports the information to a Json
-                settings.env_vars[ctx.guild.id]["Downloading"] = True
+                settings.env_vars[ctx.guild.id]['Downloading'] = True
                 song = await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + str(ctx.guild.id)), ctx,
                                            "preload", False)
-                del song["source"]
-                settings.queues[ctx.guild.id][0]["duration"] = song["duration"]
+                del song['source']
+                settings.queues[ctx.guild.id][0]['duration'] = song['duration']
                 jsonbuilder.exportJson(song, f"{currdir}{str(ctx.guild.id)}/preload.json")
-                print(f"Song {Color.RED}{Color.BOLD}{song["title"]}{Color.END} has been preloaded for "
+                print(f"Song {Color.RED}{Color.BOLD}{song['title']}{Color.END} has been preloaded for "
                       f"{Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
 
-        settings.env_vars[ctx.guild.id]["Downloading"] = False
+        settings.env_vars[ctx.guild.id]['Downloading'] = False
 
         # Reinitialized Timer
-        settings.env_vars[ctx.guild.id]["Active"] = True
+        settings.env_vars[ctx.guild.id]['Active'] = True
 
     else:
 
         # Temporarily Pauses Timer
-        settings.env_vars[ctx.guild.id]["Active"] = False
+        settings.env_vars[ctx.guild.id]['Active'] = False
 
         # It then checks if there is an active queue for an individual server
         if settings.queues[ctx.guild.id]:
 
             # It then sets up everything for the next song to play properly
             # It clears the guild directory and sets downloading to true
-            settings.env_vars[ctx.guild.id]["Downloading"] = True
+            settings.env_vars[ctx.guild.id]['Downloading'] = True
 
             # It then checks if the next item is a playlist and retrieves every item in the playlist
             url = settings.queues[ctx.guild.id][0]['url']
@@ -281,7 +281,7 @@ async def queue(ctx, client):
             # After that it then retrieves the next audio and if it is set to repeating, it places the song back
             # to the end of the queue It then plays the next song and sets downloading to false
             else:
-                if settings.env_vars[ctx.guild.id]["Repeat"]:
+                if settings.env_vars[ctx.guild.id]['Repeat']:
                     settings.queues[ctx.guild.id].append(settings.queues[ctx.guild.id][0])
 
                 # Ensures that track can be downloaded, if not, it fails and prints a message
@@ -295,7 +295,7 @@ async def queue(ctx, client):
 
                     if "preload.json" in os.listdir(currdir + str(ctx.guild.id)):
                         song = jsonbuilder.importJson(currdir + str(ctx.guild.id) + "/preload.json")
-                    if song.get("title", None) == settings.queues[ctx.guild.id][0]["title"]:
+                    if song.get("title", None) == settings.queues[ctx.guild.id][0]['title']:
 
                         # It then removes the preloaded song's information, and it renames the file to song.extension
                         os.remove(currdir + str(ctx.guild.id) + "/preload.json")
@@ -305,14 +305,14 @@ async def queue(ctx, client):
                                 extension = os.path.splitext(f"{currdir + str(ctx.guild.id)}/{file}")[1]
                                 os.rename(f"{currdir + str(ctx.guild.id)}/{file}", f"{currdir + str(ctx.guild.id)}"
                                                                                    f"/song{extension}")
-                        song["source"] = FFmpegOpusAudio(f"{currdir + str(ctx.guild.id)}/song{extension}")
+                        song['source'] = FFmpegOpusAudio(f"{currdir + str(ctx.guild.id)}/song{extension}")
 
                         # Finally, it pops the item from the queue
                         settings.queues[ctx.guild.id].pop(0)
                     else:
                         try:
                             message = await textchannel.send(f"Downloading song ***"
-                                                             f"{settings.queues[ctx.guild.id][0]["title"]}***")
+                                                             f"{settings.queues[ctx.guild.id][0]['title']}***")
                         except Forbidden:
                             print(f"Unable to print message in {Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}, "
                                   f"playing song {Color.RED}{Color.BOLD}{song['title']}{Color.END}")
@@ -338,12 +338,12 @@ async def queue(ctx, client):
                     print(f"{Color.RED}{Color.BOLD}Error: Failed to Download Track in Guild \""
                           f"{ctx.guild.name}\"{Color.END}")
 
-            settings.env_vars[ctx.guild.id]["Downloading"] = False
+            settings.env_vars[ctx.guild.id]['Downloading'] = False
 
             # Reinitialized Timer
-            settings.env_vars[ctx.guild.id]["Active"] = True
+            settings.env_vars[ctx.guild.id]['Active'] = True
 
         # If there is not an active queue, it cleans up and pauses the timer
         else:
-            settings.env_vars[ctx.guild.id]["Active"] = False
+            settings.env_vars[ctx.guild.id]['Active'] = False
             print(f"No queued items for {Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
