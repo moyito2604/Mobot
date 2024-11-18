@@ -1,5 +1,6 @@
 *.pyc
-config.json
+*.json
+*.opus
 *.log
 Guilds.txt
 .idea

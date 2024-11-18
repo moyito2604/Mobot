@@ -246,13 +246,18 @@ async def queue(ctx, client):
 
                 # Once it ensures there is a next queue item, it preloads it and exports the information to a Json
                 settings.env_vars[ctx.guild.id]['Downloading'] = True
-                song = await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + str(ctx.guild.id)), ctx,
-                                           "preload", False)
-                del song['source']
-                settings.queues[ctx.guild.id][0]['duration'] = song['duration']
-                jsonbuilder.exportJson(song, f"{currdir}{str(ctx.guild.id)}/preload.json")
-                print(f"Song {Color.RED}{Color.BOLD}{song['title']}{Color.END} has been preloaded for "
-                      f"{Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
+                try:
+                    song = await retrieveAudio(settings.queues[ctx.guild.id][0]['url'], (currdir + str(ctx.guild.id)), ctx,
+                                               "preload", False)
+                    del song['source']
+                    settings.queues[ctx.guild.id][0]['duration'] = song['duration']
+                    jsonbuilder.exportJson(song, f"{currdir}{str(ctx.guild.id)}/preload.json")
+                    print(f"Song {Color.RED}{Color.BOLD}{song['title']}{Color.END} has been preloaded for "
+                          f"{Color.BLUE}{Color.BOLD}{ctx.guild.name}{Color.END}")
+                except AudioDownloadError:
+                    print(f"{Color.RED}{Color.BOLD}Failed to preload song, removing from the Queue for {ctx.guild.name}"
+                          f"{Color.END}")
+                    settings.queues[ctx.guild.id].pop(0)
 
         settings.env_vars[ctx.guild.id]['Downloading'] = False
 
