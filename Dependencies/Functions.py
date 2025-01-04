@@ -139,7 +139,7 @@ async def retrieveAudio(url: str, path: str, ctx, filename: str = "song", pop: b
         thumbnail = info['thumbnails'][0]['url']
 
     return {'source': source, 'title': title, 'thumbnail': thumbnail, 'duration': duration,
-            'user': user, 'name': name, 'avatar': avatar}
+            'user': user, 'name': name, 'avatar': avatar, 'url': url}
 
 
 # This function retrieves a playlist from YouTube using scrapetube and pushes the urls to queue
@@ -240,7 +240,7 @@ async def queue(ctx, client):
                 songlist, title, durations = await retrievePlaylist(settings.queues[ctx.guild.id][0]['url'],
                                        settings.queues[ctx.guild.id][0]['title'], ctx)
                 loadPlaylist(songlist, title, durations, ctx)
-            elif item and (item.get("title", None) == settings.queues[ctx.guild.id][0]['title']):
+            elif item and (item.get("url", None) == settings.queues[ctx.guild.id][0]['url']):
                 pass
             else:
 

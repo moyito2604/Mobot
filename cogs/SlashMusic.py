@@ -316,7 +316,8 @@ class SlashMusic(commands.Cog):
                         await interaction.response.defer()
 
                     # Generates a search object
-                    vidsearch = scrapetube.get_search(query=url, limit=5)
+                    loop = asyncio.get_event_loop()
+                    vidsearch = await loop.run_in_executor(None, lambda: scrapetube.get_search(query=url, limit=5))
 
                     search = []
                     for video in vidsearch:
@@ -468,7 +469,8 @@ class SlashMusic(commands.Cog):
 
             await interaction.response.defer()
 
-            vidsearch = scrapetube.get_search(query=song, limit=1)
+            loop = asyncio.get_event_loop()
+            vidsearch = await loop.run_in_executor(None, lambda: scrapetube.get_search(query=song, limit=1))
 
             search = []
             for video in vidsearch:
@@ -502,7 +504,9 @@ class SlashMusic(commands.Cog):
 
             # Then it checks if the user has put a search term, if it is, then it provides the user with the top 5
             # options.
-            vidsearch = scrapetube.get_search(query=playlist, limit=5, results_type="playlist")
+            loop = asyncio.get_event_loop()
+            vidsearch = await loop.run_in_executor(None, lambda: scrapetube.get_search(query=playlist, limit=5,
+                                                                                       results_type="playlist"))
 
             search = []
             for video in vidsearch:
@@ -553,7 +557,9 @@ class SlashMusic(commands.Cog):
             await interaction.response.defer()
 
             # A search object is generated with one result required
-            vidsearch = scrapetube.get_search(query=playlist, limit=1, results_type="playlist")
+            loop = asyncio.get_event_loop()
+            vidsearch = await loop.run_in_executor(None, lambda: scrapetube.get_search(query=playlist, limit=1,
+                                                                                       results_type="playlist"))
 
             search = []
             for video in vidsearch:
