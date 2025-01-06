@@ -188,6 +188,28 @@ def loadPlaylist(songlist, title, lengths, ctx):
     settings.queues[ctx.guild.id] = []
     settings.queues[ctx.guild.id] = temp + curqueue
 
+async def songSearch(searchterm, ctx):
+    settings.env_vars[ctx.guild.id]['log'] = ''
+    loop = asyncio.get_event_loop()
+    with yt_dlp.YoutubeDL({'noplaylist': True, 'extract_flat': True, 'ignoreerrors': True,
+                           'logger': loggerOutputs(ctx=ctx)}) as ydl:
+        vidsearch = await loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch5:{searchterm}", download=False))
+    return vidsearch["entries"]
+
+async def playlistSearch(searchterm, ctx):
+    settings.env_vars[ctx.guild.id]['log'] = ''
+    plistresults = []
+    tasks = []
+    loop = asyncio.get_event_loop()
+    with yt_dlp.YoutubeDL({'lazy_playlist': True, 'extract_flat': True, 'ignoreerrors': True,
+                           'playlistend': 5, 'logger': loggerOutputs(ctx=ctx)}) as ydl:
+        plistsearch = await loop.run_in_executor(None, lambda: ydl.extract_info(
+            f"https://www.youtube.com/results?sp=EgIQAw%253D%253D&search_query={searchterm.replace(" ", "+")}",
+            download=False))
+    with yt_dlp.YoutubeDL({'ignoreerrors': True, 'playlistend': 0, 'logger': loggerOutputs(ctx=ctx)}) as ydl:
+        for playlist in plistsearch["entries"]:
+            plistresults.append(await loop.run_in_executor(None, lambda: ydl.extract_info(playlist["url"], download=False)))
+    return plistresults
 
 # Checkurl is a function that ensures that the given URL is a valid url
 def checkurl(url_string: str):

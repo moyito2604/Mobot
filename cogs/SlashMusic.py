@@ -7,7 +7,6 @@ import os
 import time
 import jsonbuilder
 import nextcord
-import scrapetube
 from nextcord.ext import commands, tasks
 from nextcord import Interaction
 from nextcord.errors import Forbidden
@@ -21,6 +20,7 @@ import shutil
 import settings
 import Dependencies.Functions as Functions
 import Dependencies.Buttons as Buttons
+from Dependencies.Functions import songSearch, playlistSearch
 from Dependencies.Scrape import get_video
 
 color = Functions.Color
@@ -316,25 +316,11 @@ class SlashMusic(commands.Cog):
                         await interaction.response.defer()
 
                     # Generates a search object
-                    settings.env_vars[interaction.guild.id]['log'] = ''
-                    loop = asyncio.get_event_loop()
-                    with yt_dlp.YoutubeDL({'noplaylist': True, 'extract_flat': True, 'ignoreerrors': True,
-                                           'logger': Functions.loggerOutputs(ctx=interaction)}) as ydl:
-                        vidsearch = await loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch5:{url}", download=False))
-                    with yt_dlp.YoutubeDL({'lazy_playlist': True, 'extract_flat': True, 'ignoreerrors': True,
-                                           'playlistend': 5, 'logger': Functions.loggerOutputs(ctx=interaction)}) as ydl:
-                        plistsearch = await loop.run_in_executor(None, lambda: ydl.extract_info(f"https://www.youtube.com/results?sp=EgIQAw%253D%253D&search_query={url.replace(" ", "+")}", download=False))
                     search = []
-                    songresults = []
-                    plistresults = []
-                    for video in vidsearch["entries"]:
-                        search.append(video)
-                        songresults.append(video)
-                    with yt_dlp.YoutubeDL({'ignoreerrors': True, 'playlistend': 0, 'logger': Functions.loggerOutputs(ctx=interaction)}) as ydl:
-                        for playlist in plistsearch["entries"]:
-                            plistinfo = await loop.run_in_executor(None, lambda: ydl.extract_info(playlist["url"], download=False))
-                            search.append(plistinfo)
-                            plistresults.append(plistinfo)
+                    songtask = asyncio.create_task(songSearch(url, interaction))
+                    playlisttask = asyncio.create_task(playlistSearch(url, interaction))
+                    songresults, plistresults = await songtask, await playlisttask
+                    search = search + songresults + plistresults
 
                     # It generates the buttons necessary for the search select
                     index = 0
