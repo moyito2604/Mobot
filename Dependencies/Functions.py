@@ -145,17 +145,29 @@ async def retrieveAudio(url: str, path: str, ctx, filename: str = "song", pop: b
 # This function retrieves a playlist from YouTube using scrapetube and pushes the urls to queue
 # It also retrieves the titles, duration, and the user who placed each song and pushes it to queue as well
 async def retrievePlaylist(url, titles, ctx):
-    id = url.lstrip('https://www.youtube.com/playlist?list=')
     loop = asyncio.get_event_loop()
-    videos = await loop.run_in_executor(None, scrapetube.get_playlist, id)
+
+    # ydl_opts are set up to log yt-dlp and also to set up arguments for extracting the playlist
+    settings.env_vars[ctx.guild.id]['log'] = ''
+    ydl_opts = {
+        'lazy_playlist': True,
+        'ignoreerrors': True,
+        'extract_flat': True,
+        'logger': loggerOutputs(ctx=ctx)
+    }
+
+    # The playlist metadata is extracted and only necessary information about each item is stored
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = await loop.run_in_executor(None, lambda: ydl.extract_info(url, download=False))
     songlist = []
     title = []
     lengths = []
-    for video in videos:
-        songlist.append('https://www.youtube.com/watch?v=' + video['videoId'])
-        title.append(video['title']['runs'][0]['text'])
-        times = time.gmtime(int(video['lengthSeconds']))
-        lengths.append(time.strftime("%H:%M:%S", times))
+    for video in info["entries"]:
+        if video["channel_id"]:
+            songlist.append(video["url"])
+            title.append(video["title"])
+            times = time.gmtime(int(video["duration"]))
+            lengths.append(time.strftime("%H:%M:%S", times))
     print(f"Playlist {Color.RED}{Color.BOLD}{titles}{Color.END} Extracted Successfully for {Color.BLUE}{Color.BOLD}"
           f"{ctx.guild.name}{Color.END}")
     return songlist, title, lengths
