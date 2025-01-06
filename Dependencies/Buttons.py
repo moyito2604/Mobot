@@ -64,7 +64,7 @@ class queueButtonFrontDisabled(nextcord.ui.View):
 
 # THe class searchButton holds all the buttons used to make a selection in a search. The buttons correspond to the
 # 1-5 buttons needed for a search
-class searchButton(nextcord.ui.View):
+class songSearchButton(nextcord.ui.View):
     def __init__(self):
         super().__init__(timeout=20)
         self.value = None
@@ -102,6 +102,57 @@ class searchButton(nextcord.ui.View):
         self.value = 5
         self.clear_items()
         await interaction.response.edit_message(view=self)
+        self.stop()
+
+    @nextcord.ui.button(label='Playlist', style=nextcord.ButtonStyle.red)
+    async def playlist(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = -1
+        self.stop()
+
+
+class plistSearchButton(nextcord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=20)
+        self.value = None
+
+    @nextcord.ui.button(label='1', style=nextcord.ButtonStyle.blurple)
+    async def one(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = 6
+        self.clear_items()
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+    @nextcord.ui.button(label='2', style=nextcord.ButtonStyle.blurple)
+    async def two(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = 7
+        self.clear_items()
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+    @nextcord.ui.button(label='3', style=nextcord.ButtonStyle.blurple)
+    async def three(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = 8
+        self.clear_items()
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+    @nextcord.ui.button(label='4', style=nextcord.ButtonStyle.blurple)
+    async def four(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = 9
+        self.clear_items()
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+    @nextcord.ui.button(label='5', style=nextcord.ButtonStyle.blurple)
+    async def five(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = 10
+        self.clear_items()
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+    @nextcord.ui.button(label='Song', style=nextcord.ButtonStyle.green)
+    async def song(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        self.value = 0
         self.stop()
 
 

@@ -136,7 +136,7 @@ class SlashMusic(commands.Cog):
     # load a playlist from a YouTube link, allows you to search for a song on YouTube It also allows a user to select
     # a song to play from the search results It can also be used to join the bot automatically and play a song
     @nextcord.slash_command(name="play",
-                            description="Allows the bot to play music from a link or search")
+                            description="Allows the bot to play music from a link or search (Can search for a Song or Playlist)")
     async def play(self, interaction: Interaction, song: str = ' '):
         url = song
         # First it grabs the voice channel to check if the bot is in a voice channel
@@ -316,46 +316,85 @@ class SlashMusic(commands.Cog):
                         await interaction.response.defer()
 
                     # Generates a search object
+                    settings.env_vars[interaction.guild.id]['log'] = ''
                     loop = asyncio.get_event_loop()
-                    vidsearch = await loop.run_in_executor(None, lambda: scrapetube.get_search(query=url, limit=5))
-
+                    with yt_dlp.YoutubeDL({'noplaylist': True, 'extract_flat': True, 'ignoreerrors': True,
+                                           'logger': Functions.loggerOutputs(ctx=interaction)}) as ydl:
+                        vidsearch = await loop.run_in_executor(None, lambda: ydl.extract_info(f"ytsearch5:{url}", download=False))
+                    with yt_dlp.YoutubeDL({'lazy_playlist': True, 'extract_flat': True, 'ignoreerrors': True,
+                                           'playlistend': 5, 'logger': Functions.loggerOutputs(ctx=interaction)}) as ydl:
+                        plistsearch = await loop.run_in_executor(None, lambda: ydl.extract_info(f"https://www.youtube.com/results?sp=EgIQAw%253D%253D&search_query={url.replace(" ", "+")}", download=False))
                     search = []
-                    for video in vidsearch:
+                    songresults = []
+                    plistresults = []
+                    for video in vidsearch["entries"]:
                         search.append(video)
+                        songresults.append(video)
+                    with yt_dlp.YoutubeDL({'ignoreerrors': True, 'playlistend': 0, 'logger': Functions.loggerOutputs(ctx=interaction)}) as ydl:
+                        for playlist in plistsearch["entries"]:
+                            plistinfo = await loop.run_in_executor(None, lambda: ydl.extract_info(playlist["url"], download=False))
+                            search.append(plistinfo)
+                            plistresults.append(plistinfo)
 
                     # It generates the buttons necessary for the search select
-                    view = Buttons.searchButton()
-                    embed = nextcord.Embed(title="Search Results")
-                    for counter, result in enumerate(search):
-                        if result.get("lengthText", None):
-                            embed.add_field(name=f"{counter + 1}: ***{result['title']['runs'][0]['text']}***",
-                                            value=f"Duration: {result['lengthText']['simpleText']}",
-                                            inline=False)
+                    index = 0
+                    message = None
+                    while index == 0 or index == -1:
+                        view = Buttons.songSearchButton()
+                        if index == 0:
+                            embed = nextcord.Embed(title="Song Search Results")
+                            for counter, result in enumerate(songresults):
+                                if result.get("duration", None):
+                                    embed.add_field(name=f"{counter + 1}: ***{result["title"]}***",
+                                                    value=f"Duration: {time.strftime("%H:%M:%S", time.gmtime(int(result['duration'])))}",
+                                                    inline=False)
+                                else:
+                                    embed.add_field(name=f"{counter + 1}: ***{result["title"]}***",
+                                                    value=f"Duration: N/A",
+                                                    inline=False)
+                        elif index == -1:
+                            view = Buttons.plistSearchButton()
+                            embed = nextcord.Embed(title="Playlist Search Results")
+                            for counter, result in enumerate(plistresults):
+                                embed.add_field(name=f"{counter + 1}: ***{result["title"]}***",
+                                                value=f"Playlist Items: {result["playlist_count"]}",
+                                                inline=False)
+                        if not message:
+                            message = await interaction.send(embed=embed, ephemeral=True, view=view, delete_after=20)
                         else:
-                            embed.add_field(name=f"{counter + 1}: ***{result['title']['runs'][0]['text']}***",
-                                            value=f"Duration: N/A",
-                                            inline=False)
-                    await interaction.send(embed=embed, ephemeral=True, view=view, delete_after=20)
-                    await view.wait()
-                    if view.value is None:
-                        return
+                            await message.edit(embed=embed, view=view, delete_after=20)
+                        await view.wait()
+                        if view.value is None:
+                            return
+                        else:
+                            index = view.value
 
                     # Once the user inputs the value, it is then saved to the queue
                     else:
-                        await interaction.send('Song number ' + str(view.value) + ' selected:\n***' +
-                                               search[int(view.value) - 1]['title']['runs'][0]['text'] +
-                                               '*** has been added to the queue', ephemeral=True)
-                        temp = {'url': 'https://www.youtube.com/watch?v=' + search[int(view.value) - 1]['videoId'],
-                                'user': interaction.user.mention, 'name': interaction.user.display_name,
-                                'avatar': interaction.user.display_avatar.url,
-                                'duration': Functions.timetostr(search[int(view.value) - 1]['lengthText']['simpleText']),
-                                'title': search[int(view.value) - 1]['title']['runs'][0]['text']}
+                        temp = ""
+                        if index <= 5:
+                            await interaction.send('Song number ' + str(index) + ' selected:\n***' +
+                                                   search[int(index) - 1]["title"] +
+                                                   '*** has been added to the queue', ephemeral=True)
+                            temp = {'url': search[int(index) - 1]["url"], 'user': interaction.user.mention,
+                                    'name': interaction.user.display_name, 'avatar': interaction.user.display_avatar.url,
+                                    'duration': time.strftime("%H:%M:%S", time.gmtime(int(search[int(index) - 1]['duration']))),
+                                    'title': search[int(index) - 1]["title"]}
+                        else:
+                            await interaction.send('Playlist number ' + str(index - 5) + ' selected:\n***' +
+                                                   search[int(index) - 1]["title"] +
+                                                   '*** has been added to the queue', ephemeral=True)
+                            temp = {'url': search[int(index) - 1]["webpage_url"],
+                                    'user': interaction.user.mention, 'name': interaction.user.display_name,
+                                    'avatar': interaction.user.display_avatar.url,
+                                    'items': search[int(view.value - 1)]["playlist_count"],
+                                    'title': search[int(view.value - 1)]["title"]}
                         settings.queues[interaction.guild.id].append(temp)
                         if not settings.env_vars[interaction.guild.id]['Downloading']:
                             settings.env_vars[interaction.guild.id]['Active'] = True
                         print(
                             f"Successfully added {color.RED}{color.BOLD}"
-                            f"{search[int(view.value) - 1]['title']['runs'][0]['text']}{color.END} "
+                            f"{search[int(index) - 1]["title"]}{color.END} "
                             f"to the queue for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
 
             # This then checks if the bot is not in a voice channel and if it's not, it sends a message reminding a
@@ -452,133 +491,6 @@ class SlashMusic(commands.Cog):
                 await interaction.send(f"Please input a valid amount of songs to skip. There are {items} items in queue")
             else:
                 await interaction.send("There is no music to skip.")
-
-    # The song command allows a user to search for a song and automatically play the first search result for this
-    # song The search terms for this one has to be very specific, or it will not be very useful since the first result
-    # may be irrelevant
-    @nextcord.slash_command(name="song",
-                            description="Allows the user to search for a song and automatically adds it to the queue")
-    async def song(self, interaction: Interaction, song: str):
-
-        # It checks for voice
-        voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
-
-        # Once it has checked for voice it searches for the song and automatically adds it to the end of the queue
-        # It also starts the threaded timer if it is not downloading
-        if voice is not None:
-
-            await interaction.response.defer()
-
-            loop = asyncio.get_event_loop()
-            vidsearch = await loop.run_in_executor(None, lambda: scrapetube.get_search(query=song, limit=1))
-
-            search = []
-            for video in vidsearch:
-                search.append(video)
-
-            await interaction.send('***' + search[0]['title']['runs'][0]['text'] + '*** has been added to the queue',
-                                   ephemeral=True)
-            temp = {'url': 'https://www.youtube.com/watch?v=' + search[0]['videoId'], 'user': interaction.user.mention,
-                    'name': interaction.user.display_name, 'avatar': interaction.user.display_avatar.url,
-                    'duration': Functions.timetostr(search[0]['lengthText']['simpleText']),
-                    'title': search[0]['title']['runs'][0]['text']}
-            settings.queues[interaction.guild.id].append(temp)
-            if not settings.env_vars[interaction.guild.id]['Downloading']:
-                settings.env_vars[interaction.guild.id]['Active'] = True
-            print(f"Successfully added {color.RED}{color.BOLD}{search[0]['title']['runs'][0]['text']}{color.END} to the"
-                  f" queue for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
-        else:
-            await interaction.response.send_message('I am not in a voice channel')
-
-    # The playlist command allows a user to search and select for a playlist of their choosing
-    @nextcord.slash_command(name="playlist",
-                            description="Allows a user to search for and select a playlist and add it to the queue")
-    async def playlist(self, interaction: Interaction, playlist: str):
-
-        # First it checks for a voice channel once again
-        voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
-        if voice is not None:
-
-            # Defers Response until it is done
-            await interaction.response.defer()
-
-            # Then it checks if the user has put a search term, if it is, then it provides the user with the top 5
-            # options.
-            loop = asyncio.get_event_loop()
-            vidsearch = await loop.run_in_executor(None, lambda: scrapetube.get_search(query=playlist, limit=5,
-                                                                                       results_type="playlist"))
-
-            search = []
-            for video in vidsearch:
-                search.append(video)
-
-            # It then generates the buttons for selection
-            view = Buttons.searchButton()
-            embed = nextcord.Embed(title="Search Results")
-            for counter, result in enumerate(search):
-                embed.add_field(name=f"{counter + 1}: ***{result['title']['simpleText']}***",
-                                value=f"Playlist Items: {result['videoCount']}",
-                                inline=False)
-            await interaction.send(embed=embed, ephemeral=True, view=view, delete_after=20)
-            await view.wait()
-            if view.value is None:
-                return
-
-            # Once that's done, it saves it to the queue
-            else:
-                await interaction.send('Playlist number ' + playlist + ' selected:\n***' +
-                                       search[int(view.value) - 1]['title']['simpleText'] +
-                                       '*** has been added to the queue', ephemeral=True)
-                temp = {'url': "https://www.youtube.com/playlist?list=" + search[int(view.value - 1)]['playlistId'],
-                        'user': interaction.user.mention, 'name': interaction.user.display_name,
-                        'avatar': interaction.user.display_avatar.url, 'items': search[int(view.value - 1)]['videoCount'],
-                        'title': search[int(view.value - 1)]['title']['simpleText']}
-                settings.queues[interaction.guild.id].append(temp)
-                if not settings.env_vars[interaction.guild.id]['Downloading']:
-                    settings.env_vars[interaction.guild.id]['Active'] = True
-                print(
-                    f"Successfully added playlist {color.RED}{color.BOLD}{search[int(view.value) - 1]['title']['simpleText']}"
-                    f"{color.END} to the queue for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
-
-        else:
-            await interaction.send('I am not in a voice channel')
-
-    # The qplaylist function provides a similar function to playlist This command however instead of allowing a user
-    # to quickly search for a playlist and automatically add it to the queue
-    @nextcord.slash_command(name="qplaylist",
-                            description="Allows the user to search for a playlist and automatically adds it to the queue")
-    async def qplaylist(self, interaction: Interaction, playlist: str):
-
-        voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
-
-        if voice is not None:
-
-            # Defers response until done
-            await interaction.response.defer()
-
-            # A search object is generated with one result required
-            loop = asyncio.get_event_loop()
-            vidsearch = await loop.run_in_executor(None, lambda: scrapetube.get_search(query=playlist, limit=1,
-                                                                                       results_type="playlist"))
-
-            search = []
-            for video in vidsearch:
-                search.append(video)
-
-            # The playlist item is added into the queue
-            await interaction.send('***' + search[0]['title']['simpleText'] + '*** has been added to the queue\n'
-                                   'Size: ' + search[0]['videoCount'], ephemeral=True)
-            temp = {'url': "https://www.youtube.com/playlist?list=" + search[0]['playlistId'],
-                    'user': interaction.user.mention, 'name': interaction.user.display_name,
-                    'avatar': interaction.user.display_avatar.url, 'items': search[0]['videoCount'],
-                    'title': search[0]['title']['simpleText']}
-            settings.queues[interaction.guild.id].append(temp)
-            if not settings.env_vars[interaction.guild.id]['Downloading']:
-                settings.env_vars[interaction.guild.id]['Active'] = True
-            print(f"Successfully added playlist {color.RED}{color.BOLD}{search[0]['title']['simpleText']}{color.END} "
-                  f"to the queue for {color.BLUE}{color.BOLD}{interaction.guild.name}{color.END}")
-        else:
-            await interaction.response.send_message('I am not in a voice channel')
 
     # The queue function allows a user to see the queue key for their specific server
     @nextcord.slash_command(name="queue", description="Shows the user the current server's queue")
