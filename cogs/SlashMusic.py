@@ -18,10 +18,10 @@ import yt_dlp
 import random
 import shutil
 import settings
-import Dependencies.Functions as Functions
-import Dependencies.Buttons as Buttons
-from Dependencies.Functions import songSearch, playlistSearch
-from Dependencies.Scrape import get_video
+import Modules.Functions as Functions
+import Modules.Buttons as Buttons
+from Modules.Functions import songSearch, playlistSearch
+from Modules.Scrape import get_video
 
 color = Functions.Color
 
@@ -66,7 +66,7 @@ class SlashMusic(commands.Cog):
         # It sets up the threaded timer to monitor the voice activity of the bot as well.
         if interaction.user.voice:
             if voice is None:
-                currdir = settings.pwd + '/Dependencies/'
+                currdir = settings.pwd + '/Modules/'
                 if os.path.isdir(currdir + '/' + str(interaction.guild.id)):
                     shutil.rmtree(currdir + '/' + str(interaction.guild.id))
                     print('Directory ' + str(interaction.guild.id) + ' has been deleted')
@@ -110,7 +110,7 @@ class SlashMusic(commands.Cog):
     # server
     @nextcord.slash_command(name="leave", description="Leaves the bot from a voice channel")
     async def leave(self, interaction: Interaction):
-        currdir = settings.pwd + '/Dependencies/'
+        currdir = settings.pwd + '/Modules/'
 
         # First it grabs the voice channel that the bot is currently in
         voice = nextcord.utils.get(self.client.voice_clients, guild=interaction.guild)
@@ -146,7 +146,7 @@ class SlashMusic(commands.Cog):
             # It then checks if the bot is in a Voice channel and if not, it sets it up similarly to the join command
             if interaction.user.voice:
                 if voice is None:
-                    currdir = settings.pwd + '/Dependencies/'
+                    currdir = settings.pwd + '/Modules/'
                     if os.path.isdir(currdir + '/' + str(interaction.guild.id)):
                         shutil.rmtree(currdir + '/' + str(interaction.guild.id))
                         print('Directory ' + str(interaction.guild.id) + ' has been deleted')
@@ -587,7 +587,7 @@ class SlashMusic(commands.Cog):
             else:
                 embed.add_field(name="Repeat", value="Off")
             embed.add_field(name="Items in Queue", value=len(settings.queues[interaction.guild.id]))
-            item = jsonbuilder.importJson(f"{settings.pwd}/Dependencies/{str(interaction.guild.id)}/preload.json")
+            item = jsonbuilder.importJson(f"{settings.pwd}/Modules/{str(interaction.guild.id)}/preload.json")
             if item:
                 embed.add_field(name="Preloaded Song", value=item['title'], inline=False)
             else:

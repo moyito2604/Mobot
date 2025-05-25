@@ -2,8 +2,8 @@
 # It includes several functions that retrieve songs, playlists, Quotes, etc.
 import asyncio
 from contextlib import suppress
-from Dependencies.Error import AudioDownloadError
-from Dependencies.Error import internalErrorEmbed
+from Modules.Error import AudioDownloadError
+from Modules.Error import internalErrorEmbed
 import time
 from random import randint
 import jsonbuilder
@@ -38,7 +38,7 @@ class Color:
 # It then returns the quote to be used in Mobot when the command is run
 def techQuotes():
     # Sets the working directory
-    currdir = settings.pwd + '/Dependencies/'
+    currdir = settings.pwd + '/Modules/'
     files = open(currdir + '/Quotes/' + 'Funnytechquotes.txt', 'r')
     quote = ''
     randomquote = randint(1, 62)
@@ -251,7 +251,7 @@ def timetostr(timestring: str):
 # The queue function is what runs the entire music bot.
 # This function is used to periodically check if a song is ready to be loaded up into the voice chat for playing
 async def queue(ctx, client):
-    currdir = settings.pwd + '/Dependencies/'
+    currdir = settings.pwd + '/Modules/'
 
     # First it sets the working directory and checks if the bot is playing a song
     voice = nextcord.utils.get(client.voice_clients, guild=ctx.guild)

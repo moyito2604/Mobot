@@ -1,9 +1,9 @@
 import nextcord
 import settings
 import os
-from Dependencies.Error import ReconnectError
+from Modules.Error import ReconnectError
 from mysql.connector import InterfaceError
-from Dependencies.Functions import Color
+from Modules.Functions import Color
 from mysql.connector import Error
 
 

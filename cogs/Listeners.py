@@ -1,9 +1,9 @@
 # cogs.Listeners holds all the listeners needed for Mobot
 import nextcord
-import Dependencies.Functions as Functions
-from Dependencies.Functions import Color
-from Dependencies.SQLFunc import guildSave, checkConn, blocklistcheck
-from Dependencies.Error import ReconnectError
+import Modules.Functions as Functions
+from Modules.Functions import Color
+from Modules.SQLFunc import guildSave, checkConn, blocklistcheck
+from Modules.Error import ReconnectError
 from mysql.connector import Error
 import settings
 import shutil
@@ -42,7 +42,7 @@ class Listeners(commands.Cog):
                     f"{Color.END} voice channel in the server "
                     f"{Color.BLUE}{Color.BOLD}{textchannel.guild.name}{Color.END}")
             await voice.disconnect()
-            currdir = settings.pwd + '/Dependencies/'
+            currdir = settings.pwd + '/Modules/'
             if os.path.isdir(currdir + '/' + str(member.guild.id)):
                 shutil.rmtree(currdir + '/' + str(member.guild.id))
             print('directory ' + str(member.guild.id) + ' has been deleted')

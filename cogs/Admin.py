@@ -2,9 +2,9 @@ import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction
 import settings
-from Dependencies.Error import ReconnectError
-import Dependencies.SQLFunc as SQLFunc
-from Dependencies.Functions import Color
+from Modules.Error import ReconnectError
+import Modules.SQLFunc as SQLFunc
+from Modules.Functions import Color
 
 
 # The Admin Cog is for general purpose commands related to administration

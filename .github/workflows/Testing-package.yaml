@@ -45,8 +45,6 @@ jobs:
           tags: |
             ghcr.io/${{ env.IMAGE }}:${{ env.VERSION }}
             ${{ env.IMAGE }}:${{ env.VERSION }}
-          cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE }}:${{ env.VERSION }}
-          cache-to: type=inline
           build-args: |
             TAG=${{ env.VERSION }}
           provenance: false

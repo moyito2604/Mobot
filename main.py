@@ -3,7 +3,7 @@
 
 # imports necessary to run the program
 import argparse
-import Dependencies.Functions as Functions
+import Modules.Functions as Functions
 import nextcord
 from nextcord.ext import commands
 from nextcord.errors import LoginFailure

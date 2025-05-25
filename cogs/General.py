@@ -3,7 +3,7 @@ import asyncio
 import nextcord
 from nextcord.ext import commands
 from nextcord import Interaction
-import Dependencies.Functions as Functions
+import Modules.Functions as Functions
 
 
 # This class defines what the cogs.General will be able to do
@@ -27,7 +27,7 @@ class General(commands.Cog):
         await interaction.send('GOTTEM!')
         print("Response to deez printed")
 
-    # This generates a tech quote from a small database of tech quotes under Dependencies/Quotes/Funnytechquotes.txt
+    # This generates a tech quote from a small database of tech quotes under Modules/Quotes/Funnytechquotes.txt
     # Compiled quotes are from a variety of sources, most of them coming from Linus Torvalds
     @nextcord.slash_command(name="tquote", description="Prints a quote from a list of tech quotes")
     async def tquote(self, ctx):

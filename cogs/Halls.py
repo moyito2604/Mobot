@@ -1,13 +1,13 @@
 # The Halls.py Cog handles all the commands related to the Halls functionality (starboard?)
-from Dependencies.Functions import Color
+from Modules.Functions import Color
 from datetime import datetime
 from datetime import UTC
 import nextcord
 from nextcord.ext import commands, tasks
 from nextcord import Interaction
 import settings
-import Dependencies.SQLFunc as SQLFunc
-from Dependencies.Error import ReconnectError
+import Modules.SQLFunc as SQLFunc
+from Modules.Error import ReconnectError
 import asyncio
 
 
@@ -18,16 +18,13 @@ class Halls(commands.Cog):
         self.client = client
         self.hallscheck.start()
 
-    # Checks for new halls every five minutes when the bot is first started up, after that, it checks every hour
-    @tasks.loop(minutes=5)
+    # Checks for new halls every hour when the bot is first started up. It will check 5 times only and stop
+    @tasks.loop(hours=1, count=5)
     async def hallscheck(self):
 
         # Waits if the Bot is ready to start hall check
         await self.client.wait_until_ready()
 
-        # Sets the interval to 1 hour after 5 checks
-        if self.hallscheck.current_loop == 5:
-            self.hallscheck.change_interval(hours=1)
         for guild in self.client.guilds:
 
             # Checks if there is an SQL connection still active
